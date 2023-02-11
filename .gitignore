@@ -52,8 +52,8 @@ Mkfile.old
 dkms.conf
 
 # Compiled assembler and processor
-assember/assembler
-simple-simulator/processor
+assembler
+simple_processor
 
 # Compiling assembly to machine code
 **/*.o
