@@ -8,6 +8,14 @@ uint32_t registers[NUM_REGISTERS];
 uint32_t pc = 0;
 rv32i_instruction *instructions;
 
+void output_registers()
+{
+    for (uint8_t i = 0; i < NUM_REGISTERS; i++)
+    {
+        printf("x%d: %d\n", i, registers[i]);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     FILE *fp;
@@ -28,5 +36,7 @@ int main(int argc, char *argv[])
     }
 
     fclose(fp);
+
+    output_registers();
     return 0;
 }
