@@ -5,11 +5,11 @@
 
 typedef enum Opcode
 {
-    // Register-Immediate
+    // Integer Register-Immediate
     OP_IMM_OPCODE = 0b0010011,
     LUI_OPCODE = 0b0110111,
     AUIPC_OPCODE = 0b0010111,
-    // Register-Register
+    // Integer Register-Register
     OP_OPCODE = 0b0110011,
     // Unconditional Jumps
     JAL_OPCODE = 0b1101111,
@@ -23,7 +23,7 @@ typedef enum Opcode
 
 typedef enum Funct3
 {
-    // Register-Immediate
+    // Integer Register-Immediate
     ADDI_FUNCT3 = 0b000,
     SLTI_FUNCT3 = 0b010,
     SLTIU_FUNCT3 = 0b011,
@@ -33,7 +33,7 @@ typedef enum Funct3
     SLLI_FUNCT3 = 0b001,
     SRLI_FUNCT3 = 0b101,
     SRAI_FUNCT3 = 0b101,
-    // Register-Register
+    // Integer Register-Register
     ADD_FUNCT3 = 0b000,
     SLT_FUNCT3 = 0b010,
     SLTU_FUNCT3 = 0b011,
@@ -66,7 +66,7 @@ typedef enum Funct3
 
 typedef enum Funct7
 {
-    // Register-Register
+    // Integer Register-Register
     ADD_FUNCT7 = 0b0000000,
     SLT_FUNCT7 = 0b0000000,
     SLTU_FUNCT7 = 0b0000000,
@@ -81,7 +81,7 @@ typedef enum Funct7
 
 typedef enum ShiftType
 {
-    // Register-Immediate
+    // Integer Register-Immediate
     SLLI_SHIFT_TYPE = 0b0000000,
     SRLI_SHIFT_TYPE = 0b0000000,
     SRAI_SHIFT_TYPE = 0b0100000
