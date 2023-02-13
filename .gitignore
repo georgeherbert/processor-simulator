@@ -362,3 +362,6 @@ TSWLatexianTemp*
 
 # iCloud
 **/*.icloud
+
+# VS Code
+**/.vscode
