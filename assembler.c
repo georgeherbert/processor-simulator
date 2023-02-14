@@ -101,18 +101,18 @@ void lines_list_to_word_lists(node *head)
     }
 }
 
-uint32_t get_num_instructions(node *head)
+uint32_t get_num_insts(node *head)
 {
     node *current = head;
-    uint32_t num_instructions = 0;
+    uint32_t num_insts = 0;
 
     while (current != NULL)
     {
-        num_instructions++;
+        num_insts++;
         current = current->next;
     }
 
-    return num_instructions;
+    return num_insts;
 }
 
 uint32_t str_register_to_uint5_t(char *reg_name)
@@ -156,6 +156,7 @@ int32_t str_to_int32_t(char *str)
 uint32_t str_imm_to_uintn_t(char *str, uint8_t n)
 {
     int32_t imm = str_to_int32_t(str);
+
     if (imm < 0 || imm > (1 << n) - 1)
     {
         perror("Error: Immediate out of range\n");
@@ -177,332 +178,217 @@ uint32_t str_imm_to_intn_t(char *str, uint8_t n)
     return (uint32_t)(imm >= 0 ? imm : (1 << n) + imm);
 }
 
-void word_lists_to_machine_code(node *head, rv32i_instruction *machine_code)
+void append_i_type(rv32i_t *inst, uint8_t opcode, char **fields)
+{
+    inst->i_type.opcode = opcode;
+    inst->i_type.rd = str_register_to_uint5_t(fields[1]);
+    inst->i_type.rs1 = str_register_to_uint5_t(fields[2]);
+    inst->i_type.imm = str_imm_to_intn_t(fields[3], 12);
+}
+
+void append_i_type_shift(rv32i_t *inst, uint8_t opcode, char **fields)
+{
+    inst->i_type_shift.opcode = opcode;
+    inst->i_type_shift.rd = str_register_to_uint5_t(fields[1]);
+    inst->i_type_shift.rs1 = str_register_to_uint5_t(fields[2]);
+    inst->i_type_shift.shamt = str_imm_to_uintn_t(fields[3], 5);
+}
+
+void append_u_type(rv32i_t *inst, uint8_t opcode, char **fields)
+{
+    inst->u_type.opcode = opcode;
+    inst->u_type.rd = str_register_to_uint5_t(fields[1]);
+    inst->u_type.imm = str_imm_to_intn_t(fields[2], 20);
+}
+
+void append_r_type(rv32i_t *inst, uint8_t opcode, char **fields)
+{
+    inst->r_type.opcode = opcode;
+    inst->r_type.rd = str_register_to_uint5_t(fields[1]);
+    inst->r_type.rs1 = str_register_to_uint5_t(fields[2]);
+    inst->r_type.rs2 = str_register_to_uint5_t(fields[3]);
+}
+
+void append_s_type(rv32i_t *inst, uint8_t opcode, char **fields)
+{
+    inst->s_type.opcode = opcode;
+    inst->s_type.rs1 = str_register_to_uint5_t(fields[1]);
+    inst->s_type.rs2 = str_register_to_uint5_t(fields[2]);
+    inst->s_type.imm = str_imm_to_intn_t(fields[3], 12);
+}
+
+void word_lists_to_machine_code(node *head, rv32i_t *machine_code)
 {
     node *current = head;
     uint32_t i = 0;
 
     while (current != NULL)
     {
+        rv32i_t *inst = &machine_code[i];
         char **fields = current->words;
-        char *operation = fields[0];
+        char *opcode = fields[0];
         uint8_t num_fields = current->num_words;
 
-        // Integer Register-Immediate
-        if (strcmp(operation, "addi") == 0 && num_fields == 4)
+        if (strcmp(opcode, "addi") == 0 && num_fields == 4)
         {
-            machine_code[i].i_type.opcode = OP_IMM_OPCODE;
-            machine_code[i].i_type.funct3 = ADDI_FUNCT3;
-            machine_code[i].i_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].i_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].i_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_i_type(inst, ADDI, fields);
         }
-        else if (strcmp(operation, "slti") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "slti") == 0 && num_fields == 4)
         {
-            machine_code[i].i_type.opcode = OP_IMM_OPCODE;
-            machine_code[i].i_type.funct3 = SLTI_FUNCT3;
-            machine_code[i].i_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].i_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].i_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_i_type(inst, SLTI, fields);
         }
-        else if (strcmp(operation, "sltiu") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "sltiu") == 0 && num_fields == 4)
         {
-            machine_code[i].i_type.opcode = OP_IMM_OPCODE;
-            machine_code[i].i_type.funct3 = SLTIU_FUNCT3;
-            machine_code[i].i_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].i_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].i_type.imm = str_imm_to_uintn_t(fields[3], 12);
+            inst->i_type.opcode = SLTIU;
+            inst->i_type.rd = str_register_to_uint5_t(fields[1]);
+            inst->i_type.rs1 = str_register_to_uint5_t(fields[2]);
+            uint32_t imm = (uint32_t)str_to_int32_t(fields[3]);
+            if (imm > 0x7FF && imm < 0xfffff800)
+            {
+                perror("Error: Immediate out of range\n");
+                exit(EXIT_FAILURE);
+            }
+            inst->i_type.imm = imm;
         }
-        else if (strcmp(operation, "andi") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "andi") == 0 && num_fields == 4)
         {
-            machine_code[i].i_type.opcode = OP_IMM_OPCODE;
-            machine_code[i].i_type.funct3 = ANDI_FUNCT3;
-            machine_code[i].i_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].i_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].i_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_i_type(inst, ANDI, fields);
         }
-        else if (strcmp(operation, "ori") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "ori") == 0 && num_fields == 4)
         {
-            machine_code[i].i_type.opcode = OP_IMM_OPCODE;
-            machine_code[i].i_type.funct3 = ORI_FUNCT3;
-            machine_code[i].i_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].i_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].i_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_i_type(inst, ORI, fields);
         }
-        else if (strcmp(operation, "xori") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "xori") == 0 && num_fields == 4)
         {
-            machine_code[i].i_type.opcode = OP_IMM_OPCODE;
-            machine_code[i].i_type.funct3 = XORI_FUNCT3;
-            machine_code[i].i_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].i_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].i_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_i_type(inst, XORI, fields);
         }
-        else if (strcmp(operation, "slli") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "slli") == 0 && num_fields == 4)
         {
-            machine_code[i].i_type_shift.opcode = OP_IMM_OPCODE;
-            machine_code[i].i_type_shift.funct3 = SLLI_FUNCT3;
-            machine_code[i].i_type_shift.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].i_type_shift.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].i_type_shift.shamt = str_imm_to_uintn_t(fields[3], 5);
-            machine_code[i].i_type_shift.shift_type = SLLI_SHIFT_TYPE;
+            append_i_type_shift(inst, SLLI, fields);
         }
-        else if (strcmp(operation, "srli") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "srli") == 0 && num_fields == 4)
         {
-            machine_code[i].i_type_shift.opcode = OP_IMM_OPCODE;
-            machine_code[i].i_type_shift.funct3 = SRLI_FUNCT3;
-            machine_code[i].i_type_shift.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].i_type_shift.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].i_type_shift.shamt = str_imm_to_uintn_t(fields[3], 5);
-            machine_code[i].i_type_shift.shift_type = SRLI_SHIFT_TYPE;
+            append_i_type_shift(inst, SRLI, fields);
         }
-        else if (strcmp(operation, "srai") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "srai") == 0 && num_fields == 4)
         {
-            machine_code[i].i_type_shift.opcode = OP_IMM_OPCODE;
-            machine_code[i].i_type_shift.funct3 = SRAI_FUNCT3;
-            machine_code[i].i_type_shift.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].i_type_shift.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].i_type_shift.shamt = str_imm_to_uintn_t(fields[3], 5);
-            machine_code[i].i_type_shift.shift_type = SRAI_SHIFT_TYPE;
+            append_i_type_shift(inst, SRAI, fields);
         }
-        else if (strcmp(operation, "lui") == 0 && num_fields == 3)
+        else if (strcmp(opcode, "lui") == 0 && num_fields == 3)
         {
-            machine_code[i].u_type.opcode = LUI_OPCODE;
-            machine_code[i].u_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].u_type.imm = str_imm_to_uintn_t(fields[2], 20);
+            append_u_type(inst, LUI, fields);
         }
-        else if (strcmp(operation, "auipc") == 0 && num_fields == 3)
+        else if (strcmp(opcode, "auipc") == 0 && num_fields == 3)
         {
-            machine_code[i].u_type.opcode = AUIPC_OPCODE;
-            machine_code[i].u_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].u_type.imm = str_imm_to_uintn_t(fields[2], 20);
+            append_u_type(inst, AUIPC, fields);
         }
-
-        // Integer Register-Register
-        else if (strcmp(operation, "add") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "add") == 0 && num_fields == 4)
         {
-            machine_code[i].r_type.opcode = OP_OPCODE;
-            machine_code[i].r_type.funct3 = ADD_FUNCT3;
-            machine_code[i].r_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].r_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].r_type.rs2 = str_register_to_uint5_t(fields[3]);
-            machine_code[i].r_type.funct7 = ADD_FUNCT7;
+            append_r_type(inst, ADD, fields);
         }
-        else if (strcmp(operation, "slt") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "slt") == 0 && num_fields == 4)
         {
-            machine_code[i].r_type.opcode = OP_OPCODE;
-            machine_code[i].r_type.funct3 = SLT_FUNCT3;
-            machine_code[i].r_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].r_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].r_type.rs2 = str_register_to_uint5_t(fields[3]);
-            machine_code[i].r_type.funct7 = SLT_FUNCT7;
+            append_r_type(inst, SLT, fields);
         }
-        else if (strcmp(operation, "sltu") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "sltu") == 0 && num_fields == 4)
         {
-            machine_code[i].r_type.opcode = OP_OPCODE;
-            machine_code[i].r_type.funct3 = SLTU_FUNCT3;
-            machine_code[i].r_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].r_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].r_type.rs2 = str_register_to_uint5_t(fields[3]);
-            machine_code[i].r_type.funct7 = SLTU_FUNCT7;
+            append_r_type(inst, SLTU, fields);
         }
-        else if (strcmp(operation, "and") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "and") == 0 && num_fields == 4)
         {
-            machine_code[i].r_type.opcode = OP_OPCODE;
-            machine_code[i].r_type.funct3 = AND_FUNCT3;
-            machine_code[i].r_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].r_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].r_type.rs2 = str_register_to_uint5_t(fields[3]);
-            machine_code[i].r_type.funct7 = AND_FUNCT7;
+            append_r_type(inst, AND, fields);
         }
-        else if (strcmp(operation, "or") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "or") == 0 && num_fields == 4)
         {
-            machine_code[i].r_type.opcode = OP_OPCODE;
-            machine_code[i].r_type.funct3 = OR_FUNCT3;
-            machine_code[i].r_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].r_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].r_type.rs2 = str_register_to_uint5_t(fields[3]);
-            machine_code[i].r_type.funct7 = OR_FUNCT7;
+            append_r_type(inst, OR, fields);
         }
-        else if (strcmp(operation, "xor") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "xor") == 0 && num_fields == 4)
         {
-            machine_code[i].r_type.opcode = OP_OPCODE;
-            machine_code[i].r_type.funct3 = XOR_FUNCT3;
-            machine_code[i].r_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].r_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].r_type.rs2 = str_register_to_uint5_t(fields[3]);
-            machine_code[i].r_type.funct7 = XOR_FUNCT7;
+            append_r_type(inst, XOR, fields);
         }
-        else if (strcmp(operation, "sll") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "sll") == 0 && num_fields == 4)
         {
-            machine_code[i].r_type.opcode = OP_OPCODE;
-            machine_code[i].r_type.funct3 = SLL_FUNCT3;
-            machine_code[i].r_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].r_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].r_type.rs2 = str_register_to_uint5_t(fields[3]);
-            machine_code[i].r_type.funct7 = SLL_FUNCT7;
+            append_r_type(inst, SLL, fields);
         }
-        else if (strcmp(operation, "srl") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "srl") == 0 && num_fields == 4)
         {
-            machine_code[i].r_type.opcode = OP_OPCODE;
-            machine_code[i].r_type.funct3 = SRL_FUNCT3;
-            machine_code[i].r_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].r_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].r_type.rs2 = str_register_to_uint5_t(fields[3]);
-            machine_code[i].r_type.funct7 = SRL_FUNCT7;
+            append_r_type(inst, SRL, fields);
         }
-        else if (strcmp(operation, "sub") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "sub") == 0 && num_fields == 4)
         {
-            machine_code[i].r_type.opcode = OP_OPCODE;
-            machine_code[i].r_type.funct3 = SUB_FUNCT3;
-            machine_code[i].r_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].r_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].r_type.rs2 = str_register_to_uint5_t(fields[3]);
-            machine_code[i].r_type.funct7 = SUB_FUNCT7;
+            append_r_type(inst, SUB, fields);
         }
-        else if (strcmp(operation, "sra") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "sra") == 0 && num_fields == 4)
         {
-            machine_code[i].r_type.opcode = OP_OPCODE;
-            machine_code[i].r_type.funct3 = SRA_FUNCT3;
-            machine_code[i].r_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].r_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].r_type.rs2 = str_register_to_uint5_t(fields[3]);
-            machine_code[i].r_type.funct7 = SRA_FUNCT7;
+            append_r_type(inst, SRA, fields);
         }
-
-        // Unconditional jumps
-        else if (strcmp(operation, "jal") == 0 && num_fields == 3)
+        else if (strcmp(opcode, "jal") == 0 && num_fields == 3)
         {
-            machine_code[i].u_type.opcode = JAL_OPCODE;
-            machine_code[i].u_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].u_type.imm = str_imm_to_intn_t(fields[2], 20);
+            append_u_type(inst, JAL, fields);
         }
-        else if (strcmp(operation, "jalr") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "jalr") == 0 && num_fields == 4)
         {
-            machine_code[i].i_type.opcode = JALR_OPCODE;
-            machine_code[i].i_type.funct3 = JALR_FUNCT3;
-            machine_code[i].i_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].i_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].i_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_i_type(inst, JALR, fields);
         }
-
-        // Conditional branches
-        else if (strcmp(operation, "beq") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "beq") == 0 && num_fields == 4)
         {
-            machine_code[i].s_type.opcode = BRANCH_OPCODE;
-            machine_code[i].s_type.funct3 = BEQ_FUNCT3;
-            machine_code[i].s_type.rs1 = str_register_to_uint5_t(fields[1]);
-            machine_code[i].s_type.rs2 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].s_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_s_type(inst, BEQ, fields);
         }
-        else if (strcmp(operation, "bne") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "bne") == 0 && num_fields == 4)
         {
-            machine_code[i].s_type.opcode = BRANCH_OPCODE;
-            machine_code[i].s_type.funct3 = BNE_FUNCT3;
-            machine_code[i].s_type.rs1 = str_register_to_uint5_t(fields[1]);
-            machine_code[i].s_type.rs2 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].s_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_s_type(inst, BNE, fields);
         }
-        else if (strcmp(operation, "blt") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "blt") == 0 && num_fields == 4)
         {
-            machine_code[i].s_type.opcode = BRANCH_OPCODE;
-            machine_code[i].s_type.funct3 = BLT_FUNCT3;
-            machine_code[i].s_type.rs1 = str_register_to_uint5_t(fields[1]);
-            machine_code[i].s_type.rs2 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].s_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_s_type(inst, BLT, fields);
         }
-        else if (strcmp(operation, "bltu") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "bltu") == 0 && num_fields == 4)
         {
-            machine_code[i].s_type.opcode = BRANCH_OPCODE;
-            machine_code[i].s_type.funct3 = BLTU_FUNCT3;
-            machine_code[i].s_type.rs1 = str_register_to_uint5_t(fields[1]);
-            machine_code[i].s_type.rs2 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].s_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_s_type(inst, BLTU, fields);
         }
-        else if (strcmp(operation, "bge") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "bge") == 0 && num_fields == 4)
         {
-            machine_code[i].s_type.opcode = BRANCH_OPCODE;
-            machine_code[i].s_type.funct3 = BGE_FUNCT3;
-            machine_code[i].s_type.rs1 = str_register_to_uint5_t(fields[1]);
-            machine_code[i].s_type.rs2 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].s_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_s_type(inst, BGE, fields);
         }
-        else if (strcmp(operation, "bgeu") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "bgeu") == 0 && num_fields == 4)
         {
-            machine_code[i].s_type.opcode = BRANCH_OPCODE;
-            machine_code[i].s_type.funct3 = BGEU_FUNCT3;
-            machine_code[i].s_type.rs1 = str_register_to_uint5_t(fields[1]);
-            machine_code[i].s_type.rs2 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].s_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_s_type(inst, BGEU, fields);
         }
-
-        // Load and store
-        else if (strcmp(operation, "lw") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "lw") == 0 && num_fields == 4)
         {
-            machine_code[i].i_type.opcode = LOAD_OPCODE;
-            machine_code[i].i_type.funct3 = LW_FUNCT3;
-            machine_code[i].i_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].i_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].i_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_i_type(inst, LW, fields);
         }
-        else if (strcmp(operation, "lh") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "lh") == 0 && num_fields == 4)
         {
-            machine_code[i].i_type.opcode = LOAD_OPCODE;
-            machine_code[i].i_type.funct3 = LH_FUNCT3;
-            machine_code[i].i_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].i_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].i_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_i_type(inst, LH, fields);
         }
-        else if (strcmp(operation, "lhu") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "lhu") == 0 && num_fields == 4)
         {
-            machine_code[i].i_type.opcode = LOAD_OPCODE;
-            machine_code[i].i_type.funct3 = LHU_FUNCT3;
-            machine_code[i].i_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].i_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].i_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_i_type(inst, LHU, fields);
         }
-        else if (strcmp(operation, "lb") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "lb") == 0 && num_fields == 4)
         {
-            machine_code[i].i_type.opcode = LOAD_OPCODE;
-            machine_code[i].i_type.funct3 = LB_FUNCT3;
-            machine_code[i].i_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].i_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].i_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_i_type(inst, LB, fields);
         }
-        else if (strcmp(operation, "lbu") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "lbu") == 0 && num_fields == 4)
         {
-            machine_code[i].i_type.opcode = LOAD_OPCODE;
-            machine_code[i].i_type.funct3 = LBU_FUNCT3;
-            machine_code[i].i_type.rd = str_register_to_uint5_t(fields[1]);
-            machine_code[i].i_type.rs1 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].i_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_i_type(inst, LBU, fields);
         }
-        else if (strcmp(operation, "sw") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "sw") == 0 && num_fields == 4)
         {
-            machine_code[i].s_type.opcode = STORE_OPCODE;
-            machine_code[i].s_type.funct3 = SW_FUNCT3;
-            machine_code[i].s_type.rs1 = str_register_to_uint5_t(fields[1]);
-            machine_code[i].s_type.rs2 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].s_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_s_type(inst, SW, fields);
         }
-        else if (strcmp(operation, "sh") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "sh") == 0 && num_fields == 4)
         {
-            machine_code[i].s_type.opcode = STORE_OPCODE;
-            machine_code[i].s_type.funct3 = SH_FUNCT3;
-            machine_code[i].s_type.rs1 = str_register_to_uint5_t(fields[1]);
-            machine_code[i].s_type.rs2 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].s_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_s_type(inst, SH, fields);
         }
-        else if (strcmp(operation, "sb") == 0 && num_fields == 4)
+        else if (strcmp(opcode, "sb") == 0 && num_fields == 4)
         {
-            machine_code[i].s_type.opcode = STORE_OPCODE;
-            machine_code[i].s_type.funct3 = SB_FUNCT3;
-            machine_code[i].s_type.rs1 = str_register_to_uint5_t(fields[1]);
-            machine_code[i].s_type.rs2 = str_register_to_uint5_t(fields[2]);
-            machine_code[i].s_type.imm = str_imm_to_intn_t(fields[3], 12);
+            append_s_type(inst, SB, fields);
         }
         else
         {
-            perror("Error: Invalid operation or number of fields.\n");
+            perror("Error: Invalid opcode or number of fields.\n");
             exit(EXIT_FAILURE);
         }
 
@@ -511,7 +397,7 @@ void word_lists_to_machine_code(node *head, rv32i_instruction *machine_code)
     }
 }
 
-void write_machine_code_to_file(char *filename, rv32i_instruction *machine_code, uint32_t num_instructions)
+void write_machine_code_to_file(char *filename, rv32i_t *machine_code, uint32_t num_insts)
 {
     FILE *fp = fopen(filename, "wb");
     if (fp == NULL)
@@ -520,9 +406,9 @@ void write_machine_code_to_file(char *filename, rv32i_instruction *machine_code,
         exit(EXIT_FAILURE);
     }
 
-    for (uint32_t i = 0; i < num_instructions; i++)
+    for (uint32_t i = 0; i < num_insts; i++)
     {
-        fwrite(&machine_code[i], sizeof(rv32i_instruction), 1, fp);
+        fwrite(&machine_code[i], sizeof(rv32i_t), 1, fp);
     }
 
     fclose(fp);
@@ -539,10 +425,10 @@ int main(int argc, char *argv[])
     node *head = asm_to_lines_list(argv[1]);
     lines_list_to_word_lists(head);
 
-    uint32_t num_instructions = get_num_instructions(head);
-    rv32i_instruction machine_code[num_instructions];
+    uint32_t num_insts = get_num_insts(head);
+    rv32i_t machine_code[num_insts];
     word_lists_to_machine_code(head, machine_code);
-    write_machine_code_to_file(argv[2], machine_code, num_instructions);
+    write_machine_code_to_file(argv[2], machine_code, num_insts);
 
     return 0;
 }

@@ -1,11 +1,12 @@
-addi x0 x0 -2048
-addi x0 x0 2047
+addi x1 x2 -2048
+addi x3 x4 2047
 
 slti x0 x0 -2048
 slti x0 x0 2047
 
 sltiu x0 x0 0
-sltiu x0 x0 4095
+sltiu x0 x0 2047
+sltiu x0 x0 4294965248
 
 andi x0 x0 -2048
 andi x0 x0 2047
@@ -25,11 +26,11 @@ srli x0 x0 31
 srai x0 x0 0
 srai x0 x0 31
 
-lui x0 0
-lui x0 1048575
+lui x0 -524288
+lui x0 524287
 
-lui x0 0
-lui x0 1048575
+auipc x0 -524288
+auipc x0 524287
 
 
 add x0 x0 x0
