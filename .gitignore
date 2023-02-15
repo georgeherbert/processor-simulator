@@ -54,9 +54,11 @@ dkms.conf
 # Compiled assembler and processor
 assembler
 simple_processor
+sim/cpu
 
 # Compiling assembly to machine code
 **/*.o
+**/*.bin
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
