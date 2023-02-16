@@ -1,16 +1,24 @@
-#include <stdint.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include "decode.h"
+#include "memory.h"
 
-struct decode_unit decode_init(struct memory *memory, uint32_t *reg_inst, uint32_t *reg_rs1, uint32_t *reg_rs2, uint32_t *reg_imm)
+struct decode_unit *decode_init(struct memory *memory, uint32_t *reg_inst, uint32_t *reg_rs1, uint32_t *reg_rs2, uint32_t *reg_imm)
 {
-    struct decode_unit decode_unit = {
-        .memory = memory,
-        .reg_inst = reg_inst,
-        .reg_rs1 = reg_rs1,
-        .reg_rs2 = reg_rs2,
-        .reg_imm = reg_imm,
-    };
+    struct decode_unit *decode_unit = malloc(sizeof(struct decode_unit));
+    if (decode_unit == NULL)
+    {
+        fprintf(stderr, "Error: Could not allocate memory for decode unit");
+        exit(EXIT_FAILURE);
+    }
+
+    decode_unit->memory = memory;
+    decode_unit->reg_inst = reg_inst;
+    decode_unit->reg_rs1 = reg_rs1;
+    decode_unit->reg_rs2 = reg_rs2;
+    decode_unit->reg_imm = reg_imm;
+
     return decode_unit;
 }
 
@@ -108,6 +116,11 @@ void decode_step(struct decode_unit *decode_unit)
 {
     uint32_t inst = *decode_unit->reg_inst;
     uint32_t opcode = get_opcode(inst);
-    
+
     printf("inst: %08x, opcode: %08x\n", inst, opcode);
+}
+
+void decode_destroy(struct decode_unit *decode_unit)
+{
+    free(decode_unit);
 }

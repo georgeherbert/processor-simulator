@@ -1,12 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include "memory.h"
-
-#define MEMORY_SIZE 1024 * 1024 * 32 // 32MiB
 
 uint8_t memory_load_byte(struct memory *memory, uint32_t address)
 {
-    return memory->bytes[address];
+    uint8_t byte = memory->bytes[address];
+    return byte;
 }
 
 uint16_t memory_load_half(struct memory *memory, uint32_t address)
@@ -42,24 +42,23 @@ void memory_store_word(struct memory *memory, uint32_t address, uint32_t value)
     memory_store_half(memory, address + 2, value >> 16);
 }
 
-struct memory memory_init(char *file_name)
+struct memory *memory_init(char *file_name)
 {
     FILE *fp = fopen(file_name, "rb");
     if (fp == NULL)
     {
-        fprintf(stderr, "Error opening memory file.\n");
+        fprintf(stderr, "Error: Could not open memory file %s.\n", file_name);
         exit(EXIT_FAILURE);
     }
 
-    struct memory memory;
-    memory.bytes = calloc(MEMORY_SIZE, sizeof(uint8_t));
-    if (memory.bytes == NULL)
+    struct memory *memory = malloc(sizeof(struct memory));
+    if (memory == NULL)
     {
-        fprintf(stderr, "Error allocating memory.\n");
+        fprintf(stderr, "Error: Could not allocate memory for memory.\n");
         exit(EXIT_FAILURE);
     }
 
-    size_t bytes_read = fread(memory.bytes, 1, MEMORY_SIZE, fp);
+    size_t bytes_read = fread(memory->bytes, 1, MEMORY_SIZE, fp);
     if (bytes_read == 0)
     {
         fprintf(stderr, "Error reading from memory file.\n");
@@ -73,5 +72,5 @@ struct memory memory_init(char *file_name)
 
 void memory_destroy(struct memory *memory)
 {
-    free(memory->bytes);
+    free(memory);
 }

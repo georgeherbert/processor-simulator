@@ -11,7 +11,8 @@ struct fetch_unit
     uint32_t *reg_inst;    // Pointer to instruction register
 };
 
-struct fetch_unit fetch_init(struct memory *memory, uint32_t *reg_pc, uint32_t *reg_npc, uint32_t *reg_inst); // Initialise fetch unit
-void fetch_step(struct fetch_unit *fetch_unit);                                                               // Step fetch unit
+struct fetch_unit *fetch_init(struct memory *memory, uint32_t *reg_pc, uint32_t *reg_npc, uint32_t *reg_inst); // Initialise fetch unit
+void fetch_step(struct fetch_unit *fetch_unit);                                                                // Step fetch unit
+void fetch_destroy(struct fetch_unit *fetch_unit);                                                             // Free fetch unit
 
 #endif // FETCH_UNIT_H
