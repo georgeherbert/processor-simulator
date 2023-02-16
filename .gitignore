@@ -54,7 +54,7 @@ dkms.conf
 # Compiled assembler and processor
 assembler
 simple_processor
-sim/cpu
+src/cpu
 
 # Compiling assembly to machine code
 **/*.o
