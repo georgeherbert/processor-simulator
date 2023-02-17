@@ -1,59 +1,71 @@
 #ifndef CONTROL_H
 #define CONTROL_H
 
-enum src_a
+enum ctrl_pc_src
 {
-    SRC_A_RS1,
-    SRC_A_PC,
-    SRC_A_ZERO
+    CTRL_PC_SRC_NPC,
+    CTRL_PC_SRC_ALU_OUT
 };
 
-enum src_b
+enum ctrl_src_a
 {
-    SRC_B_RS2,
-    SRC_B_IMM,
+    CTRL_SRC_A_RS1,
+    CTRL_SRC_A_PC,
+    CTRL_SRC_A_ZERO
 };
 
-enum alu_op
+enum ctrl_src_b
 {
-    ALU_OP_ADD,
-    ALU_OP_ADD_MOD_2,
-    ALU_OP_SUB,
-    ALU_OP_SLL,
-    ALU_OP_SLT,
-    ALU_OP_SLTU,
-    ALU_OP_XOR,
-    ALU_OP_SRL,
-    ALU_OP_SRA,
-    ALU_OP_OR,
-    ALU_OP_AND,
+    CTRL_SRC_B_RS2,
+    CTRL_SRC_B_IMM,
 };
 
-enum alu_cmp
+enum ctrl_alu_op
 {
-    ALU_CMP_NONE,
-    ALU_CMP_UNCONDITIONAL,
-    ALU_CMP_EQ,
-    ALU_CMP_NE,
-    ALU_CMP_LT,
-    ALU_CMP_LTU,
-    ALU_CMP_GE,
-    ALU_CMP_GEU,
+    CTRL_ALU_OP_ADD,
+    CTRL_ALU_OP_ADD_CLEAR_BIT_0,
+    CTRL_ALU_OP_SUB,
+    CTRL_ALU_OP_SLL,
+    CTRL_ALU_OP_SLT,
+    CTRL_ALU_OP_SLTU,
+    CTRL_ALU_OP_XOR,
+    CTRL_ALU_OP_SRL,
+    CTRL_ALU_OP_SRA,
+    CTRL_ALU_OP_OR,
+    CTRL_ALU_OP_AND,
 };
 
-enum mem_op
+enum ctrl_cmp
 {
-    MEM_OP_NONE,
-    MEM_OP_LOAD,
-    MEM_OP_STORE,
+    CTRL_CMP_NONE,
+    CTRL_CMP_UNCONDITIONAL,
+    CTRL_CMP_EQ,
+    CTRL_CMP_NE,
+    CTRL_CMP_LT,
+    CTRL_CMP_LTU,
+    CTRL_CMP_GE,
+    CTRL_CMP_GEU,
 };
 
-enum wb_op
+enum ctrl_mem
 {
-    WB_OP_NONE,
-    WB_OP_ALU,
-    WB_OP_ALU_PLUS_4,
-    WB_OP_MEM,
+    CTRL_MEM_NONE,
+    CTRL_MEM_LOAD_WORD,
+    CTRL_MEM_LOAD_HALF,
+    CTRL_MEM_LOAD_HALF_UNSIGNED,
+    CTRL_MEM_LOAD_BYTE,
+    CTRL_MEM_LOAD_BYTE_UNSIGNED,
+    CTRL_MEM_STORE_WORD,
+    CTRL_MEM_STORE_HALF,
+    CTRL_MEM_STORE_BYTE,
+};
+
+enum ctrl_wb
+{
+    CTRL_WB_NONE,
+    CTRL_WB_ALU_OUT,
+    CTRL_WB_MDR,
+    CTRL_WB_NPC
 };
 
 #endif // CONTROL_H

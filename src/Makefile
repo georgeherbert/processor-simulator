@@ -2,7 +2,7 @@
 CFLAGS = -Wall -Wextra -pedantic -std=c11
 
 # Source files
-SRCS = cpu.c memory.c fetch.c decode.c execute.c
+SRCS = cpu.c main_memory.c fetch.c decode.c execute.c memory.c writeback.c
 
 # Object files
 OBJS = $(SRCS:.c=.o)

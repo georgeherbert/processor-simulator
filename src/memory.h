@@ -2,21 +2,25 @@
 #define MEMORY_H
 
 #include <stdint.h>
+#include "main_memory.h"
+#include "control.h"
 
-#define MEMORY_SIZE 1024 * 1024 * 32 // 32MiB
-
-struct memory
+struct memory_unit
 {
-    uint8_t bytes[MEMORY_SIZE]; // Bytes in memory
+    struct main_memory *mm;  // Pointer to main memory
+    enum ctrl_mem *ctrl_mem; // Pointer to control signal for memory access type
+    uint32_t *reg_alu_out;   // Pointer to ALU operation output register
+    uint32_t *reg_rs2_val;   // Pointer to rs2 value register
+    uint32_t *reg_mdr;       // Pointer to Memory data register
 };
 
-uint8_t memory_load_byte(struct memory *memory, uint32_t addres);               // Load a byte from mem at the given address
-uint16_t memory_load_half(struct memory *memory, uint32_t addres);              // Load a half word from memory at the given address
-uint32_t memory_load_word(struct memory *memory, uint32_t addres);              // Load a word from memory at the given address
-void memory_store_byte(struct memory *memory, uint32_t addres, uint8_t value);  // Store a byte in memory at the given address
-void memory_store_half(struct memory *memory, uint32_t addres, uint16_t value); // Store a half word in memory at the given address
-void memory_store_word(struct memory *memory, uint32_t addres, uint32_t value); // Store a word in memory at the given address
-struct memory *memory_init(char *file_name);                                    // Initialise memory from a file
-void memory_destroy(struct memory *memory);                                     // Free memory
+struct memory_unit *memory_init(
+    struct main_memory *mm,
+    enum ctrl_mem *ctrl_mem,
+    uint32_t *reg_alu_out,
+    uint32_t *reg_rs2_val,
+    uint32_t *reg_mdr);                            // Initialise memory unit
+void memory_step(struct memory_unit *memory_unit); // Step memory unit
+void memory_destroy(struct memory_unit *memory_unit);
 
 #endif // MEMORY_H

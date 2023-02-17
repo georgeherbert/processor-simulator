@@ -2,75 +2,64 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "memory.h"
+#include "main_memory.h"
 
-uint8_t memory_load_byte(struct memory *memory, uint32_t address)
+struct memory_unit *memory_init(struct main_memory *mm, enum ctrl_mem *ctrl_mem, uint32_t *reg_alu_out, uint32_t *reg_rs2_val, uint32_t *reg_mdr)
 {
-    uint8_t byte = memory->bytes[address];
-    return byte;
-}
-
-uint16_t memory_load_half(struct memory *memory, uint32_t address)
-{
-    uint16_t half = 0;
-    half |= memory_load_byte(memory, address);
-    half |= memory_load_byte(memory, address + 1) << 8;
-    return half;
-}
-
-uint32_t memory_load_word(struct memory *memory, uint32_t address)
-{
-    uint32_t word = 0;
-    word |= memory_load_half(memory, address);
-    word |= memory_load_half(memory, address + 2) << 16;
-    return word;
-}
-
-void memory_store_byte(struct memory *memory, uint32_t address, uint8_t value)
-{
-    memory->bytes[address] = value;
-}
-
-void memory_store_half(struct memory *memory, uint32_t address, uint16_t value)
-{
-    memory_store_byte(memory, address, value & 0xFF);
-    memory_store_byte(memory, address + 1, value >> 8);
-}
-
-void memory_store_word(struct memory *memory, uint32_t address, uint32_t value)
-{
-    memory_store_half(memory, address, value & 0xFFFF);
-    memory_store_half(memory, address + 2, value >> 16);
-}
-
-struct memory *memory_init(char *file_name)
-{
-    FILE *fp = fopen(file_name, "rb");
-    if (fp == NULL)
+    struct memory_unit *memory_unit = malloc(sizeof(struct memory_unit));
+    if (memory_unit == NULL)
     {
-        fprintf(stderr, "Error: Could not open memory file %s.\n", file_name);
+        fprintf(stderr, "Error: Could not allocate memory for memory unit\n");
         exit(EXIT_FAILURE);
     }
 
-    struct memory *memory = malloc(sizeof(struct memory));
-    if (memory == NULL)
-    {
-        fprintf(stderr, "Error: Could not allocate memory for memory.\n");
-        exit(EXIT_FAILURE);
-    }
+    memory_unit->mm = mm;
+    memory_unit->ctrl_mem = ctrl_mem;
+    memory_unit->reg_alu_out = reg_alu_out;
+    memory_unit->reg_rs2_val = reg_rs2_val;
+    memory_unit->reg_mdr = reg_mdr;
 
-    size_t bytes_read = fread(memory->bytes, 1, MEMORY_SIZE, fp);
-    if (bytes_read == 0)
-    {
-        fprintf(stderr, "Error reading from memory file.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    printf("memory initialised with %zu bytes from %s.\n", bytes_read, file_name);
-
-    return memory;
+    return memory_unit;
 }
 
-void memory_destroy(struct memory *memory)
+void memory_step(struct memory_unit *memory_unit)
 {
-    free(memory);
+    switch (*memory_unit->ctrl_mem)
+    {
+    case CTRL_MEM_NONE:
+        break;
+    case CTRL_MEM_LOAD_WORD:
+        *memory_unit->reg_mdr = main_memory_load_word(memory_unit->mm, *memory_unit->reg_alu_out);
+        break;
+    case CTRL_MEM_LOAD_HALF:
+        *memory_unit->reg_mdr = (int32_t)(int16_t)main_memory_load_half(memory_unit->mm, *memory_unit->reg_alu_out);
+        break;
+    case CTRL_MEM_LOAD_HALF_UNSIGNED:
+        *memory_unit->reg_mdr = main_memory_load_half(memory_unit->mm, *memory_unit->reg_alu_out);
+        break;
+    case CTRL_MEM_LOAD_BYTE:
+        *memory_unit->reg_mdr = (int32_t)(int8_t)main_memory_load_byte(memory_unit->mm, *memory_unit->reg_alu_out);
+        break;
+    case CTRL_MEM_LOAD_BYTE_UNSIGNED:
+        *memory_unit->reg_mdr = main_memory_load_byte(memory_unit->mm, *memory_unit->reg_alu_out);
+        break;
+    case CTRL_MEM_STORE_WORD:
+        printf("Storing word %d to address %d\n", *memory_unit->reg_rs2_val, *memory_unit->reg_alu_out);
+        main_memory_store_word(memory_unit->mm, *memory_unit->reg_alu_out, *memory_unit->reg_rs2_val);
+        break;
+    case CTRL_MEM_STORE_HALF:
+        main_memory_store_half(memory_unit->mm, *memory_unit->reg_alu_out, *memory_unit->reg_rs2_val);
+        break;
+    case CTRL_MEM_STORE_BYTE:
+        main_memory_store_byte(memory_unit->mm, *memory_unit->reg_alu_out, *memory_unit->reg_rs2_val);
+        break;
+    default:
+        fprintf(stderr, "Error: Invalid memory control signal\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void memory_destroy(struct memory_unit *memory_unit)
+{
+    free(memory_unit);
 }
