@@ -44,7 +44,6 @@ void memory_step(struct memory_unit *memory_unit)
         *memory_unit->reg_mdr = main_memory_load_byte(memory_unit->mm, *memory_unit->reg_alu_out);
         break;
     case CTRL_MEM_STORE_WORD:
-        printf("Storing word %d to address %d\n", *memory_unit->reg_rs2_val, *memory_unit->reg_alu_out);
         main_memory_store_word(memory_unit->mm, *memory_unit->reg_alu_out, *memory_unit->reg_rs2_val);
         break;
     case CTRL_MEM_STORE_HALF:

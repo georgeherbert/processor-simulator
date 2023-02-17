@@ -1,12 +1,14 @@
-char factorial(char n);
-char multiply(char a, char b);
+#include <stdint.h>
 
-char _start()
+uint32_t factorial(uint32_t n);
+uint32_t multiply(uint32_t a, uint32_t b);
+
+uint32_t _start()
 {
-    return factorial(3);
+    return factorial(9);
 }
 
-char factorial(char n)
+uint32_t factorial(uint32_t n)
 {
     if (n == 0)
     {
@@ -18,7 +20,7 @@ char factorial(char n)
     }
 }
 
-char multiply(char a, char b)
+uint32_t multiply(uint32_t a, uint32_t b)
 {
     int result = 0;
     for (int i = 0; i < b; i++)
