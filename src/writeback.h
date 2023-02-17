@@ -20,8 +20,8 @@ struct writeback_unit *writeback_init(
     uint8_t *reg_rd_addr,
     uint32_t *reg_alu_out,
     uint32_t *reg_mdr,
-    uint32_t *reg_npc);
-void writeback_step(struct writeback_unit *wb);
-void writeback_destroy(struct writeback_unit *wb);
+    uint32_t *reg_npc);                            // Initialise writeback unit
+void writeback_step(struct writeback_unit *wb);    // Step writeback unit
+void writeback_destroy(struct writeback_unit *wb); // Free writeback unit
 
 #endif // WRITEBACK_H

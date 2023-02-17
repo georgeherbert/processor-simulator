@@ -19,8 +19,8 @@ struct memory_unit *memory_init(
     enum ctrl_mem *ctrl_mem,
     uint32_t *reg_alu_out,
     uint32_t *reg_rs2_val,
-    uint32_t *reg_mdr);                            // Initialise memory unit
-void memory_step(struct memory_unit *memory_unit); // Step memory unit
-void memory_destroy(struct memory_unit *memory_unit);
+    uint32_t *reg_mdr);                               // Initialise memory unit
+void memory_step(struct memory_unit *memory_unit);    // Step memory unit
+void memory_destroy(struct memory_unit *memory_unit); // Free memory unit
 
 #endif // MEMORY_H

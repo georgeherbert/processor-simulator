@@ -29,8 +29,8 @@ struct execute_unit *execute_init(
     enum ctrl_alu_op *ctrl_alu_op,
     enum ctrl_cmp *ctrl_cmp,
     uint32_t *reg_alu_out,
-    enum ctrl_pc_src *ctrl_pc_src);                   // Initialise execute unit
-void execute_step(struct execute_unit *execute_unit); // Step execute unit
-void execute_destroy(struct execute_unit *execute_unit);
+    enum ctrl_pc_src *ctrl_pc_src);                      // Initialise execute unit
+void execute_step(struct execute_unit *execute_unit);    // Step execute unit
+void execute_destroy(struct execute_unit *execute_unit); // Free execute unit
 
 #endif // EXECUTE_H

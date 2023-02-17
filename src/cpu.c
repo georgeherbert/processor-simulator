@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdbool.h>
 #include "cpu.h"
 #include "main_memory.h"
 #include "fetch.h"
@@ -8,6 +7,7 @@
 #include "execute.h"
 #include "memory.h"
 #include "writeback.h"
+#include "control.h"
 
 struct cpu *cpu_init(char *file_name)
 {
@@ -86,7 +86,7 @@ void print_regs(uint32_t *regs)
 {
     for (int i = 0; i < NUM_REGS; i++)
     {
-        printf("x%d: %d, ", i, regs[i]);
+        printf("x%d=%d ", i, regs[i]);
     }
     printf("\n");
 }
@@ -112,24 +112,17 @@ int main(int argc, char *argv[])
     }
 
     struct cpu *cpu = cpu_init(argv[1]);
-
-    bool first_step = true;
-    while (true) // TODO: Fix this
+    
+    // Cycle until PC will be 0
+    while (!(cpu->ctrl_pc_src == CTRL_PC_SRC_ALU_OUT && cpu->reg_alu_out == 0))
     {
         fetch_step(cpu->fetch_unit);
-        if (cpu->reg_pc == 0 && !first_step)
-        {
-            break;
-        }
         decode_step(cpu->decode_unit);
         execute_step(cpu->execute_unit);
         memory_step(cpu->memory_unit);
         writeback_step(cpu->writeback_unit);
 
-        // printf("PC: %d\n", cpu->reg_pc);
         // print_regs(cpu->regs);
-
-        first_step = false;
     }
 
     print_regs(cpu->regs);
