@@ -82,6 +82,15 @@ struct cpu *cpu_init(char *file_name)
     return cpu;
 }
 
+void print_main_memory(struct main_memory *mm)
+{
+    for (int i = MEMORY_SIZE - 400; i < MEMORY_SIZE; i += 4)
+    {
+        printf("%d ", main_memory_load_word(mm, i));
+    }
+    printf("\n");
+}
+
 void print_regs(uint32_t *regs)
 {
     for (int i = 0; i < NUM_REGS; i++)
@@ -125,6 +134,7 @@ int main(int argc, char *argv[])
         // print_regs(cpu->regs);
     }
 
+    print_main_memory(cpu->mm);
     print_regs(cpu->regs);
 
     cpu_destroy(cpu);
