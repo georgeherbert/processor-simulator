@@ -4,7 +4,7 @@ uint32_t divide(uint32_t dividend, uint32_t divisor);
 
 uint32_t _start()
 {
-    return divide(170520010, 10);
+    return divide(4294967295, 100000000);
 }
 
 uint32_t divide(uint32_t dividend, uint32_t divisor)
@@ -17,7 +17,7 @@ uint32_t divide(uint32_t dividend, uint32_t divisor)
     uint32_t quotient = 0;
     uint32_t remainder = 0;
 
-    for (int i = 31; i >= 0; i--)
+    for (int32_t i = 31; i >= 0; i--)
     {
         remainder <<= 1;
         remainder |= (dividend >> i) & 1;

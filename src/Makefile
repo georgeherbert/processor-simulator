@@ -1,5 +1,5 @@
 # Compiler flags
-CFLAGS = -Wall -Wextra -pedantic -std=c11
+CFLAGS = -Wall -Wextra -pedantic -O3 -std=c11
 
 # Source files
 SRCS = cpu.c main_memory.c fetch.c decode.c execute.c memory.c writeback.c

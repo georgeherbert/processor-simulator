@@ -3,14 +3,11 @@
 int32_t bubbleSort(int32_t arr[], int32_t n);
 
 int32_t _start() {
-    int32_t arr[7];
-    arr[0] = 64;
-    arr[1] = 34;
-    arr[2] = 25;
-    arr[3] = 12;
-    arr[4] = 22;
-    arr[5] = 11;
-    arr[6] = 90;
+    int32_t arr[1000];
+    // Create an array of length 100 descending
+    for (int32_t i = 0; i < 1000; i++) {
+        arr[i] = 1000 - i;
+    }
     int32_t n = sizeof(arr) / sizeof(arr[0]);
     bubbleSort(arr, n);
     return 0;

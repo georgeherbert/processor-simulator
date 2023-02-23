@@ -12,9 +12,9 @@ _start:
 	sw	ra,12(sp)
 	sw	s0,8(sp)
 	addi	s0,sp,16
-	li	a1,10
-	li	a5,170520576
-	addi	a0,a5,-566
+	li	a5,99999744
+	addi	a1,a5,256
+	li	a0,-1
 	call	divide
 	mv	a5,a0
 	mv	a0,a5

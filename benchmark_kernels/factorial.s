@@ -12,7 +12,7 @@ _start:
 	sw	ra,12(sp)
 	sw	s0,8(sp)
 	addi	s0,sp,16
-	li	a0,9
+	li	a0,12
 	call	factorial
 	mv	a5,a0
 	mv	a0,a5
@@ -72,9 +72,9 @@ multiply:
 	addi	a5,a5,1
 	sw	a5,-24(s0)
 .L7:
-	lw	a5,-24(s0)
-	lw	a4,-40(s0)
-	bgtu	a4,a5,.L8
+	lw	a4,-24(s0)
+	lw	a5,-40(s0)
+	bltu	a4,a5,.L8
 	lw	a5,-20(s0)
 	mv	a0,a5
 	lw	s0,44(sp)

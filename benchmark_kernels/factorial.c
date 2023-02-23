@@ -5,7 +5,7 @@ uint32_t multiply(uint32_t a, uint32_t b);
 
 uint32_t _start()
 {
-    return factorial(9);
+    return factorial(12);
 }
 
 uint32_t factorial(uint32_t n)
@@ -22,8 +22,8 @@ uint32_t factorial(uint32_t n)
 
 uint32_t multiply(uint32_t a, uint32_t b)
 {
-    int result = 0;
-    for (int i = 0; i < b; i++)
+    uint32_t result = 0;
+    for (uint32_t i = 0; i < b; i++)
     {
         result += a;
     }

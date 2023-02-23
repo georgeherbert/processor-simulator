@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include "cpu.h"
 #include "main_memory.h"
 #include "fetch.h"
@@ -8,6 +10,8 @@
 #include "memory.h"
 #include "writeback.h"
 #include "control.h"
+
+#define NUM_WORDS_OUTPUT 2048
 
 struct cpu *cpu_init(char *file_name)
 {
@@ -18,7 +22,7 @@ struct cpu *cpu_init(char *file_name)
         exit(EXIT_FAILURE);
     }
 
-    for (int i = 0; i < NUM_REGS; i++)
+    for (uint32_t i = 0; i < NUM_REGS; i++)
     {
         cpu->regs[i] = 0;
     }
@@ -84,20 +88,31 @@ struct cpu *cpu_init(char *file_name)
 
 void print_main_memory(struct main_memory *mm)
 {
-    for (int i = MEMORY_SIZE - 400; i < MEMORY_SIZE; i += 4)
+    printf("\nHighest %d words of main memory:\n", NUM_WORDS_OUTPUT);
+    uint32_t start_index = MEMORY_SIZE - NUM_WORDS_OUTPUT * 4;
+    uint32_t initial_offset = start_index % 16;
+
+    for (uint32_t i = start_index; i < MEMORY_SIZE; i += 4)
     {
-        printf("%d ", main_memory_load_word(mm, i));
+        printf("%010u: %-11d ", i, main_memory_load_word(mm, i));
+        if ((i + 4) % 16 == initial_offset)
+        {
+            printf("\n");
+        }
     }
-    printf("\n");
 }
 
 void print_regs(uint32_t *regs)
 {
+    printf("\nRegisters:\n");
     for (int i = 0; i < NUM_REGS; i++)
     {
-        printf("x%d=%d ", i, regs[i]);
+        printf("x%02d: %-11d ", i, regs[i]);
+        if ((i + 1) % 4 == 0)
+        {
+            printf("\n");
+        }
     }
-    printf("\n");
 }
 
 void cpu_destroy(struct cpu *cpu)
@@ -121,7 +136,10 @@ int main(int argc, char *argv[])
     }
 
     struct cpu *cpu = cpu_init(argv[1]);
-    
+
+    uint64_t instructions = 0;
+    uint64_t cycles = 0;
+
     // Cycle until PC will be 0
     while (!(cpu->ctrl_pc_src == CTRL_PC_SRC_ALU_OUT && cpu->reg_alu_out == 0))
     {
@@ -131,11 +149,16 @@ int main(int argc, char *argv[])
         memory_step(cpu->memory_unit);
         writeback_step(cpu->writeback_unit);
 
+        instructions++;
+        cycles += 5;
         // print_regs(cpu->regs);
     }
 
     print_main_memory(cpu->mm);
     print_regs(cpu->regs);
+
+    printf("\nInstructions: %" PRIu64 "\n", instructions);
+    printf("Cycles: %" PRIu64 "\n", cycles);
 
     cpu_destroy(cpu);
     return 0;

@@ -8,35 +8,46 @@
 	.globl	_start
 	.type	_start, @function
 _start:
-	addi	sp,sp,-48
-	sw	ra,44(sp)
-	sw	s0,40(sp)
-	addi	s0,sp,48
-	li	a5,64
-	sw	a5,-48(s0)
-	li	a5,34
-	sw	a5,-44(s0)
-	li	a5,25
-	sw	a5,-40(s0)
-	li	a5,12
-	sw	a5,-36(s0)
-	li	a5,22
-	sw	a5,-32(s0)
-	li	a5,11
-	sw	a5,-28(s0)
-	li	a5,90
-	sw	a5,-24(s0)
-	li	a5,7
+	addi	sp,sp,-2032
+	sw	ra,2028(sp)
+	sw	s0,2024(sp)
+	addi	s0,sp,2032
+	addi	sp,sp,-2000
+	sw	zero,-20(s0)
+	j	.L2
+.L3:
+	li	a4,1000
+	lw	a5,-20(s0)
+	sub	a4,a4,a5
+	li	a5,-4096
+	addi	a5,a5,-16
+	add	a3,a5,s0
+	lw	a5,-20(s0)
+	slli	a5,a5,2
+	add	a5,a3,a5
+	sw	a4,88(a5)
+	lw	a5,-20(s0)
+	addi	a5,a5,1
 	sw	a5,-20(s0)
-	addi	a5,s0,-48
-	lw	a1,-20(s0)
+.L2:
+	lw	a4,-20(s0)
+	li	a5,999
+	ble	a4,a5,.L3
+	li	a5,1000
+	sw	a5,-24(s0)
+	li	a5,-4096
+	addi	a5,a5,88
+	addi	a5,a5,-16
+	add	a5,a5,s0
+	lw	a1,-24(s0)
 	mv	a0,a5
 	call	bubbleSort
 	li	a5,0
 	mv	a0,a5
-	lw	ra,44(sp)
-	lw	s0,40(sp)
-	addi	sp,sp,48
+	addi	sp,sp,2000
+	lw	ra,2028(sp)
+	lw	s0,2024(sp)
+	addi	sp,sp,2032
 	jr	ra
 	.size	_start, .-_start
 	.align	2
@@ -49,11 +60,11 @@ bubbleSort:
 	sw	a0,-36(s0)
 	sw	a1,-40(s0)
 	sw	zero,-20(s0)
-	j	.L4
-.L8:
+	j	.L6
+.L10:
 	sw	zero,-24(s0)
-	j	.L5
-.L7:
+	j	.L7
+.L9:
 	lw	a5,-24(s0)
 	slli	a5,a5,2
 	lw	a4,-36(s0)
@@ -65,7 +76,7 @@ bubbleSort:
 	lw	a3,-36(s0)
 	add	a5,a3,a5
 	lw	a5,0(a5)
-	ble	a4,a5,.L6
+	ble	a4,a5,.L8
 	lw	a5,-24(s0)
 	slli	a5,a5,2
 	lw	a4,-36(s0)
@@ -90,25 +101,25 @@ bubbleSort:
 	add	a5,a4,a5
 	lw	a4,-28(s0)
 	sw	a4,0(a5)
-.L6:
+.L8:
 	lw	a5,-24(s0)
 	addi	a5,a5,1
 	sw	a5,-24(s0)
-.L5:
+.L7:
 	lw	a4,-40(s0)
 	lw	a5,-20(s0)
 	sub	a5,a4,a5
 	addi	a5,a5,-1
 	lw	a4,-24(s0)
-	blt	a4,a5,.L7
+	blt	a4,a5,.L9
 	lw	a5,-20(s0)
 	addi	a5,a5,1
 	sw	a5,-20(s0)
-.L4:
+.L6:
 	lw	a5,-40(s0)
 	addi	a5,a5,-1
 	lw	a4,-20(s0)
-	blt	a4,a5,.L8
+	blt	a4,a5,.L10
 	nop
 	mv	a0,a5
 	lw	s0,44(sp)
