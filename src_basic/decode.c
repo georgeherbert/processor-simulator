@@ -313,7 +313,7 @@ void handle_lui(
         CTRL_MEM_NONE,
         CTRL_WB_ALU_OUT);
 
-    printf("lui x%d, %d", *reg_rd_addr, *reg_imm);
+    printf("lui x%d, %d\n", *reg_rd_addr, *reg_imm);
 }
 
 void handle_auipc(

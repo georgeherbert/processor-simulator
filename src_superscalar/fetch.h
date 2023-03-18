@@ -7,18 +7,18 @@
 
 struct fetch_unit
 {
-    struct main_memory *mm;        // Pointer to main memory
-    enum ctrl_pc_src *ctrl_pc_src; // Pointer to control signal for PC source
-    uint32_t *reg_alu_out;         // Pointer to ALU output register
-    uint32_t *reg_inst;            // Pointer to instruction register
-    uint32_t *reg_pc;              // Pointer to program counter register
-    uint32_t *reg_npc;             // Pointer to next program counter register
+    struct main_memory *mm;  // Pointer to main memory
+    enum pc_src *pc_src;     // Pointer to control signal for PC source
+    uint32_t *reg_pc_target; // Pointer to PC target register
+    uint32_t *reg_inst;      // Pointer to instruction register
+    uint32_t *reg_pc;        // Pointer to program counter register
+    uint32_t *reg_npc;       // Pointer to next program counter register
 };
 
 struct fetch_unit *fetch_init(
     struct main_memory *mm,
-    enum ctrl_pc_src *ctrl_pc_src,
-    uint32_t *reg_alu_out,
+    enum pc_src *pc_src,
+    uint32_t *reg_pc_target,
     uint32_t *reg_inst,
     uint32_t *reg_pc,
     uint32_t *reg_npc);                            // Initialise fetch unit

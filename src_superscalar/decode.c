@@ -2,22 +2,14 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "decode.h"
+#include "decoded_inst.h"
 #include "rv32i.h"
-#include "control.h"
+#include "inst_queue.h"
 
 struct decode_unit *decode_init(
-    uint32_t *regs,
     uint32_t *reg_inst,
-    uint8_t *reg_rd_addr,
-    uint32_t *reg_rs1_val,
-    uint32_t *reg_rs2_val,
-    uint32_t *reg_imm,
-    enum ctrl_src_a *ctrl_src_a,
-    enum ctrl_src_b *ctrl_src_b,
-    enum ctrl_alu_op *ctrl_alu_op,
-    enum ctrl_cmp *ctrl_cmp,
-    enum ctrl_mem *ctrl_mem,
-    enum ctrl_wb *ctrl_wb)
+    uint32_t *reg_pc,
+    struct inst_queue *inst_queue)
 {
     struct decode_unit *decode_unit = malloc(sizeof(struct decode_unit));
     if (decode_unit == NULL)
@@ -26,18 +18,9 @@ struct decode_unit *decode_init(
         exit(EXIT_FAILURE);
     }
 
-    decode_unit->regs = regs;
     decode_unit->reg_inst = reg_inst;
-    decode_unit->reg_rd_addr = reg_rd_addr;
-    decode_unit->reg_rs1_val = reg_rs1_val;
-    decode_unit->reg_rs2_val = reg_rs2_val;
-    decode_unit->reg_imm = reg_imm;
-    decode_unit->ctrl_src_a = ctrl_src_a;
-    decode_unit->ctrl_src_b = ctrl_src_b;
-    decode_unit->ctrl_alu_op = ctrl_alu_op;
-    decode_unit->ctrl_cmp = ctrl_cmp;
-    decode_unit->ctrl_mem = ctrl_mem;
-    decode_unit->ctrl_wb = ctrl_wb;
+    decode_unit->reg_pc = reg_pc;
+    decode_unit->inst_queue = inst_queue;
 
     return decode_unit;
 }
@@ -166,99 +149,79 @@ uint32_t get_imm_j(uint32_t inst)
     return imm;
 }
 
-void set_ctrl(
-    enum ctrl_src_a *ctrl_src_a,
-    enum ctrl_src_b *ctrl_src_b,
-    enum ctrl_alu_op *ctrl_alu_op,
-    enum ctrl_cmp *ctrl_cmp,
-    enum ctrl_mem *ctrl_mem,
-    enum ctrl_wb *ctrl_wb,
-    enum ctrl_src_a src_a,
-    enum ctrl_src_b src_b,
-    enum ctrl_alu_op alu_op,
-    enum ctrl_cmp cmp,
-    enum ctrl_mem mem,
-    enum ctrl_wb wb)
+void create_decoded_inst(
+    struct inst_queue *inst_queue,
+    enum op_type op_type,
+    enum op op,
+    uint8_t rd_addr,
+    uint8_t rs1_addr,
+    uint8_t rs2_addr,
+    uint32_t imm,
+    uint32_t inst_pc)
 {
-    *ctrl_src_a = src_a;
-    *ctrl_src_b = src_b;
-    *ctrl_alu_op = alu_op;
-    *ctrl_cmp = cmp;
-    *ctrl_mem = mem;
-    *ctrl_wb = wb;
+    struct decoded_inst decoded_inst = {
+        .op_type = op_type,
+        .op = op,
+        .rd_addr = rd_addr,
+        .rs1_addr = rs1_addr,
+        .rs2_addr = rs2_addr,
+        .imm = imm,
+        .inst_pc = inst_pc,
+    };
+
+    inst_queue_push(inst_queue, decoded_inst);
 }
 
-void handle_op_imm(
-    uint32_t inst,
-    uint32_t *regs,
-    uint8_t *reg_rd_addr,
-    uint32_t *reg_rs1_val,
-    uint32_t *reg_imm,
-    enum ctrl_src_a *ctrl_src_a,
-    enum ctrl_src_b *ctrl_src_b,
-    enum ctrl_alu_op *ctrl_alu_op,
-    enum ctrl_cmp *ctrl_cmp,
-    enum ctrl_mem *ctrl_mem,
-    enum ctrl_wb *ctrl_wb)
+void handle_op_imm(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
 {
-    *reg_rd_addr = get_rd_addr(inst);
+    enum op op;
+    uint8_t rd_addr = get_rd_addr(inst);
     uint8_t rs1_addr = get_rs1_addr(inst);
-    *reg_rs1_val = regs[rs1_addr];
-
     uint32_t imm = get_imm_i(inst);
-    uint32_t shamt = imm & 0x1F;
-
-    enum ctrl_alu_op alu_op;
 
     switch (get_funct3(inst))
     {
     case FUNCT3_ADDI:
-        *reg_imm = imm;
-        alu_op = CTRL_ALU_OP_ADD;
-        printf("addi x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+        op = ADDI;
+        printf("addi x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
         break;
     case FUNCT3_SLTI:
-        *reg_imm = imm;
-        alu_op = CTRL_ALU_OP_SLT;
-        printf("slti x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+        op = SLTI;
+        printf("slti x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
         break;
     case FUNCT3_SLTIU:
-        *reg_imm = imm;
-        alu_op = CTRL_ALU_OP_SLTU;
-        printf("sltiu x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+        op = SLTIU;
+        printf("sltiu x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
         break;
     case FUNCT3_XORI:
-        *reg_imm = imm;
-        alu_op = CTRL_ALU_OP_XOR;
-        printf("xori x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+        op = XORI;
+        printf("xori x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
         break;
     case FUNCT3_ORI:
-        *reg_imm = imm;
-        alu_op = CTRL_ALU_OP_OR;
-        printf("ori x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+        op = ORI;
+        printf("ori x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
         break;
     case FUNCT3_ANDI:
-        *reg_imm = imm;
-        alu_op = CTRL_ALU_OP_AND;
-        printf("andi x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+        op = ANDI;
+        printf("andi x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
         break;
     case FUNCT3_SLLI:
-        *reg_imm = shamt;
-        alu_op = CTRL_ALU_OP_SLL;
-        printf("slli x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+        op = SLLI;
+        imm &= 0x1F;
+        printf("slli x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
         break;
     case FUNCT3_SRLI_SRAI:
         switch (get_funct7(inst))
         {
         case FUNCT7_SRLI:
-            *reg_imm = shamt;
-            alu_op = CTRL_ALU_OP_SRL;
-            printf("srli x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+            op = SRLI;
+            imm &= 0x1F;
+            printf("srli x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
             break;
         case FUNCT7_SRAI:
-            *reg_imm = shamt;
-            alu_op = CTRL_ALU_OP_SRA;
-            printf("srai x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+            op = SRAI;
+            imm &= 0x1F;
+            printf("srai x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
             break;
         default:
             fprintf(stderr, "Error: Unknown funct7");
@@ -270,103 +233,60 @@ void handle_op_imm(
         exit(EXIT_FAILURE);
     }
 
-    set_ctrl(
-        ctrl_src_a,
-        ctrl_src_b,
-        ctrl_alu_op,
-        ctrl_cmp,
-        ctrl_mem,
-        ctrl_wb,
-        CTRL_SRC_A_RS1,
-        CTRL_SRC_B_IMM,
-        alu_op,
-        CTRL_CMP_NONE,
-        CTRL_MEM_NONE,
-        CTRL_WB_ALU_OUT);
+    create_decoded_inst(
+        inst_queue,
+        AL,
+        op,
+        rd_addr,
+        rs1_addr,
+        0,
+        imm,
+        inst_pc);
 }
 
-void handle_lui(
-    uint32_t inst,
-    uint8_t *reg_rd_addr,
-    uint32_t *reg_imm,
-    enum ctrl_src_a *ctrl_src_a,
-    enum ctrl_src_b *ctrl_src_b,
-    enum ctrl_alu_op *ctrl_alu_op,
-    enum ctrl_cmp *ctrl_cmp,
-    enum ctrl_mem *ctrl_mem,
-    enum ctrl_wb *ctrl_wb)
+void handle_lui(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
 {
-    *reg_rd_addr = get_rd_addr(inst);
-    *reg_imm = get_imm_u(inst);
+    uint8_t rd_addr = get_rd_addr(inst);
+    uint32_t imm = get_imm_u(inst);
 
-    set_ctrl(
-        ctrl_src_a,
-        ctrl_src_b,
-        ctrl_alu_op,
-        ctrl_cmp,
-        ctrl_mem,
-        ctrl_wb,
-        CTRL_SRC_A_ZERO,
-        CTRL_SRC_B_IMM,
-        CTRL_ALU_OP_ADD,
-        CTRL_CMP_NONE,
-        CTRL_MEM_NONE,
-        CTRL_WB_ALU_OUT);
+    create_decoded_inst(
+        inst_queue,
+        AL,
+        LUI,
+        rd_addr,
+        0,
+        0,
+        imm,
+        inst_pc);
 
-    printf("lui x%d, %d", *reg_rd_addr, *reg_imm);
+    printf("lui x%d, %d\n", rd_addr, imm);
 }
 
-void handle_auipc(
-    uint32_t inst,
-    uint8_t *reg_rd_addr,
-    uint32_t *reg_imm,
-    enum ctrl_src_a *ctrl_src_a,
-    enum ctrl_src_b *ctrl_src_b,
-    enum ctrl_alu_op *ctrl_alu_op,
-    enum ctrl_cmp *ctrl_cmp,
-    enum ctrl_mem *ctrl_mem,
-    enum ctrl_wb *ctrl_wb)
+void handle_auipc(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
 {
-    *reg_rd_addr = get_rd_addr(inst);
-    *reg_imm = get_imm_u(inst);
+    uint8_t rd_addr = get_rd_addr(inst);
+    uint32_t imm = get_imm_u(inst);
 
-    set_ctrl(
-        ctrl_src_a,
-        ctrl_src_b,
-        ctrl_alu_op,
-        ctrl_cmp,
-        ctrl_mem,
-        ctrl_wb,
-        CTRL_SRC_A_PC,
-        CTRL_SRC_B_IMM,
-        CTRL_ALU_OP_ADD,
-        CTRL_CMP_NONE,
-        CTRL_MEM_NONE,
-        CTRL_WB_ALU_OUT);
+    create_decoded_inst(
+        inst_queue,
+        AL,
+        AUIPC,
+        rd_addr,
+        0,
+        0,
+        imm,
+        inst_pc);
 
-    printf("auipc x%d, %d", *reg_rd_addr, *reg_imm);
+    printf("auipc x%d, %d", rd_addr, imm);
 }
 
-void handle_op(
-    uint32_t inst,
-    uint32_t *regs,
-    uint8_t *reg_rd_addr,
-    uint32_t *reg_rs1_val,
-    uint32_t *reg_rs2_val,
-    enum ctrl_src_a *ctrl_src_a,
-    enum ctrl_src_b *ctrl_src_b,
-    enum ctrl_alu_op *ctrl_alu_op,
-    enum ctrl_cmp *ctrl_cmp,
-    enum ctrl_mem *ctrl_mem,
-    enum ctrl_wb *ctrl_wb)
+void handle_op(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
 {
-    *reg_rd_addr = get_rd_addr(inst);
+    uint8_t rd_addr = get_rd_addr(inst);
     uint8_t rs1_addr = get_rs1_addr(inst);
     uint8_t rs2_addr = get_rs2_addr(inst);
-    *reg_rs1_val = regs[rs1_addr];
-    *reg_rs2_val = regs[rs2_addr];
 
-    enum ctrl_alu_op alu_op;
+    enum op op;
 
     switch (get_funct3(inst))
     {
@@ -374,12 +294,12 @@ void handle_op(
         switch (get_funct7(inst))
         {
         case FUNCT7_ADD:
-            alu_op = CTRL_ALU_OP_ADD;
-            printf("add x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+            op = ADD;
+            printf("add x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
             break;
         case FUNCT7_SUB:
-            alu_op = CTRL_ALU_OP_SUB;
-            printf("sub x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+            op = SUB;
+            printf("sub x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
             break;
         default:
             fprintf(stderr, "Error: Unknown funct7");
@@ -387,31 +307,31 @@ void handle_op(
         }
         break;
     case FUNCT3_SLL:
-        alu_op = CTRL_ALU_OP_SLL;
-        printf("sll x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+        op = SLL;
+        printf("sll x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
         break;
     case FUNCT3_SLT:
-        alu_op = CTRL_ALU_OP_SLT;
-        printf("slt x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+        op = SLT;
+        printf("slt x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
         break;
     case FUNCT3_SLTU:
-        alu_op = CTRL_ALU_OP_SLTU;
-        printf("sltu x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+        op = SLTU;
+        printf("sltu x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
         break;
     case FUNCT3_XOR:
-        alu_op = CTRL_ALU_OP_XOR;
-        printf("xor x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+        op = XOR;
+        printf("xor x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
         break;
     case FUNCT3_SRL_SRA:
         switch (get_funct7(inst))
         {
         case FUNCT7_SRL:
-            alu_op = CTRL_ALU_OP_SRL;
-            printf("srl x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+            op = SRL;
+            printf("srl x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
             break;
         case FUNCT7_SRA:
-            alu_op = CTRL_ALU_OP_SRA;
-            printf("sra x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+            op = SRA;
+            printf("sra x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
             break;
         default:
             fprintf(stderr, "Error: Unknown funct7");
@@ -419,409 +339,241 @@ void handle_op(
         }
         break;
     case FUNCT3_OR:
-        alu_op = CTRL_ALU_OP_OR;
-        printf("or x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+        op = OR;
+        printf("or x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
         break;
     case FUNCT3_AND:
-        alu_op = CTRL_ALU_OP_AND;
-        printf("and x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+        op = AND;
+        printf("and x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
         break;
     default:
         fprintf(stderr, "Error: Unknown funct3");
         exit(EXIT_FAILURE);
     }
 
-    set_ctrl(
-        ctrl_src_a,
-        ctrl_src_b,
-        ctrl_alu_op,
-        ctrl_cmp,
-        ctrl_mem,
-        ctrl_wb,
-        CTRL_SRC_A_RS1,
-        CTRL_SRC_B_RS2,
-        alu_op,
-        CTRL_CMP_NONE,
-        CTRL_MEM_NONE,
-        CTRL_WB_ALU_OUT);
+    create_decoded_inst(
+        inst_queue,
+        AL,
+        op,
+        rd_addr,
+        rs1_addr,
+        rs2_addr,
+        0,
+        inst_pc);
 }
 
-void handle_jal(
-    uint32_t inst,
-    uint8_t *reg_rd_addr,
-    uint32_t *reg_imm,
-    enum ctrl_src_a *ctrl_src_a,
-    enum ctrl_src_b *ctrl_src_b,
-    enum ctrl_alu_op *ctrl_alu_op,
-    enum ctrl_cmp *ctrl_cmp,
-    enum ctrl_mem *ctrl_mem,
-    enum ctrl_wb *ctrl_wb)
+void handle_jal(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
 {
-    *reg_rd_addr = get_rd_addr(inst);
-    *reg_imm = get_imm_j(inst);
+    uint8_t rd_addr = get_rd_addr(inst);
+    uint32_t imm = get_imm_j(inst);
 
-    set_ctrl(
-        ctrl_src_a,
-        ctrl_src_b,
-        ctrl_alu_op,
-        ctrl_cmp,
-        ctrl_mem,
-        ctrl_wb,
-        CTRL_SRC_A_PC,
-        CTRL_SRC_B_IMM,
-        CTRL_ALU_OP_ADD,
-        CTRL_CMP_UNCONDITIONAL,
-        CTRL_MEM_NONE,
-        CTRL_WB_NPC);
+    create_decoded_inst(
+        inst_queue,
+        BRANCH,
+        JAL,
+        rd_addr,
+        0,
+        0,
+        imm,
+        inst_pc
+    );
 
-    printf("jal x%d, %d\n", *reg_rd_addr, *reg_imm);
+    printf("jal x%d, %d\n", rd_addr, imm);
 }
 
-void handle_jalr(
-    uint32_t inst,
-    uint32_t *regs,
-    uint8_t *reg_rd_addr,
-    uint32_t *reg_rs1_val,
-    uint32_t *reg_imm,
-    enum ctrl_src_a *ctrl_src_a,
-    enum ctrl_src_b *ctrl_src_b,
-    enum ctrl_alu_op *ctrl_alu_op,
-    enum ctrl_cmp *ctrl_cmp,
-    enum ctrl_mem *ctrl_mem,
-    enum ctrl_wb *ctrl_wb)
+void handle_jalr(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
 {
-    *reg_rd_addr = get_rd_addr(inst);
+    uint8_t rd_addr = get_rd_addr(inst);
     uint8_t rs1_addr = get_rs1_addr(inst);
-    *reg_rs1_val = regs[rs1_addr];
-    *reg_imm = get_imm_i(inst);
+    uint32_t imm = get_imm_i(inst);
 
-    set_ctrl(
-        ctrl_src_a,
-        ctrl_src_b,
-        ctrl_alu_op,
-        ctrl_cmp,
-        ctrl_mem,
-        ctrl_wb,
-        CTRL_SRC_A_RS1,
-        CTRL_SRC_B_IMM,
-        CTRL_ALU_OP_ADD_CLEAR_BIT_0,
-        CTRL_CMP_UNCONDITIONAL,
-        CTRL_MEM_NONE,
-        CTRL_WB_NPC);
+    create_decoded_inst(
+        inst_queue,
+        BRANCH,
+        JALR,
+        rd_addr,
+        rs1_addr,
+        0,
+        imm,
+        inst_pc
+    );
 
-    printf("jalr x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+    printf("jalr x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
 }
 
-void handle_branch(
-    uint32_t inst,
-    uint32_t *regs,
-    uint32_t *reg_rs1_val,
-    uint32_t *reg_rs2_val,
-    uint32_t *reg_imm,
-    enum ctrl_src_a *ctrl_src_a,
-    enum ctrl_src_b *ctrl_src_b,
-    enum ctrl_alu_op *ctrl_alu_op,
-    enum ctrl_cmp *ctrl_cmp,
-    enum ctrl_mem *ctrl_mem,
-    enum ctrl_wb *ctrl_wb)
+void handle_branch(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
 {
     uint8_t rs1_addr = get_rs1_addr(inst);
     uint8_t rs2_addr = get_rs2_addr(inst);
-    *reg_rs1_val = regs[rs1_addr];
-    *reg_rs2_val = regs[rs2_addr];
-    *reg_imm = get_imm_b(inst);
+    uint32_t imm = get_imm_b(inst);
 
-    enum ctrl_cmp cmp;
+    enum op op;
 
     switch (get_funct3(inst))
     {
     case FUNCT3_BEQ:
-        cmp = CTRL_CMP_EQ;
-        printf("beq x%d, x%d, %d\n", rs1_addr, rs2_addr, *reg_imm);
+        op = BEQ;
+        printf("beq x%d, x%d, %d\n", rs1_addr, rs2_addr, imm);
         break;
     case FUNCT3_BNE:
-        cmp = CTRL_CMP_NE;
-        printf("bne x%d, x%d, %d\n", rs1_addr, rs2_addr, *reg_imm);
+        op = BNE;
+        printf("bne x%d, x%d, %d\n", rs1_addr, rs2_addr, imm);
         break;
     case FUNCT3_BLT:
-        cmp = CTRL_CMP_LT;
-        printf("blt x%d, x%d, %d\n", rs1_addr, rs2_addr, *reg_imm);
+        op = BLT;
+        printf("blt x%d, x%d, %d\n", rs1_addr, rs2_addr, imm);
         break;
     case FUNCT3_BLTU:
-        cmp = CTRL_CMP_LTU;
-        printf("bltu x%d, x%d, %d\n", rs1_addr, rs2_addr, *reg_imm);
+        op = BLTU;
+        printf("bltu x%d, x%d, %d\n", rs1_addr, rs2_addr, imm);
         break;
     case FUNCT3_BGE:
-        cmp = CTRL_CMP_GE;
-        printf("bge x%d, x%d, %d\n", rs1_addr, rs2_addr, *reg_imm);
+        op = BGE;
+        printf("bge x%d, x%d, %d\n", rs1_addr, rs2_addr, imm);
         break;
     case FUNCT3_BGEU:
-        cmp = CTRL_CMP_GEU;
-        printf("bgeu x%d, x%d, %d\n", rs1_addr, rs2_addr, *reg_imm);
+        op = BGEU;
+        printf("bgeu x%d, x%d, %d\n", rs1_addr, rs2_addr, imm);
         break;
     default:
         printf("Unknown funct3");
         exit(EXIT_FAILURE);
     }
 
-    set_ctrl(
-        ctrl_src_a,
-        ctrl_src_b,
-        ctrl_alu_op,
-        ctrl_cmp,
-        ctrl_mem,
-        ctrl_wb,
-        CTRL_SRC_A_PC,
-        CTRL_SRC_B_IMM,
-        CTRL_ALU_OP_ADD,
-        cmp,
-        CTRL_MEM_NONE,
-        CTRL_WB_NONE);
+    create_decoded_inst(
+        inst_queue,
+        BRANCH,
+        op,
+        0,
+        rs1_addr,
+        rs2_addr,
+        imm,
+        inst_pc
+    );
 }
 
-void handle_load(
-    uint32_t inst,
-    uint32_t *regs,
-    uint8_t *reg_rd_addr,
-    uint32_t *reg_rs1_val,
-    uint32_t *reg_imm,
-    enum ctrl_src_a *ctrl_src_a,
-    enum ctrl_src_b *ctrl_src_b,
-    enum ctrl_alu_op *ctrl_alu_op,
-    enum ctrl_cmp *ctrl_cmp,
-    enum ctrl_mem *ctrl_mem,
-    enum ctrl_wb *ctrl_wb)
+void handle_load(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
 {
-    *reg_rd_addr = get_rd_addr(inst);
+    uint8_t rd_addr = get_rd_addr(inst);
     uint8_t rs1_addr = get_rs1_addr(inst);
-    *reg_rs1_val = regs[rs1_addr];
-    *reg_imm = get_imm_i(inst);
+    uint32_t imm = get_imm_i(inst);
 
-    enum ctrl_mem mem;
+    enum op op;
 
     switch (get_funct3(inst))
     {
     case FUNCT3_LB:
-        mem = CTRL_MEM_LOAD_BYTE;
-        printf("lb x%d, %d(x%d)\n", *reg_rd_addr, *reg_imm, rs1_addr);
+        op = LB;
+        printf("lb x%d, %d(x%d)\n", rd_addr, imm, rs1_addr);
         break;
     case FUNCT3_LBU:
-        mem = CTRL_MEM_LOAD_BYTE_UNSIGNED;
-        printf("lbu x%d, %d(x%d)\n", *reg_rd_addr, *reg_imm, rs1_addr);
+        op = LBU;
+        printf("lbu x%d, %d(x%d)\n", rd_addr, imm, rs1_addr);
         break;
     case FUNCT3_LH:
-        mem = CTRL_MEM_LOAD_HALF;
-        printf("lh x%d, %d(x%d)\n", *reg_rd_addr, *reg_imm, rs1_addr);
+        op = LH;
+        printf("lh x%d, %d(x%d)\n", rd_addr, imm, rs1_addr);
         break;
     case FUNCT3_LHU:
-        mem = CTRL_MEM_LOAD_HALF_UNSIGNED;
-        printf("lhu x%d, %d(x%d)\n", *reg_rd_addr, *reg_imm, rs1_addr);
+        op = LHU;
+        printf("lhu x%d, %d(x%d)\n", rd_addr, imm, rs1_addr);
         break;
     case FUNCT3_LW:
-        mem = CTRL_MEM_LOAD_WORD;
-        printf("lw x%d, %d(x%d)\n", *reg_rd_addr, *reg_imm, rs1_addr);
+        op = LW;
+        printf("lw x%d, %d(x%d)\n", rd_addr, imm, rs1_addr);
         break;
     default:
         printf("Unknown funct3");
         exit(EXIT_FAILURE);
     }
 
-    set_ctrl(
-        ctrl_src_a,
-        ctrl_src_b,
-        ctrl_alu_op,
-        ctrl_cmp,
-        ctrl_mem,
-        ctrl_wb,
-        CTRL_SRC_A_RS1,
-        CTRL_SRC_B_IMM,
-        CTRL_ALU_OP_ADD,
-        CTRL_CMP_NONE,
-        mem,
-        CTRL_WB_MDR);
+    create_decoded_inst(
+        inst_queue,
+        MEMORY,
+        op,
+        rd_addr,
+        rs1_addr,
+        0,
+        imm,
+        inst_pc
+    );
 }
 
-void handle_store(
-    uint32_t inst,
-    uint32_t *regs,
-    uint32_t *reg_rs1_val,
-    uint32_t *reg_rs2_val,
-    uint32_t *reg_imm,
-    enum ctrl_src_a *ctrl_src_a,
-    enum ctrl_src_b *ctrl_src_b,
-    enum ctrl_alu_op *ctrl_alu_op,
-    enum ctrl_cmp *ctrl_cmp,
-    enum ctrl_mem *ctrl_mem,
-    enum ctrl_wb *ctrl_wb)
+void handle_store(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
 {
     uint8_t rs1_addr = get_rs1_addr(inst);
     uint8_t rs2_addr = get_rs2_addr(inst);
-    *reg_rs1_val = regs[rs1_addr];
-    *reg_rs2_val = regs[rs2_addr];
-    *reg_imm = get_imm_s(inst);
+    uint32_t imm = get_imm_s(inst);
 
-    enum ctrl_mem mem;
+    enum op op;
 
     switch (get_funct3(inst))
     {
     case FUNCT3_SB:
-        mem = CTRL_MEM_STORE_BYTE;
-        printf("sb x%d, %d(x%d)\n", rs2_addr, *reg_imm, rs1_addr);
+        op = SB;
+        printf("sb x%d, %d(x%d)\n", rs2_addr, imm, rs1_addr);
         break;
     case FUNCT3_SH:
-        mem = CTRL_MEM_STORE_HALF;
-        printf("sh x%d, %d(x%d)\n", rs2_addr, *reg_imm, rs1_addr);
+        op = SH;
+        printf("sh x%d, %d(x%d)\n", rs2_addr, imm, rs1_addr);
         break;
     case FUNCT3_SW:
-        mem = CTRL_MEM_STORE_WORD;
-        printf("sw x%d, %d(x%d)\n", rs2_addr, *reg_imm, rs1_addr);
+        op = SW;
+        printf("sw x%d, %d(x%d)\n", rs2_addr, imm, rs1_addr);
         break;
     default:
         printf("Unknown funct3");
         exit(EXIT_FAILURE);
     }
 
-    set_ctrl(
-        ctrl_src_a,
-        ctrl_src_b,
-        ctrl_alu_op,
-        ctrl_cmp,
-        ctrl_mem,
-        ctrl_wb,
-        CTRL_SRC_A_RS1,
-        CTRL_SRC_B_IMM,
-        CTRL_ALU_OP_ADD,
-        CTRL_CMP_NONE,
-        mem,
-        CTRL_WB_NONE);
+    create_decoded_inst(
+        inst_queue,
+        MEMORY,
+        op,
+        0,
+        rs1_addr,
+        rs2_addr,
+        imm,
+        inst_pc
+    );
 }
 
 void decode_step(struct decode_unit *decode_unit)
 {
+    struct inst_queue *inst_queue = decode_unit->inst_queue;
     uint32_t inst = *decode_unit->reg_inst;
     uint32_t opcode = get_opcode(inst);
+
+    uint32_t inst_pc = *decode_unit->reg_pc;
 
     switch (opcode)
     {
     case OPCODE_OP_IMM:
-        handle_op_imm(
-            inst,
-            decode_unit->regs,
-            decode_unit->reg_rd_addr,
-            decode_unit->reg_rs1_val,
-            decode_unit->reg_imm,
-            decode_unit->ctrl_src_a,
-            decode_unit->ctrl_src_b,
-            decode_unit->ctrl_alu_op,
-            decode_unit->ctrl_cmp,
-            decode_unit->ctrl_mem,
-            decode_unit->ctrl_wb);
+        handle_op_imm(inst_queue, inst, inst_pc);
         break;
     case OPCODE_LUI:
-        handle_lui(
-            inst,
-            decode_unit->reg_rd_addr,
-            decode_unit->reg_imm,
-            decode_unit->ctrl_src_a,
-            decode_unit->ctrl_src_b,
-            decode_unit->ctrl_alu_op,
-            decode_unit->ctrl_cmp,
-            decode_unit->ctrl_mem,
-            decode_unit->ctrl_wb);
+        handle_lui(inst_queue, inst, inst_pc);
         break;
     case OPCODE_AUIPC:
-        handle_auipc(
-            inst,
-            decode_unit->reg_rd_addr,
-            decode_unit->reg_imm,
-            decode_unit->ctrl_src_a,
-            decode_unit->ctrl_src_b,
-            decode_unit->ctrl_alu_op,
-            decode_unit->ctrl_cmp,
-            decode_unit->ctrl_mem,
-            decode_unit->ctrl_wb);
+        handle_auipc(inst_queue, inst, inst_pc);
         break;
     case OPCODE_OP:
-        handle_op(
-            inst,
-            decode_unit->regs,
-            decode_unit->reg_rd_addr,
-            decode_unit->reg_rs1_val,
-            decode_unit->reg_rs2_val,
-            decode_unit->ctrl_src_a,
-            decode_unit->ctrl_src_b,
-            decode_unit->ctrl_alu_op,
-            decode_unit->ctrl_cmp,
-            decode_unit->ctrl_mem,
-            decode_unit->ctrl_wb);
+        handle_op(inst_queue, inst, inst_pc);
         break;
     case OPCODE_JAL:
-        handle_jal(
-            inst,
-            decode_unit->reg_rd_addr,
-            decode_unit->reg_imm,
-            decode_unit->ctrl_src_a,
-            decode_unit->ctrl_src_b,
-            decode_unit->ctrl_alu_op,
-            decode_unit->ctrl_cmp,
-            decode_unit->ctrl_mem,
-            decode_unit->ctrl_wb);
+        handle_jal(inst_queue, inst, inst_pc);
         break;
     case OPCODE_JALR:
-        handle_jalr(
-            inst,
-            decode_unit->regs,
-            decode_unit->reg_rd_addr,
-            decode_unit->reg_rs1_val,
-            decode_unit->reg_imm,
-            decode_unit->ctrl_src_a,
-            decode_unit->ctrl_src_b,
-            decode_unit->ctrl_alu_op,
-            decode_unit->ctrl_cmp,
-            decode_unit->ctrl_mem,
-            decode_unit->ctrl_wb);
+        handle_jalr(inst_queue, inst, inst_pc);
         break;
     case OPCODE_BRANCH:
-        handle_branch(
-            inst,
-            decode_unit->regs,
-            decode_unit->reg_rs1_val,
-            decode_unit->reg_rs2_val,
-            decode_unit->reg_imm,
-            decode_unit->ctrl_src_a,
-            decode_unit->ctrl_src_b,
-            decode_unit->ctrl_alu_op,
-            decode_unit->ctrl_cmp,
-            decode_unit->ctrl_mem,
-            decode_unit->ctrl_wb);
+        handle_branch(inst_queue, inst, inst_pc);
         break;
     case OPCODE_LOAD:
-        handle_load(
-            inst,
-            decode_unit->regs,
-            decode_unit->reg_rd_addr,
-            decode_unit->reg_rs1_val,
-            decode_unit->reg_imm,
-            decode_unit->ctrl_src_a,
-            decode_unit->ctrl_src_b,
-            decode_unit->ctrl_alu_op,
-            decode_unit->ctrl_cmp,
-            decode_unit->ctrl_mem,
-            decode_unit->ctrl_wb);
+        handle_load(inst_queue, inst, inst_pc);
         break;
     case OPCODE_STORE:
-        handle_store(
-            inst,
-            decode_unit->regs,
-            decode_unit->reg_rs1_val,
-            decode_unit->reg_rs2_val,
-            decode_unit->reg_imm,
-            decode_unit->ctrl_src_a,
-            decode_unit->ctrl_src_b,
-            decode_unit->ctrl_alu_op,
-            decode_unit->ctrl_cmp,
-            decode_unit->ctrl_mem,
-            decode_unit->ctrl_wb);
+        handle_store(inst_queue, inst, inst_pc);
         break;
     default:
         fprintf(stderr, "Error: Unknown opcode: %08x", opcode);

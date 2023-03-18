@@ -12,7 +12,7 @@ _start:
 	sw	ra,12(sp)
 	sw	s0,8(sp)
 	addi	s0,sp,16
-	li	a0,12
+	li	a0,11
 	call	factorial
 	mv	a5,a0
 	mv	a0,a5

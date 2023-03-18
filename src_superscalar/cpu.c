@@ -6,9 +6,8 @@
 #include "main_memory.h"
 #include "fetch.h"
 #include "decode.h"
-#include "execute.h"
+#include "inst_queue.h"
 #include "memory.h"
-#include "writeback.h"
 #include "control.h"
 
 #define NUM_WORDS_OUTPUT 2048
@@ -30,7 +29,7 @@ struct cpu *cpu_init(char *file_name)
     cpu->regs[8] = MEMORY_SIZE;
     cpu->regs[2] = MEMORY_SIZE;
 
-    cpu->ctrl_pc_src = CTRL_PC_SRC_NPC;
+    cpu->pc_src = PC_SRC_PLUS_4;
 
     cpu->reg_pc = 0;
     cpu->reg_npc = 0;
@@ -38,48 +37,37 @@ struct cpu *cpu_init(char *file_name)
     cpu->mm = main_memory_init(file_name);
     cpu->fetch_unit = fetch_init(
         cpu->mm,
-        &cpu->ctrl_pc_src,
-        &cpu->reg_alu_out,
+        &cpu->pc_src,
+        &cpu->reg_pc_target,
         &cpu->reg_inst,
         &cpu->reg_pc,
         &cpu->reg_npc);
+    cpu->inst_queue = inst_queue_init();
     cpu->decode_unit = decode_init(
-        cpu->regs,
         &cpu->reg_inst,
-        &cpu->reg_rd_addr,
-        &cpu->reg_rs1_val,
-        &cpu->reg_rs2_val,
-        &cpu->reg_imm,
-        &cpu->ctrl_src_a,
-        &cpu->ctrl_src_b,
-        &cpu->ctrl_alu_op,
-        &cpu->ctrl_cmp,
-        &cpu->ctrl_mem,
-        &cpu->ctrl_wb);
-    cpu->execute_unit = execute_init(
         &cpu->reg_pc,
-        &cpu->reg_rs1_val,
-        &cpu->reg_rs2_val,
-        &cpu->reg_imm,
-        &cpu->ctrl_src_a,
-        &cpu->ctrl_src_b,
-        &cpu->ctrl_alu_op,
-        &cpu->ctrl_cmp,
-        &cpu->reg_alu_out,
-        &cpu->ctrl_pc_src);
-    cpu->memory_unit = memory_init(
-        cpu->mm,
-        &cpu->ctrl_mem,
-        &cpu->reg_alu_out,
-        &cpu->reg_rs2_val,
-        &cpu->reg_mdr);
-    cpu->writeback_unit = writeback_init(
+        cpu->inst_queue);
+    cpu->alu_res_station = res_station_init();
+    cpu->branch_res_station = res_station_init();
+    cpu->mem_res_station = res_station_init();
+    cpu->issue_unit = issue_init(
+        cpu->inst_queue,
         cpu->regs,
-        &cpu->ctrl_wb,
-        &cpu->reg_rd_addr,
-        &cpu->reg_alu_out,
-        &cpu->reg_mdr,
-        &cpu->reg_npc);
+        cpu->alu_res_station,
+        cpu->branch_res_station,
+        cpu->mem_res_station);
+    cpu->alu_unit = alu_init(
+        cpu->alu_res_station,
+        cpu->regs);
+    cpu->branch_unit = branch_init(
+        cpu->branch_res_station,
+        cpu->regs,
+        &cpu->reg_pc_target,
+        &cpu->pc_src);
+    cpu->memory_unit = memory_init(
+        cpu->mem_res_station,
+        cpu->mm,
+        cpu->regs);
 
     printf("CPU successfully initialised\n");
 
@@ -120,9 +108,14 @@ void cpu_destroy(struct cpu *cpu)
     main_memory_destroy(cpu->mm);
     fetch_destroy(cpu->fetch_unit);
     decode_destroy(cpu->decode_unit);
-    execute_destroy(cpu->execute_unit);
+    inst_queue_destroy(cpu->inst_queue);
+    res_station_destroy(cpu->alu_res_station);
+    res_station_destroy(cpu->mem_res_station);
+    res_station_destroy(cpu->branch_res_station);
+    issue_destroy(cpu->issue_unit);
+    alu_destroy(cpu->alu_unit);
+    branch_destroy(cpu->branch_unit);
     memory_destroy(cpu->memory_unit);
-    writeback_destroy(cpu->writeback_unit);
 
     free(cpu);
 }
@@ -141,13 +134,17 @@ int main(int argc, char *argv[])
     uint64_t cycles = 0;
 
     // Cycle until PC will be 0
-    while (!(cpu->ctrl_pc_src == CTRL_PC_SRC_ALU_OUT && cpu->reg_alu_out == 0))
+    while (!(cpu->pc_src == PC_SRC_BRANCH && cpu->reg_pc_target == 0))
     {
         fetch_step(cpu->fetch_unit);
         decode_step(cpu->decode_unit);
-        execute_step(cpu->execute_unit);
+        issue_step(cpu->issue_unit);
+        alu_step(cpu->alu_unit);
+        branch_step(cpu->branch_unit);
         memory_step(cpu->memory_unit);
-        writeback_step(cpu->writeback_unit);
+        // execute_step(cpu->execute_unit);
+        // memory_step(cpu->memory_unit);
+        // writeback_step(cpu->writeback_unit);
 
         instructions++;
         cycles += 5;

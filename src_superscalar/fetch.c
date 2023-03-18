@@ -7,8 +7,8 @@
 
 struct fetch_unit *fetch_init(
     struct main_memory *mm,
-    enum ctrl_pc_src *ctrl_pc_src,
-    uint32_t *reg_alu_out,
+    enum pc_src *pc_src,
+    uint32_t *reg_pc_target,
     uint32_t *reg_inst,
     uint32_t *reg_pc,
     uint32_t *reg_npc)
@@ -21,8 +21,8 @@ struct fetch_unit *fetch_init(
     }
 
     fetch_unit->mm = mm;
-    fetch_unit->ctrl_pc_src = ctrl_pc_src;
-    fetch_unit->reg_alu_out = reg_alu_out;
+    fetch_unit->pc_src = pc_src;
+    fetch_unit->reg_pc_target = reg_pc_target;
     fetch_unit->reg_inst = reg_inst;
     fetch_unit->reg_pc = reg_pc;
     fetch_unit->reg_npc = reg_npc;
@@ -32,17 +32,18 @@ struct fetch_unit *fetch_init(
 
 void fetch_step(struct fetch_unit *fetch_unit)
 {
-    if (*fetch_unit->ctrl_pc_src == CTRL_PC_SRC_NPC)
+    if (*fetch_unit->pc_src == PC_SRC_PLUS_4)
     {
         *fetch_unit->reg_pc = *fetch_unit->reg_npc;
     }
-    else if (*fetch_unit->ctrl_pc_src == CTRL_PC_SRC_ALU_OUT)
+    else if (*fetch_unit->pc_src == PC_SRC_BRANCH)
     {
-        *fetch_unit->reg_pc = *fetch_unit->reg_alu_out;
+        *fetch_unit->reg_pc = *fetch_unit->reg_pc_target;
+        *fetch_unit->pc_src = PC_SRC_PLUS_4;
     }
     else
     {
-        fprintf(stderr, "Error: Invalid PC source control signal\n");
+        fprintf(stderr, "Error: Invalid PC source control signal %d\n", *fetch_unit->pc_src);
         exit(EXIT_FAILURE);
     }
     *fetch_unit->reg_inst = main_memory_load_word(fetch_unit->mm, *fetch_unit->reg_pc);
