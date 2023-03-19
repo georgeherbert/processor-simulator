@@ -8,9 +8,9 @@
 struct issue_unit *issue_init(
     struct inst_queue *inst_queue,
     uint32_t *regs,
-    struct res_station *alu_res_station,
-    struct res_station *branch_res_station,
-    struct res_station *mem_res_station)
+    struct res_stations *alu_res_stations,
+    struct res_stations *branch_res_stations,
+    struct res_stations *memory_res_stations)
 {
     struct issue_unit *issue_unit = malloc(sizeof(struct issue_unit));
 
@@ -22,14 +22,14 @@ struct issue_unit *issue_init(
 
     issue_unit->inst_queue = inst_queue;
     issue_unit->regs = regs;
-    issue_unit->alu_res_station = alu_res_station;
-    issue_unit->branch_res_station = branch_res_station;
-    issue_unit->mem_res_station = mem_res_station;
+    issue_unit->alu_res_stations = alu_res_stations;
+    issue_unit->branch_res_stations = branch_res_stations;
+    issue_unit->memory_res_stations = memory_res_stations;
 
     return issue_unit;
 }
 
-void handle_al_operation(struct decoded_inst inst, uint32_t *regs, struct res_station *alu_res_station)
+void handle_al_operation(struct decoded_inst inst, uint32_t *regs, struct res_stations *alu_res_stations)
 {
     switch (inst.op) {
         case ADDI:
@@ -41,13 +41,13 @@ void handle_al_operation(struct decoded_inst inst, uint32_t *regs, struct res_st
         case SLLI:
         case SRLI:
         case SRAI:
-            res_station_add(alu_res_station, inst.op, regs[inst.rs1_addr], inst.imm, 0, inst.rd_addr, inst.inst_pc);
+            res_stations_add(alu_res_stations, inst.op, regs[inst.rs1_addr], inst.imm, 0, inst.rd_addr, inst.inst_pc);
             break;
         case LUI:
-            res_station_add(alu_res_station, inst.op, 0, inst.imm, 0, inst.rd_addr, inst.inst_pc);
+            res_stations_add(alu_res_stations, inst.op, 0, inst.imm, 0, inst.rd_addr, inst.inst_pc);
             break;
         case AUIPC:
-            res_station_add(alu_res_station, inst.op, inst.inst_pc, inst.imm, 0, inst.rd_addr, inst.inst_pc);
+            res_stations_add(alu_res_stations, inst.op, inst.inst_pc, inst.imm, 0, inst.rd_addr, inst.inst_pc);
             break;
         case ADD:
         case SLT:
@@ -59,7 +59,7 @@ void handle_al_operation(struct decoded_inst inst, uint32_t *regs, struct res_st
         case SRL:
         case SUB:
         case SRA:
-            res_station_add(alu_res_station, inst.op, regs[inst.rs1_addr], regs[inst.rs2_addr], 0, inst.rd_addr, inst.inst_pc);
+            res_stations_add(alu_res_stations, inst.op, regs[inst.rs1_addr], regs[inst.rs2_addr], 0, inst.rd_addr, inst.inst_pc);
             break;
         default:
             fprintf(stderr, "Error: Unknown arithmetic or logical op");
@@ -68,15 +68,15 @@ void handle_al_operation(struct decoded_inst inst, uint32_t *regs, struct res_st
     }
 }
 
-void handle_branch_operation(struct decoded_inst inst, uint32_t *regs, struct res_station *branch_res_station)
+void handle_branch_operation(struct decoded_inst inst, uint32_t *regs, struct res_stations *branch_res_stations)
 {
     switch (inst.op) {
         case JAL:
             // TODO: Decide what we're doing with the PC here
-            res_station_add(branch_res_station, inst.op, 0, 0, inst.imm, inst.rd_addr, inst.inst_pc);
+            res_stations_add(branch_res_stations, inst.op, 0, 0, inst.imm, inst.rd_addr, inst.inst_pc);
             break;
         case JALR:
-            res_station_add(branch_res_station, inst.op, regs[inst.rs1_addr], 0, inst.imm, inst.rd_addr, inst.inst_pc);
+            res_stations_add(branch_res_stations, inst.op, regs[inst.rs1_addr], 0, inst.imm, inst.rd_addr, inst.inst_pc);
             break;
         case BEQ:
         case BNE:
@@ -85,7 +85,7 @@ void handle_branch_operation(struct decoded_inst inst, uint32_t *regs, struct re
         case BGE:
         case BGEU:
             // TODO: Decide what to do about the destination register
-            res_station_add(branch_res_station, inst.op, regs[inst.rs1_addr], regs[inst.rs2_addr], inst.imm, inst.rd_addr, inst.inst_pc);
+            res_stations_add(branch_res_stations, inst.op, regs[inst.rs1_addr], regs[inst.rs2_addr], inst.imm, inst.rd_addr, inst.inst_pc);
             break;
         default:
             fprintf(stderr, "Error: Unknown branch op");
@@ -94,7 +94,7 @@ void handle_branch_operation(struct decoded_inst inst, uint32_t *regs, struct re
     }
 }
 
-void handle_mem_operation(struct decoded_inst inst, uint32_t *regs, struct res_station *mem_res_station)
+void handle_mem_operation(struct decoded_inst inst, uint32_t *regs, struct res_stations *memory_res_stations)
 {
     // TODO: Decide what to do about the destination register for stores here
     switch (inst.op) {
@@ -103,12 +103,12 @@ void handle_mem_operation(struct decoded_inst inst, uint32_t *regs, struct res_s
         case LHU:
         case LB:
         case LBU:
-            res_station_add(mem_res_station, inst.op, regs[inst.rs1_addr], 0, inst.imm, inst.rd_addr, inst.inst_pc);
+            res_stations_add(memory_res_stations, inst.op, regs[inst.rs1_addr], 0, inst.imm, inst.rd_addr, inst.inst_pc);
             break;
         case SW:
         case SH:
         case SB:
-            res_station_add(mem_res_station, inst.op, regs[inst.rs1_addr], regs[inst.rs2_addr], inst.imm, inst.rd_addr, inst.inst_pc);
+            res_stations_add(memory_res_stations, inst.op, regs[inst.rs1_addr], regs[inst.rs2_addr], inst.imm, inst.rd_addr, inst.inst_pc);
             break;
         default:
             fprintf(stderr, "Error: Unknown memory op");
@@ -123,13 +123,13 @@ void issue_step(struct issue_unit *issue_unit)
     switch (inst.op_type)
     {
     case AL:
-        handle_al_operation(inst, issue_unit->regs, issue_unit->alu_res_station);
+        handle_al_operation(inst, issue_unit->regs, issue_unit->alu_res_stations);
         break;
     case BRANCH:
-        handle_branch_operation(inst, issue_unit->regs, issue_unit->branch_res_station);
+        handle_branch_operation(inst, issue_unit->regs, issue_unit->branch_res_stations);
         break;
     case MEMORY:
-        handle_mem_operation(inst, issue_unit->regs, issue_unit->mem_res_station);
+        handle_mem_operation(inst, issue_unit->regs, issue_unit->memory_res_stations);
         break;
     default:
         fprintf(stderr, "Error: Unknown instruction type");

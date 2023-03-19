@@ -4,7 +4,7 @@
 #include "res_station.h"
 #include "decoded_inst.h"
 
-struct alu_unit *alu_init(struct res_station *alu_res_station, uint32_t *regs)
+struct alu_unit *alu_init(struct res_stations *alu_res_stations, uint32_t *regs)
 {
     struct alu_unit *alu_unit = malloc(sizeof(struct alu_unit));
 
@@ -14,7 +14,7 @@ struct alu_unit *alu_init(struct res_station *alu_res_station, uint32_t *regs)
         exit(EXIT_FAILURE);
     }
 
-    alu_unit->alu_res_station = alu_res_station;
+    alu_unit->alu_res_stations = alu_res_stations;
     alu_unit->regs = regs;
 
     return alu_unit;
@@ -22,9 +22,9 @@ struct alu_unit *alu_init(struct res_station *alu_res_station, uint32_t *regs)
 
 void alu_step(struct alu_unit *alu_unit)
 {
-    if (res_station_get_num_entries(alu_unit->alu_res_station) != 0)
+    if (res_station_not_empty(alu_unit->alu_res_stations))
     {
-        struct res_station_entry entry = res_station_remove(alu_unit->alu_res_station);
+        struct res_station entry = res_stations_remove(alu_unit->alu_res_stations);
 
         uint32_t out;
 

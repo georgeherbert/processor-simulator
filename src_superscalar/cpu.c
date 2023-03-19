@@ -47,25 +47,25 @@ struct cpu *cpu_init(char *file_name)
         &cpu->reg_inst,
         &cpu->reg_pc,
         cpu->inst_queue);
-    cpu->alu_res_station = res_station_init();
-    cpu->branch_res_station = res_station_init();
-    cpu->mem_res_station = res_station_init();
+    cpu->alu_res_stations = res_stations_init();
+    cpu->branch_res_stations = res_stations_init();
+    cpu->memory_res_stations = res_stations_init();
     cpu->issue_unit = issue_init(
         cpu->inst_queue,
         cpu->regs,
-        cpu->alu_res_station,
-        cpu->branch_res_station,
-        cpu->mem_res_station);
+        cpu->alu_res_stations,
+        cpu->branch_res_stations,
+        cpu->memory_res_stations);
     cpu->alu_unit = alu_init(
-        cpu->alu_res_station,
+        cpu->alu_res_stations,
         cpu->regs);
     cpu->branch_unit = branch_init(
-        cpu->branch_res_station,
+        cpu->branch_res_stations,
         cpu->regs,
         &cpu->reg_pc_target,
         &cpu->pc_src);
     cpu->memory_unit = memory_init(
-        cpu->mem_res_station,
+        cpu->memory_res_stations,
         cpu->mm,
         cpu->regs);
 
@@ -109,9 +109,9 @@ void cpu_destroy(struct cpu *cpu)
     fetch_destroy(cpu->fetch_unit);
     decode_destroy(cpu->decode_unit);
     inst_queue_destroy(cpu->inst_queue);
-    res_station_destroy(cpu->alu_res_station);
-    res_station_destroy(cpu->mem_res_station);
-    res_station_destroy(cpu->branch_res_station);
+    res_station_destroy(cpu->alu_res_stations);
+    res_station_destroy(cpu->memory_res_stations);
+    res_station_destroy(cpu->branch_res_stations);
     issue_destroy(cpu->issue_unit);
     alu_destroy(cpu->alu_unit);
     branch_destroy(cpu->branch_unit);

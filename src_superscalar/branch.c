@@ -6,7 +6,7 @@
 #include "control.h"
 
 struct branch_unit *branch_init(
-    struct res_station *branch_res_station,
+    struct res_stations *branch_res_stations,
     uint32_t *regs,
     uint32_t *reg_pc_target,
     enum pc_src *pc_src)
@@ -19,7 +19,7 @@ struct branch_unit *branch_init(
         exit(EXIT_FAILURE);
     }
 
-    branch_unit->branch_res_station = branch_res_station;
+    branch_unit->branch_res_stations = branch_res_stations;
     branch_unit->regs = regs;
     branch_unit->reg_pc_target = reg_pc_target;
     branch_unit->pc_src = pc_src;
@@ -29,9 +29,9 @@ struct branch_unit *branch_init(
 
 void branch_step(struct branch_unit *branch_unit)
 {
-    if (res_station_get_num_entries(branch_unit->branch_res_station) != 0)
+    if (res_station_not_empty(branch_unit->branch_res_stations))
     {
-        struct res_station_entry entry = res_station_remove(branch_unit->branch_res_station);
+        struct res_station entry = res_stations_remove(branch_unit->branch_res_stations);
 
         switch (entry.op)
         {

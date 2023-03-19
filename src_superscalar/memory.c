@@ -5,7 +5,7 @@
 #include "main_memory.h"
 
 struct memory_unit *memory_init(
-    struct res_station *memory_res_station,
+    struct res_stations *memory_res_stations,
     struct main_memory *mm,
     uint32_t *regs)
 {
@@ -17,7 +17,7 @@ struct memory_unit *memory_init(
         exit(EXIT_FAILURE);
     }
 
-    memory_unit->memory_res_station = memory_res_station;
+    memory_unit->memory_res_stations = memory_res_stations;
     memory_unit->mm = mm;
     memory_unit->regs = regs;
 
@@ -26,9 +26,9 @@ struct memory_unit *memory_init(
 
 void memory_step(struct memory_unit *memory_unit)
 {
-    if (res_station_get_num_entries(memory_unit->memory_res_station) != 0)
+    if (res_station_not_empty(memory_unit->memory_res_stations))
     {
-        struct res_station_entry entry = res_station_remove(memory_unit->memory_res_station);
+        struct res_station entry = res_stations_remove(memory_unit->memory_res_stations);
 
         uint32_t address = entry.vj + entry.a;
 

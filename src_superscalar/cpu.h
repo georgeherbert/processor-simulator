@@ -22,9 +22,9 @@ struct cpu
     struct fetch_unit *fetch_unit;          // Pointer to fetch unit
     struct decode_unit *decode_unit;        // Pointer to decode unit
     struct inst_queue *inst_queue;          // Pointer to instruction queue
-    struct res_station *alu_res_station;    // Pointer to ALU reservation station
-    struct res_station *branch_res_station; // Pointer to branch reservation station
-    struct res_station *mem_res_station;    // Pointer to memory reservation station
+    struct res_stations *alu_res_stations;    // Pointer to ALU reservation station
+    struct res_stations *branch_res_stations; // Pointer to branch reservation station
+    struct res_stations *memory_res_stations;    // Pointer to memory reservation station
     struct issue_unit *issue_unit;          // Pointer to issue unit
     struct alu_unit *alu_unit;              // Pointer to ALU unit
     struct branch_unit *branch_unit;        // Pointer to branch unit
