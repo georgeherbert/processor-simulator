@@ -42,14 +42,15 @@ struct cpu *cpu_init(char *file_name)
     cpu->reg_npc = 0;
 
     cpu->mm = main_memory_init(file_name);
+    cpu->inst_queue = inst_queue_init();
     cpu->fetch_unit = fetch_init(
         cpu->mm,
         &cpu->pc_src,
+        cpu->inst_queue,
         &cpu->reg_pc_target,
         &cpu->reg_inst,
         &cpu->reg_pc,
         &cpu->reg_npc);
-    cpu->inst_queue = inst_queue_init();
     cpu->decode_unit = decode_init(
         &cpu->reg_inst,
         &cpu->reg_pc,
