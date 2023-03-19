@@ -12,13 +12,13 @@ struct res_station
     uint32_t id;
     bool busy;
     enum op op;
-    uint32_t vj;
-    uint32_t vk;
     uint32_t qj;
     uint32_t qk;
-    uint32_t dest; // TODO: Remove this eventually
+    uint32_t vj;
+    uint32_t vk;
     uint32_t a;
     uint32_t inst_pc;
+    uint32_t dest; // TODO: Remove this eventually
 };
 
 struct res_stations
@@ -34,6 +34,8 @@ void res_stations_step(struct res_stations *rs); // Step reservation stations
 void res_stations_add(
     struct res_stations *rs,
     enum op op,
+    uint32_t qj,
+    uint32_t qk,
     uint32_t vj,
     uint32_t vk,
     uint32_t a,

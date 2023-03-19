@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include "reg_file.h"
 
 struct reg_file *reg_file_init()
@@ -23,6 +24,11 @@ struct reg_file *reg_file_init()
 
 void reg_file_step(struct reg_file *reg_file)
 {
+}
+
+bool reg_file_is_reg_available(struct reg_file *reg_file, uint32_t index)
+{
+    return reg_file->regs[index].qi == 0;
 }
 
 void reg_file_destroy(struct reg_file *reg_file)

@@ -32,9 +32,13 @@ void alu_step(struct alu_unit *alu_unit)
         {
         case ADD:
         case ADDI:
-        case LUI:
-        case AUIPC:
             out = entry.vj + entry.vk;
+            break;
+        case LUI:
+            out = entry.vj;
+            break;
+        case AUIPC:
+            out = entry.vj + entry.inst_pc;
             break;
         case SUB:
             out = entry.vj - entry.vk;

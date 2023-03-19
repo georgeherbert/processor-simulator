@@ -45,13 +45,40 @@ void handle_al_operation(struct decoded_inst inst, struct reg_file *reg_file, st
     case SLLI:
     case SRLI:
     case SRAI:
-        res_stations_add(alu_res_stations, inst.op, reg_file->regs[inst.rs1_addr].value, inst.imm, NA, inst.rd_addr, inst.inst_pc);
+        res_stations_add(
+            alu_res_stations,
+            inst.op,
+            0,
+            NA, // Integer register-immediate operations don't use rs2
+            reg_file->regs[inst.rs1_addr].value,
+            inst.imm,
+            NA, // Only used in branch and memory instructions
+            inst.rd_addr,
+            inst.inst_pc);
         break;
     case LUI:
-        res_stations_add(alu_res_stations, inst.op, NA, inst.imm, NA, inst.rd_addr, inst.inst_pc);
+        res_stations_add(
+            alu_res_stations,
+            inst.op,
+            NA, // LUI doesn't use rs1
+            NA, // LUI doesn't use rs2
+            inst.imm,
+            NA, // LUI only has one operand
+            NA, // Only used in branch and memory instructions
+            inst.rd_addr,
+            inst.inst_pc);
         break;
     case AUIPC:
-        res_stations_add(alu_res_stations, inst.op, inst.inst_pc, inst.imm, NA, inst.rd_addr, inst.inst_pc);
+        res_stations_add(
+            alu_res_stations,
+            inst.op,
+            NA, // AUIPC doesn't use rs1
+            NA, // AUIPC doesn't use rs2
+            inst.imm,
+            NA, // AUIPC only has one operand
+            NA, // Only used in branch and memory instructions
+            inst.rd_addr,
+            inst.inst_pc);
         break;
     case ADD:
     case SLT:
@@ -63,7 +90,16 @@ void handle_al_operation(struct decoded_inst inst, struct reg_file *reg_file, st
     case SRL:
     case SUB:
     case SRA:
-        res_stations_add(alu_res_stations, inst.op, reg_file->regs[inst.rs1_addr].value, reg_file->regs[inst.rs2_addr].value, NA, inst.rd_addr, inst.inst_pc);
+        res_stations_add(
+            alu_res_stations,
+            inst.op,
+            0,
+            0,
+            reg_file->regs[inst.rs1_addr].value,
+            reg_file->regs[inst.rs2_addr].value,
+            NA, // Only used in branch and memory instructions
+            inst.rd_addr,
+            inst.inst_pc);
         break;
     default:
         fprintf(stderr, "Error: Unknown arithmetic or logical op");
@@ -77,11 +113,28 @@ void handle_branch_operation(struct decoded_inst inst, struct reg_file *reg_file
     switch (inst.op)
     {
     case JAL:
-        // TODO: Decide what we're doing with the PC here
-        res_stations_add(branch_res_stations, inst.op, NA, NA, inst.imm, inst.rd_addr, inst.inst_pc);
+        res_stations_add(
+            branch_res_stations,
+            inst.op,
+            NA, // JAL doesn't use rs1
+            NA, // JAL doesn't use rs2
+            NA, // JAL only has an offset operand
+            NA, // JAL only has an offset operand
+            inst.imm,
+            inst.rd_addr,
+            inst.inst_pc);
         break;
     case JALR:
-        res_stations_add(branch_res_stations, inst.op, reg_file->regs[inst.rs1_addr].value, NA, inst.imm, inst.rd_addr, inst.inst_pc);
+        res_stations_add(
+            branch_res_stations,
+            inst.op,
+            0,
+            NA, // JALR doesn't use rs2
+            reg_file->regs[inst.rs1_addr].value,
+            NA, // JALR only has base and offset operands
+            inst.imm,
+            inst.rd_addr,
+            inst.inst_pc);
         break;
     case BEQ:
     case BNE:
@@ -90,7 +143,16 @@ void handle_branch_operation(struct decoded_inst inst, struct reg_file *reg_file
     case BGE:
     case BGEU:
         // TODO: Decide what to do about the destination register
-        res_stations_add(branch_res_stations, inst.op, reg_file->regs[inst.rs1_addr].value, reg_file->regs[inst.rs2_addr].value, inst.imm, inst.rd_addr, inst.inst_pc);
+        res_stations_add(
+            branch_res_stations,
+            inst.op,
+            0,
+            0,
+            reg_file->regs[inst.rs1_addr].value,
+            reg_file->regs[inst.rs2_addr].value,
+            inst.imm,
+            inst.rd_addr,
+            inst.inst_pc);
         break;
     default:
         fprintf(stderr, "Error: Unknown branch op");
@@ -109,12 +171,30 @@ void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, s
     case LHU:
     case LB:
     case LBU:
-        res_stations_add(memory_res_stations, inst.op, reg_file->regs[inst.rs1_addr].value, NA, inst.imm, inst.rd_addr, inst.inst_pc);
+        res_stations_add(
+            memory_res_stations,
+            inst.op,
+            0,
+            NA, // Load operations don't use rs2
+            reg_file->regs[inst.rs1_addr].value,
+            NA, // Load operations only have base and offset operands
+            inst.imm,
+            inst.rd_addr,
+            inst.inst_pc);
         break;
     case SW:
     case SH:
     case SB:
-        res_stations_add(memory_res_stations, inst.op, reg_file->regs[inst.rs1_addr].value, reg_file->regs[inst.rs2_addr].value, inst.imm, inst.rd_addr, inst.inst_pc);
+        res_stations_add(
+            memory_res_stations,
+            inst.op,
+            0,
+            0,
+            reg_file->regs[inst.rs1_addr].value,
+            reg_file->regs[inst.rs2_addr].value,
+            inst.imm,
+            inst.rd_addr,
+            inst.inst_pc);
         break;
     default:
         fprintf(stderr, "Error: Unknown memory op");

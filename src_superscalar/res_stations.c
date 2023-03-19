@@ -37,6 +37,8 @@ void res_stations_step(struct res_stations *rs)
 void res_stations_add(
     struct res_stations *rs,
     enum op op,
+    uint32_t qj,
+    uint32_t qk,
     uint32_t vj,
     uint32_t vk,
     uint32_t a,
@@ -46,10 +48,10 @@ void res_stations_add(
     // TODO: This shouldn't be zero and the attributes are hacky for now
     rs->stations[0].busy = true;
     rs->stations[0].op = op;
+    rs->stations[0].qj = qj;
+    rs->stations[0].qk = qk;
     rs->stations[0].vj = vj;
     rs->stations[0].vk = vk;
-    rs->stations[0].qj = 0;
-    rs->stations[0].qk = 0;
     rs->stations[0].dest = dest;
 
     rs->stations[0].a = a;
