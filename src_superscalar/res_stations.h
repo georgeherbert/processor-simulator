@@ -43,6 +43,7 @@ void res_stations_add(
     uint32_t inst_pc);                                           // Add instruction to reservation stations
 struct res_station res_stations_remove(struct res_stations *rs); // Remove instruction from reservation stations
 bool res_stations_not_empty(struct res_stations *rs);            // Check if reservation stations are not empty
+bool res_stations_not_full(struct res_stations *rs);             // Check if reservation stations are not full
 // TODO: The res_stations_add args need to be fixed
 
 void res_stations_destroy(struct res_stations *rs); // Free reservation stations

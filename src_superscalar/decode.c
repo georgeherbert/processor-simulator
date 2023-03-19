@@ -169,7 +169,7 @@ void create_decoded_inst(
         .inst_pc = inst_pc,
     };
 
-    inst_queue_push(inst_queue, decoded_inst);
+    inst_queue_enqueue(inst_queue, decoded_inst);
 }
 
 void handle_op_imm(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)

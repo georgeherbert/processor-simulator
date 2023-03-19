@@ -5,6 +5,7 @@
 #include "res_stations.h"
 #include "reg_file.h"
 #include "decode.h"
+#include "decoded_inst.h"
 
 #define NA 0
 
@@ -205,17 +206,29 @@ void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, s
 
 void issue_step(struct issue_unit *issue_unit)
 {
-    struct decoded_inst inst = inst_queue_pop(issue_unit->inst_queue);
-    switch (inst.op_type)
+    enum op_type op_type = inst_queue_peek_op_type(issue_unit->inst_queue);
+    switch (op_type)
     {
     case AL:
-        handle_al_operation(inst, issue_unit->reg_file, issue_unit->alu_res_stations);
+        if (res_stations_not_full(issue_unit->alu_res_stations))
+        {
+            struct decoded_inst inst = inst_queue_dequeue(issue_unit->inst_queue);
+            handle_al_operation(inst, issue_unit->reg_file, issue_unit->alu_res_stations);
+        }
         break;
     case BRANCH:
-        handle_branch_operation(inst, issue_unit->reg_file, issue_unit->branch_res_stations);
+        if (res_stations_not_full(issue_unit->branch_res_stations))
+        {
+            struct decoded_inst inst = inst_queue_dequeue(issue_unit->inst_queue);
+            handle_branch_operation(inst, issue_unit->reg_file, issue_unit->branch_res_stations);
+        }
         break;
     case MEMORY:
-        handle_mem_operation(inst, issue_unit->reg_file, issue_unit->memory_res_stations);
+        if (res_stations_not_full(issue_unit->memory_res_stations))
+        {
+            struct decoded_inst inst = inst_queue_dequeue(issue_unit->inst_queue);
+            handle_mem_operation(inst, issue_unit->reg_file, issue_unit->memory_res_stations);
+        }
         break;
     default:
         fprintf(stderr, "Error: Unknown instruction type");

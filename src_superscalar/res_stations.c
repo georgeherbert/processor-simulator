@@ -76,6 +76,18 @@ bool res_stations_not_empty(struct res_stations *rs)
     return !is_empty;
 }
 
+bool res_stations_not_full(struct res_stations *rs)
+{
+    uint32_t is_full = true;
+
+    for (uint32_t i = 0; i < rs->num_stations; i++)
+    {
+        is_full &= rs->stations[i].busy;
+    }
+
+    return !is_full;
+}
+
 void res_stations_destroy(struct res_stations *rs)
 {
     free(rs->stations);
