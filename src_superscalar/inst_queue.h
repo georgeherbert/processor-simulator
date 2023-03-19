@@ -9,8 +9,8 @@
 struct inst_queue
 {
     struct decoded_inst insts[INST_QUEUE_SIZE];
-    uint32_t front;
-    uint32_t rear;
+    int32_t front;
+    int32_t rear;
 };
 
 struct inst_queue *inst_queue_init();                                             // Initialise instruction queue

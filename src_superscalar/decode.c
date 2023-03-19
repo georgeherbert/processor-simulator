@@ -6,6 +6,8 @@
 #include "rv32i.h"
 #include "inst_queue.h"
 
+#define NA 0
+
 struct decode_unit *decode_init(
     uint32_t *reg_inst,
     uint32_t *reg_pc,
@@ -239,7 +241,7 @@ void handle_op_imm(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_p
         op,
         rd_addr,
         rs1_addr,
-        0,
+        NA, // Integer register-immediate instructions don't use rs2
         imm,
         inst_pc);
 }
@@ -254,8 +256,8 @@ void handle_lui(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
         AL,
         LUI,
         rd_addr,
-        0,
-        0,
+        NA, // LUI doesn't use rs1
+        NA, // LUI doesn't use rs2
         imm,
         inst_pc);
 
@@ -272,8 +274,8 @@ void handle_auipc(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc
         AL,
         AUIPC,
         rd_addr,
-        0,
-        0,
+        NA, // AUIPC doesn't use rs1
+        NA, // AUIPC doesn't use rs2
         imm,
         inst_pc);
 
@@ -358,7 +360,7 @@ void handle_op(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
         rd_addr,
         rs1_addr,
         rs2_addr,
-        0,
+        NA, // Integer register-register instructions don't use immediate
         inst_pc);
 }
 
@@ -372,8 +374,8 @@ void handle_jal(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
         BRANCH,
         JAL,
         rd_addr,
-        0,
-        0,
+        NA, // JAL doesn't use rs1
+        NA, // JAL doesn't use rs2
         imm,
         inst_pc);
 
@@ -392,7 +394,7 @@ void handle_jalr(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
         JALR,
         rd_addr,
         rs1_addr,
-        0,
+        NA, // JALR doesn't use rs2
         imm,
         inst_pc);
 
@@ -442,7 +444,7 @@ void handle_branch(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_p
         inst_queue,
         BRANCH,
         op,
-        0,
+        NA, // Branch instructions don't use rd
         rs1_addr,
         rs2_addr,
         imm,
@@ -490,7 +492,7 @@ void handle_load(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
         op,
         rd_addr,
         rs1_addr,
-        0,
+        NA, // Load instructions don't use rs2
         imm,
         inst_pc);
 }
@@ -526,7 +528,7 @@ void handle_store(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc
         inst_queue,
         MEMORY,
         op,
-        0,
+        NA, // Store instructions don't use rd
         rs1_addr,
         rs2_addr,
         imm,
