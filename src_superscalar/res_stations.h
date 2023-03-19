@@ -5,8 +5,6 @@
 #include <stdbool.h>
 #include "decode.h"
 
-#define RES_STATION_SIZE 32
-
 struct res_station
 {
     uint32_t id;
@@ -40,11 +38,11 @@ void res_stations_add(
     uint32_t vk,
     uint32_t a,
     uint32_t dest,
-    uint32_t inst_pc);                                           // Add instruction to reservation stations
-struct res_station res_stations_remove(struct res_stations *rs); // Remove instruction from reservation stations
-bool res_stations_not_empty(struct res_stations *rs);            // Check if reservation stations are not empty
-bool res_stations_not_full(struct res_stations *rs);             // Check if reservation stations are not full
-// TODO: The res_stations_add args need to be fixed
+    uint32_t inst_pc);                                                        // Add instruction to reservation stations
+struct res_station res_stations_remove(struct res_stations *rs);              // Remove instruction from reservation stations
+bool res_stations_is_ready(struct res_stations *rs);                          // Check if any busy reservation stations have all operands
+void res_stations_set_station_not_busy(struct res_stations *rs, uint32_t id); // Set a reservation station to not busy
+bool res_stations_not_full(struct res_stations *rs);                          // Check if reservation stations are not full
 
 void res_stations_destroy(struct res_stations *rs); // Free reservation stations
 

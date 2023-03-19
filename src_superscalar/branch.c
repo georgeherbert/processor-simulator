@@ -30,7 +30,7 @@ struct branch_unit *branch_init(
 
 void branch_step(struct branch_unit *branch_unit)
 {
-    if (res_stations_not_empty(branch_unit->branch_res_stations))
+    if (res_stations_is_ready(branch_unit->branch_res_stations))
     {
         struct res_station entry = res_stations_remove(branch_unit->branch_res_stations);
 
@@ -80,6 +80,8 @@ void branch_step(struct branch_unit *branch_unit)
             fprintf(stderr, "Error: Unknown branch or jump operation\n");
             exit(EXIT_FAILURE);
         }
+
+        res_stations_set_station_not_busy(branch_unit->branch_res_stations, entry.id);
     }
 }
 

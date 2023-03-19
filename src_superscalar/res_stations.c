@@ -45,35 +45,64 @@ void res_stations_add(
     uint32_t dest,
     uint32_t inst_pc)
 {
-    // TODO: This shouldn't be zero and the attributes are hacky for now
-    rs->stations[0].busy = true;
-    rs->stations[0].op = op;
-    rs->stations[0].qj = qj;
-    rs->stations[0].qk = qk;
-    rs->stations[0].vj = vj;
-    rs->stations[0].vk = vk;
-    rs->stations[0].dest = dest;
-
-    rs->stations[0].a = a;
-    rs->stations[0].inst_pc = inst_pc;
+    if (res_stations_not_full(rs))
+    {
+        for (uint32_t i = 0; i < rs->num_stations; i++)
+        {
+            if (!rs->stations[i].busy)
+            {
+                rs->stations[i].busy = true;
+                rs->stations[i].op = op;
+                rs->stations[i].qj = qj;
+                rs->stations[i].qk = qk;
+                rs->stations[i].vj = vj;
+                rs->stations[i].vk = vk;
+                rs->stations[i].dest = dest;
+                rs->stations[i].a = a;
+                rs->stations[i].inst_pc = inst_pc;
+                break;
+            }
+        }
+    }
+    else
+    {
+        fprintf(stderr, "Error: Cannot add since all reservation stations are busy");
+        exit(EXIT_FAILURE);
+    }
 }
 
 struct res_station res_stations_remove(struct res_stations *rs)
 {
-    rs->stations[0].busy = false;
-    return rs->stations[0]; // TODO: This shouldn't be zero
+    if (res_stations_is_ready(rs))
+    {
+        for (uint32_t i = 0; i < rs->num_stations; i++)
+        {
+            if (rs->stations[i].qj == 0 && rs->stations[i].qk == 0 && rs->stations[i].busy)
+            {
+                return rs->stations[i];
+            }
+        }
+        fprintf(stderr, "Error: Cannot find a ready reservation station despite checking if there is one");
+        exit(EXIT_FAILURE);
+    }
+    else
+    {
+        fprintf(stderr, "Error: Cannot remove since all busy reservation stations are awaiting operands");
+        exit(EXIT_FAILURE);
+    }
 }
 
-bool res_stations_not_empty(struct res_stations *rs)
+bool res_stations_is_ready(struct res_stations *rs)
 {
-    uint32_t is_empty = true;
+    uint32_t is_ready = false;
 
     for (uint32_t i = 0; i < rs->num_stations; i++)
     {
-        is_empty &= !rs->stations[i].busy;
+        is_ready |= rs->stations[i].qj == 0 && rs->stations[i].qk == 0 && rs->stations[i].busy;
+        break;
     }
 
-    return !is_empty;
+    return is_ready;
 }
 
 bool res_stations_not_full(struct res_stations *rs)
@@ -86,6 +115,18 @@ bool res_stations_not_full(struct res_stations *rs)
     }
 
     return !is_full;
+}
+
+void res_stations_set_station_not_busy(struct res_stations *rs, uint32_t id)
+{
+    for (uint32_t i = 0; i < rs->num_stations; i++)
+    {
+        if (rs->stations[i].id == id)
+        {
+            rs->stations[i].busy = false;
+            return;
+        }
+    }
 }
 
 void res_stations_destroy(struct res_stations *rs)

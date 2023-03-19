@@ -22,7 +22,7 @@ struct alu_unit *alu_init(struct res_stations *alu_res_stations, struct reg_file
 
 void alu_step(struct alu_unit *alu_unit)
 {
-    if (res_stations_not_empty(alu_unit->alu_res_stations))
+    if (res_stations_is_ready(alu_unit->alu_res_stations))
     {
         struct res_station entry = res_stations_remove(alu_unit->alu_res_stations);
 
@@ -84,6 +84,8 @@ void alu_step(struct alu_unit *alu_unit)
         if (entry.dest != 0) {
             alu_unit->reg_file->regs[entry.dest].value = out;
         }
+
+        res_stations_set_station_not_busy(alu_unit->alu_res_stations, entry.id);
     }
 }
 

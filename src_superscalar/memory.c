@@ -27,7 +27,7 @@ struct memory_unit *memory_init(
 
 void memory_step(struct memory_unit *memory_unit)
 {
-    if (res_stations_not_empty(memory_unit->memory_res_stations))
+    if (res_stations_is_ready(memory_unit->memory_res_stations))
     {
         struct res_station entry = res_stations_remove(memory_unit->memory_res_stations);
 
@@ -78,6 +78,8 @@ void memory_step(struct memory_unit *memory_unit)
             fprintf(stderr, "Error: Unknown memory operation");
             exit(EXIT_FAILURE);
         }
+
+        res_stations_set_station_not_busy(memory_unit->memory_res_stations, entry.id);
     }
 }
 
