@@ -2,12 +2,13 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "branch.h"
-#include "res_station.h"
+#include "res_stations.h"
+#include "reg_file.h"
 #include "control.h"
 
 struct branch_unit *branch_init(
     struct res_stations *branch_res_stations,
-    uint32_t *regs,
+    struct reg_file *reg_file,
     uint32_t *reg_pc_target,
     enum pc_src *pc_src)
 {
@@ -20,7 +21,7 @@ struct branch_unit *branch_init(
     }
 
     branch_unit->branch_res_stations = branch_res_stations;
-    branch_unit->regs = regs;
+    branch_unit->reg_file = reg_file;
     branch_unit->reg_pc_target = reg_pc_target;
     branch_unit->pc_src = pc_src;
 
@@ -29,7 +30,7 @@ struct branch_unit *branch_init(
 
 void branch_step(struct branch_unit *branch_unit)
 {
-    if (res_station_not_empty(branch_unit->branch_res_stations))
+    if (res_stations_not_empty(branch_unit->branch_res_stations))
     {
         struct res_station entry = res_stations_remove(branch_unit->branch_res_stations);
 
@@ -40,7 +41,7 @@ void branch_step(struct branch_unit *branch_unit)
             *branch_unit->reg_pc_target = entry.a + entry.inst_pc;
             if (entry.dest != 0)
             {
-                branch_unit->regs[entry.dest] = entry.inst_pc + 4;
+                branch_unit->reg_file->regs[entry.dest].value = entry.inst_pc + 4;
             }
             break;
         case JALR:
@@ -48,7 +49,7 @@ void branch_step(struct branch_unit *branch_unit)
             *branch_unit->reg_pc_target = (entry.vj + entry.a) & ~1;
             if (entry.dest != 0)
             {
-                branch_unit->regs[entry.dest] = entry.inst_pc + 4;
+                branch_unit->reg_file->regs[entry.dest].value = entry.inst_pc + 4;
             }
             break;
         case BEQ:

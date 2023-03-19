@@ -2,12 +2,15 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "issue.h"
-#include "res_station.h"
+#include "res_stations.h"
+#include "reg_file.h"
 #include "decode.h"
+
+#define NA 0
 
 struct issue_unit *issue_init(
     struct inst_queue *inst_queue,
-    uint32_t *regs,
+    struct reg_file *reg_file,
     struct res_stations *alu_res_stations,
     struct res_stations *branch_res_stations,
     struct res_stations *memory_res_stations)
@@ -21,7 +24,7 @@ struct issue_unit *issue_init(
     }
 
     issue_unit->inst_queue = inst_queue;
-    issue_unit->regs = regs;
+    issue_unit->reg_file = reg_file;
     issue_unit->alu_res_stations = alu_res_stations;
     issue_unit->branch_res_stations = branch_res_stations;
     issue_unit->memory_res_stations = memory_res_stations;
@@ -29,91 +32,94 @@ struct issue_unit *issue_init(
     return issue_unit;
 }
 
-void handle_al_operation(struct decoded_inst inst, uint32_t *regs, struct res_stations *alu_res_stations)
+void handle_al_operation(struct decoded_inst inst, struct reg_file *reg_file, struct res_stations *alu_res_stations)
 {
-    switch (inst.op) {
-        case ADDI:
-        case SLTI:
-        case SLTIU:
-        case ANDI:
-        case ORI:
-        case XORI:
-        case SLLI:
-        case SRLI:
-        case SRAI:
-            res_stations_add(alu_res_stations, inst.op, regs[inst.rs1_addr], inst.imm, 0, inst.rd_addr, inst.inst_pc);
-            break;
-        case LUI:
-            res_stations_add(alu_res_stations, inst.op, 0, inst.imm, 0, inst.rd_addr, inst.inst_pc);
-            break;
-        case AUIPC:
-            res_stations_add(alu_res_stations, inst.op, inst.inst_pc, inst.imm, 0, inst.rd_addr, inst.inst_pc);
-            break;
-        case ADD:
-        case SLT:
-        case SLTU:
-        case AND:
-        case OR:
-        case XOR:
-        case SLL:
-        case SRL:
-        case SUB:
-        case SRA:
-            res_stations_add(alu_res_stations, inst.op, regs[inst.rs1_addr], regs[inst.rs2_addr], 0, inst.rd_addr, inst.inst_pc);
-            break;
-        default:
-            fprintf(stderr, "Error: Unknown arithmetic or logical op");
-            exit(EXIT_FAILURE);
-            break;
+    switch (inst.op)
+    {
+    case ADDI:
+    case SLTI:
+    case SLTIU:
+    case ANDI:
+    case ORI:
+    case XORI:
+    case SLLI:
+    case SRLI:
+    case SRAI:
+        res_stations_add(alu_res_stations, inst.op, reg_file->regs[inst.rs1_addr].value, inst.imm, NA, inst.rd_addr, inst.inst_pc);
+        break;
+    case LUI:
+        res_stations_add(alu_res_stations, inst.op, NA, inst.imm, NA, inst.rd_addr, inst.inst_pc);
+        break;
+    case AUIPC:
+        res_stations_add(alu_res_stations, inst.op, inst.inst_pc, inst.imm, NA, inst.rd_addr, inst.inst_pc);
+        break;
+    case ADD:
+    case SLT:
+    case SLTU:
+    case AND:
+    case OR:
+    case XOR:
+    case SLL:
+    case SRL:
+    case SUB:
+    case SRA:
+        res_stations_add(alu_res_stations, inst.op, reg_file->regs[inst.rs1_addr].value, reg_file->regs[inst.rs2_addr].value, NA, inst.rd_addr, inst.inst_pc);
+        break;
+    default:
+        fprintf(stderr, "Error: Unknown arithmetic or logical op");
+        exit(EXIT_FAILURE);
+        break;
     }
 }
 
-void handle_branch_operation(struct decoded_inst inst, uint32_t *regs, struct res_stations *branch_res_stations)
+void handle_branch_operation(struct decoded_inst inst, struct reg_file *reg_file, struct res_stations *branch_res_stations)
 {
-    switch (inst.op) {
-        case JAL:
-            // TODO: Decide what we're doing with the PC here
-            res_stations_add(branch_res_stations, inst.op, 0, 0, inst.imm, inst.rd_addr, inst.inst_pc);
-            break;
-        case JALR:
-            res_stations_add(branch_res_stations, inst.op, regs[inst.rs1_addr], 0, inst.imm, inst.rd_addr, inst.inst_pc);
-            break;
-        case BEQ:
-        case BNE:
-        case BLT:
-        case BLTU:
-        case BGE:
-        case BGEU:
-            // TODO: Decide what to do about the destination register
-            res_stations_add(branch_res_stations, inst.op, regs[inst.rs1_addr], regs[inst.rs2_addr], inst.imm, inst.rd_addr, inst.inst_pc);
-            break;
-        default:
-            fprintf(stderr, "Error: Unknown branch op");
-            exit(EXIT_FAILURE);
-            break;
+    switch (inst.op)
+    {
+    case JAL:
+        // TODO: Decide what we're doing with the PC here
+        res_stations_add(branch_res_stations, inst.op, NA, NA, inst.imm, inst.rd_addr, inst.inst_pc);
+        break;
+    case JALR:
+        res_stations_add(branch_res_stations, inst.op, reg_file->regs[inst.rs1_addr].value, NA, inst.imm, inst.rd_addr, inst.inst_pc);
+        break;
+    case BEQ:
+    case BNE:
+    case BLT:
+    case BLTU:
+    case BGE:
+    case BGEU:
+        // TODO: Decide what to do about the destination register
+        res_stations_add(branch_res_stations, inst.op, reg_file->regs[inst.rs1_addr].value, reg_file->regs[inst.rs2_addr].value, inst.imm, inst.rd_addr, inst.inst_pc);
+        break;
+    default:
+        fprintf(stderr, "Error: Unknown branch op");
+        exit(EXIT_FAILURE);
+        break;
     }
 }
 
-void handle_mem_operation(struct decoded_inst inst, uint32_t *regs, struct res_stations *memory_res_stations)
+void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, struct res_stations *memory_res_stations)
 {
     // TODO: Decide what to do about the destination register for stores here
-    switch (inst.op) {
-        case LW:
-        case LH:
-        case LHU:
-        case LB:
-        case LBU:
-            res_stations_add(memory_res_stations, inst.op, regs[inst.rs1_addr], 0, inst.imm, inst.rd_addr, inst.inst_pc);
-            break;
-        case SW:
-        case SH:
-        case SB:
-            res_stations_add(memory_res_stations, inst.op, regs[inst.rs1_addr], regs[inst.rs2_addr], inst.imm, inst.rd_addr, inst.inst_pc);
-            break;
-        default:
-            fprintf(stderr, "Error: Unknown memory op");
-            exit(EXIT_FAILURE);
-            break;
+    switch (inst.op)
+    {
+    case LW:
+    case LH:
+    case LHU:
+    case LB:
+    case LBU:
+        res_stations_add(memory_res_stations, inst.op, reg_file->regs[inst.rs1_addr].value, NA, inst.imm, inst.rd_addr, inst.inst_pc);
+        break;
+    case SW:
+    case SH:
+    case SB:
+        res_stations_add(memory_res_stations, inst.op, reg_file->regs[inst.rs1_addr].value, reg_file->regs[inst.rs2_addr].value, inst.imm, inst.rd_addr, inst.inst_pc);
+        break;
+    default:
+        fprintf(stderr, "Error: Unknown memory op");
+        exit(EXIT_FAILURE);
+        break;
     }
 }
 
@@ -123,13 +129,13 @@ void issue_step(struct issue_unit *issue_unit)
     switch (inst.op_type)
     {
     case AL:
-        handle_al_operation(inst, issue_unit->regs, issue_unit->alu_res_stations);
+        handle_al_operation(inst, issue_unit->reg_file, issue_unit->alu_res_stations);
         break;
     case BRANCH:
-        handle_branch_operation(inst, issue_unit->regs, issue_unit->branch_res_stations);
+        handle_branch_operation(inst, issue_unit->reg_file, issue_unit->branch_res_stations);
         break;
     case MEMORY:
-        handle_mem_operation(inst, issue_unit->regs, issue_unit->memory_res_stations);
+        handle_mem_operation(inst, issue_unit->reg_file, issue_unit->memory_res_stations);
         break;
     default:
         fprintf(stderr, "Error: Unknown instruction type");

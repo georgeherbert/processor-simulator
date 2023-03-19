@@ -4,13 +4,23 @@
 #include <inttypes.h>
 #include "cpu.h"
 #include "main_memory.h"
+#include "reg_file.h"
 #include "fetch.h"
 #include "decode.h"
 #include "inst_queue.h"
+#include "issue.h"
+#include "res_stations.h"
+#include "reg_file.h"
+#include "alu.h"
+#include "branch.h"
 #include "memory.h"
 #include "control.h"
 
 #define NUM_WORDS_OUTPUT 2048
+
+#define NUM_ALU_RES_STATIONS 32
+#define NUM_BRANCH_RES_STATIONS 32
+#define NUM_MEMORY_RES_STATIONS 32
 
 struct cpu *cpu_init(char *file_name)
 {
@@ -21,13 +31,10 @@ struct cpu *cpu_init(char *file_name)
         exit(EXIT_FAILURE);
     }
 
-    for (uint32_t i = 0; i < NUM_REGS; i++)
-    {
-        cpu->regs[i] = 0;
-    }
+    cpu->reg_file = reg_file_init();
     // Set frame pointer and stack pointer
-    cpu->regs[8] = MEMORY_SIZE;
-    cpu->regs[2] = MEMORY_SIZE;
+    cpu->reg_file->regs[8].value = MEMORY_SIZE;
+    cpu->reg_file->regs[2].value = MEMORY_SIZE;
 
     cpu->pc_src = PC_SRC_PLUS_4;
 
@@ -47,27 +54,33 @@ struct cpu *cpu_init(char *file_name)
         &cpu->reg_inst,
         &cpu->reg_pc,
         cpu->inst_queue);
-    cpu->alu_res_stations = res_stations_init();
-    cpu->branch_res_stations = res_stations_init();
-    cpu->memory_res_stations = res_stations_init();
+    cpu->alu_res_stations = res_stations_init(
+        NUM_ALU_RES_STATIONS,
+        1); // 0 is used to indicate operands are available
+    cpu->branch_res_stations = res_stations_init(
+        NUM_BRANCH_RES_STATIONS,
+        NUM_ALU_RES_STATIONS);
+    cpu->memory_res_stations = res_stations_init(
+        NUM_MEMORY_RES_STATIONS,
+        NUM_ALU_RES_STATIONS + NUM_BRANCH_RES_STATIONS);
     cpu->issue_unit = issue_init(
         cpu->inst_queue,
-        cpu->regs,
+        cpu->reg_file,
         cpu->alu_res_stations,
         cpu->branch_res_stations,
         cpu->memory_res_stations);
     cpu->alu_unit = alu_init(
         cpu->alu_res_stations,
-        cpu->regs);
+        cpu->reg_file);
     cpu->branch_unit = branch_init(
         cpu->branch_res_stations,
-        cpu->regs,
+        cpu->reg_file,
         &cpu->reg_pc_target,
         &cpu->pc_src);
     cpu->memory_unit = memory_init(
         cpu->memory_res_stations,
         cpu->mm,
-        cpu->regs);
+        cpu->reg_file);
 
     printf("CPU successfully initialised\n");
 
@@ -90,12 +103,12 @@ void print_main_memory(struct main_memory *mm)
     }
 }
 
-void print_regs(uint32_t *regs)
+void print_reg_file(struct reg_file *reg_file)
 {
     printf("\nRegisters:\n");
     for (int i = 0; i < NUM_REGS; i++)
     {
-        printf("x%02d: %-11d ", i, regs[i]);
+        printf("x%02d: %-11d ", i, reg_file->regs[i].value);
         if ((i + 1) % 4 == 0)
         {
             printf("\n");
@@ -109,10 +122,10 @@ void cpu_destroy(struct cpu *cpu)
     fetch_destroy(cpu->fetch_unit);
     decode_destroy(cpu->decode_unit);
     inst_queue_destroy(cpu->inst_queue);
-    res_station_destroy(cpu->alu_res_stations);
-    res_station_destroy(cpu->memory_res_stations);
-    res_station_destroy(cpu->branch_res_stations);
     issue_destroy(cpu->issue_unit);
+    res_stations_destroy(cpu->alu_res_stations);
+    res_stations_destroy(cpu->memory_res_stations);
+    res_stations_destroy(cpu->branch_res_stations);
     alu_destroy(cpu->alu_unit);
     branch_destroy(cpu->branch_unit);
     memory_destroy(cpu->memory_unit);
@@ -148,11 +161,10 @@ int main(int argc, char *argv[])
 
         instructions++;
         cycles += 5;
-        // print_regs(cpu->regs);
     }
 
     print_main_memory(cpu->mm);
-    print_regs(cpu->regs);
+    print_reg_file(cpu->reg_file);
 
     printf("\nInstructions: %" PRIu64 "\n", instructions);
     printf("Cycles: %" PRIu64 "\n", cycles);

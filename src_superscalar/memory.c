@@ -1,13 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "memory.h"
-#include "res_station.h"
+#include "res_stations.h"
+#include "reg_file.h"
 #include "main_memory.h"
 
 struct memory_unit *memory_init(
     struct res_stations *memory_res_stations,
     struct main_memory *mm,
-    uint32_t *regs)
+    struct reg_file *reg_file)
 {
     struct memory_unit *memory_unit = malloc(sizeof(struct memory_unit));
 
@@ -19,14 +20,14 @@ struct memory_unit *memory_init(
 
     memory_unit->memory_res_stations = memory_res_stations;
     memory_unit->mm = mm;
-    memory_unit->regs = regs;
+    memory_unit->reg_file = reg_file;
 
     return memory_unit;
 }
 
 void memory_step(struct memory_unit *memory_unit)
 {
-    if (res_station_not_empty(memory_unit->memory_res_stations))
+    if (res_stations_not_empty(memory_unit->memory_res_stations))
     {
         struct res_station entry = res_stations_remove(memory_unit->memory_res_stations);
 
@@ -37,31 +38,31 @@ void memory_step(struct memory_unit *memory_unit)
         case LW:
             if (entry.dest != 0)
             {
-                memory_unit->regs[entry.dest] = main_memory_load_word(memory_unit->mm, address);
+                memory_unit->reg_file->regs[entry.dest].value = main_memory_load_word(memory_unit->mm, address);
             }
             break;
         case LH:
             if (entry.dest != 0)
             {
-                memory_unit->regs[entry.dest] = (int32_t)(int16_t)main_memory_load_half(memory_unit->mm, address);
+                memory_unit->reg_file->regs[entry.dest].value = (int32_t)(int16_t)main_memory_load_half(memory_unit->mm, address);
             }
             break;
         case LHU:
             if (entry.dest != 0)
             {
-                memory_unit->regs[entry.dest] = main_memory_load_half(memory_unit->mm, address);
+                memory_unit->reg_file->regs[entry.dest].value = main_memory_load_half(memory_unit->mm, address);
             }
             break;
         case LB:
             if (entry.dest != 0)
             {
-                memory_unit->regs[entry.dest] = (int32_t)(int8_t)main_memory_load_byte(memory_unit->mm, address);
+                memory_unit->reg_file->regs[entry.dest].value = (int32_t)(int8_t)main_memory_load_byte(memory_unit->mm, address);
             }
             break;
         case LBU:
             if (entry.dest != 0)
             {
-                memory_unit->regs[entry.dest] = main_memory_load_byte(memory_unit->mm, address);
+                memory_unit->reg_file->regs[entry.dest].value = main_memory_load_byte(memory_unit->mm, address);
             }
             break;
         case SW:

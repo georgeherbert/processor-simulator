@@ -1,10 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "alu.h"
-#include "res_station.h"
+#include "res_stations.h"
 #include "decoded_inst.h"
 
-struct alu_unit *alu_init(struct res_stations *alu_res_stations, uint32_t *regs)
+struct alu_unit *alu_init(struct res_stations *alu_res_stations, struct reg_file *reg_file)
 {
     struct alu_unit *alu_unit = malloc(sizeof(struct alu_unit));
 
@@ -15,14 +15,14 @@ struct alu_unit *alu_init(struct res_stations *alu_res_stations, uint32_t *regs)
     }
 
     alu_unit->alu_res_stations = alu_res_stations;
-    alu_unit->regs = regs;
+    alu_unit->reg_file = reg_file;
 
     return alu_unit;
 }
 
 void alu_step(struct alu_unit *alu_unit)
 {
-    if (res_station_not_empty(alu_unit->alu_res_stations))
+    if (res_stations_not_empty(alu_unit->alu_res_stations))
     {
         struct res_station entry = res_stations_remove(alu_unit->alu_res_stations);
 
@@ -78,7 +78,7 @@ void alu_step(struct alu_unit *alu_unit)
 
         // TODO: This should be two steps really...
         if (entry.dest != 0) {
-            alu_unit->regs[entry.dest] = out;
+            alu_unit->reg_file->regs[entry.dest].value = out;
         }
     }
 }
