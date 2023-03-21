@@ -83,10 +83,7 @@ void alu_step(struct alu_unit *alu_unit)
         }
 
         // TODO: This should be two steps really...
-        if (entry.dest != 0)
-        {
-            com_data_bus_add_entry(alu_unit->cdb, entry.id, out);
-        }
+        com_data_bus_add_entry(alu_unit->cdb, entry.id, out);
 
         res_stations_set_station_not_busy(alu_unit->alu_res_stations, entry.id);
     }

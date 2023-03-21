@@ -86,7 +86,6 @@ void res_stations_add(
                 rs->stations[i].qk = qk;
                 rs->stations[i].vj = vj;
                 rs->stations[i].vk = vk;
-                rs->stations[i].dest = dest;
                 rs->stations[i].a = a;
                 rs->stations[i].inst_pc = inst_pc;
                 reg_file_set_reg_qi(rs->reg_file, dest, rs->stations[i].id);

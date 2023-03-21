@@ -38,34 +38,19 @@ void memory_step(struct memory_unit *memory_unit)
         switch (entry.op)
         {
         case LW:
-            if (entry.dest != 0)
-            {
-                com_data_bus_add_entry(memory_unit->cdb, entry.id, main_memory_load_word(memory_unit->mm, address));
-            }
+            com_data_bus_add_entry(memory_unit->cdb, entry.id, main_memory_load_word(memory_unit->mm, address));
             break;
         case LH:
-            if (entry.dest != 0)
-            {
-                com_data_bus_add_entry(memory_unit->cdb, entry.id, (int32_t)(int16_t)main_memory_load_half(memory_unit->mm, address));
-            }
+            com_data_bus_add_entry(memory_unit->cdb, entry.id, (int32_t)(int16_t)main_memory_load_half(memory_unit->mm, address));
             break;
         case LHU:
-            if (entry.dest != 0)
-            {
-                com_data_bus_add_entry(memory_unit->cdb, entry.id, main_memory_load_half(memory_unit->mm, address));
-            }
+            com_data_bus_add_entry(memory_unit->cdb, entry.id, main_memory_load_half(memory_unit->mm, address));
             break;
         case LB:
-            if (entry.dest != 0)
-            {
-                com_data_bus_add_entry(memory_unit->cdb, entry.id, (int32_t)(int8_t)main_memory_load_byte(memory_unit->mm, address));
-            }
+            com_data_bus_add_entry(memory_unit->cdb, entry.id, (int32_t)(int8_t)main_memory_load_byte(memory_unit->mm, address));
             break;
         case LBU:
-            if (entry.dest != 0)
-            {
-                com_data_bus_add_entry(memory_unit->cdb, entry.id, main_memory_load_byte(memory_unit->mm, address));
-            }
+            com_data_bus_add_entry(memory_unit->cdb, entry.id, main_memory_load_byte(memory_unit->mm, address));
             break;
         case SW:
             main_memory_store_word(memory_unit->mm, address, entry.vk);

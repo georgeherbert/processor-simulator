@@ -44,18 +44,12 @@ void branch_step(struct branch_unit *branch_unit)
         case JAL:
             *branch_unit->pc_src = PC_SRC_BRANCH;
             *branch_unit->reg_pc_target = entry.a + entry.inst_pc;
-            if (entry.dest != 0)
-            {
-                com_data_bus_add_entry(branch_unit->cdb, entry.id, entry.inst_pc + 4);
-            }
+            com_data_bus_add_entry(branch_unit->cdb, entry.id, entry.inst_pc + 4);
             break;
         case JALR:
             *branch_unit->pc_src = PC_SRC_BRANCH;
             *branch_unit->reg_pc_target = (entry.vj + entry.a) & ~1;
-            if (entry.dest != 0)
-            {
-                com_data_bus_add_entry(branch_unit->cdb, entry.id, entry.inst_pc + 4);
-            }
+            com_data_bus_add_entry(branch_unit->cdb, entry.id, entry.inst_pc + 4);
             break;
         case BEQ:
             *branch_unit->pc_src = entry.vj == entry.vk ? PC_SRC_BRANCH : PC_SRC_PLUS_4;

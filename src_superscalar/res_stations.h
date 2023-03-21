@@ -18,7 +18,6 @@ struct res_station
     uint32_t vk;      // Value of second operand
     uint32_t a;       // Immediate value or address
     uint32_t inst_pc; // Program counter of instruction
-    uint32_t dest;    // TODO: Remove this eventually
 };
 
 struct res_stations
