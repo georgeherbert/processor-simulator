@@ -145,34 +145,45 @@ void cpu_destroy(struct cpu *cpu)
 
 void update_current(struct cpu *cpu)
 {
-    reg_update_current(&cpu->reg_pc_target);
-    reg_update_current(&cpu->reg_inst);
-    reg_update_current(&cpu->pc_src);
-    reg_update_current(&cpu->branch_in_pipeline);
+    // reg_update_current(&cpu->reg_pc_target);
+    // reg_update_current(&cpu->reg_inst);
+    // reg_update_current(&cpu->pc_src);
+    // reg_update_current(&cpu->branch_in_pipeline);
 }
 
 void step(struct cpu *cpu)
 {
     fetch_step(cpu->fetch_unit);
 
-    reg_update_current(&cpu->reg_inst);
-    reg_update_current(&cpu->reg_inst_pc);
-    reg_update_current(&cpu->branch_in_pipeline);
+    reg_update_current(&cpu->reg_inst); // TODO: Remove
+    reg_update_current(&cpu->reg_inst_pc); // TODO: Remove
+    reg_update_current(&cpu->branch_in_pipeline); // TODO: Remove
 
     decode_step(cpu->decode_unit);
+
+    inst_queue_update_current(cpu->inst_queue); // TODO: Remove
+
     issue_step(cpu->issue_unit);
+
+    com_data_bus_update_current(cpu->cdb); // TODO: Remove
+
     alu_step(cpu->alu_unit);
     branch_step(cpu->branch_unit);
     memory_step(cpu->memory_unit);
+
+    com_data_bus_update_current(cpu->cdb); // TODO: Remove
+
     res_stations_step(cpu->alu_res_stations);
     res_stations_step(cpu->branch_res_stations);
     res_stations_step(cpu->memory_res_stations);
     reg_file_step(cpu->reg_file);
     com_data_bus_step(cpu->cdb);
 
-    reg_update_current(&cpu->reg_pc_target);
-    reg_update_current(&cpu->pc_src);
-    reg_update_current(&cpu->branch_in_pipeline);
+    com_data_bus_update_current(cpu->cdb); // TODO: Remove
+
+    reg_update_current(&cpu->reg_pc_target); // TODO: Remove
+    reg_update_current(&cpu->pc_src); // TODO: Remove
+    reg_update_current(&cpu->branch_in_pipeline); // TODO: Remove
 }
 
 int main(int argc, char *argv[])
