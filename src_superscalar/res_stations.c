@@ -45,17 +45,17 @@ void res_stations_step(struct res_stations *rs)
         {
             if (rs->stations[i].qj != 0)
             {
-                if (com_data_bus_is_value_ready(rs->cdb, rs->stations[i].qj))
+                if (com_data_bus_is_val_ready(rs->cdb, rs->stations[i].qj))
                 {
-                    rs->stations[i].vj = com_data_bus_get_value(rs->cdb, rs->stations[i].qj);
+                    rs->stations[i].vj = com_data_bus_get_val(rs->cdb, rs->stations[i].qj);
                     rs->stations[i].qj = 0;
                 }
             }
             if (rs->stations[i].qk != 0)
             {
-                if (com_data_bus_is_value_ready(rs->cdb, rs->stations[i].qk))
+                if (com_data_bus_is_val_ready(rs->cdb, rs->stations[i].qk))
                 {
-                    rs->stations[i].vk = com_data_bus_get_value(rs->cdb, rs->stations[i].qk);
+                    rs->stations[i].vk = com_data_bus_get_val(rs->cdb, rs->stations[i].qk);
                     rs->stations[i].qk = 0;
                 }
             }

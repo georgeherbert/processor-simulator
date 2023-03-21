@@ -23,7 +23,7 @@ struct com_data_bus *com_data_bus_init(uint32_t num_entries)
     for (uint32_t i = 0; i < num_entries; i++)
     {
         cbd->entries[i].qi = 0;
-        cbd->entries[i].value = 0;
+        cbd->entries[i].val = 0;
     }
 
     cbd->num_entries = num_entries;
@@ -31,20 +31,20 @@ struct com_data_bus *com_data_bus_init(uint32_t num_entries)
     return cbd;
 }
 
-void com_data_bus_add_entry(struct com_data_bus *cbd, uint32_t qi, uint32_t value)
+void com_data_bus_add_entry(struct com_data_bus *cbd, uint32_t qi, uint32_t val)
 {
     for (uint32_t i = 0; i < cbd->num_entries; i++)
     {
         if (cbd->entries[i].qi == 0)
         {
             cbd->entries[i].qi = qi;
-            cbd->entries[i].value = value;
+            cbd->entries[i].val = val;
             return;
         }
     }
 }
 
-bool com_data_bus_is_value_ready(struct com_data_bus *cbd, uint32_t qi)
+bool com_data_bus_is_val_ready(struct com_data_bus *cbd, uint32_t qi)
 {
     for (uint32_t i = 0; i < cbd->num_entries; i++)
     {
@@ -57,17 +57,17 @@ bool com_data_bus_is_value_ready(struct com_data_bus *cbd, uint32_t qi)
     return false;
 }
 
-uint32_t com_data_bus_get_value(struct com_data_bus *cbd, uint32_t qi)
+uint32_t com_data_bus_get_val(struct com_data_bus *cbd, uint32_t qi)
 {
     for (uint32_t i = 0; i < cbd->num_entries; i++)
     {
         if (cbd->entries[i].qi == qi)
         {
-            return cbd->entries[i].value;
+            return cbd->entries[i].val;
         }
     }
 
-    fprintf(stderr, "Error: Could not find value for qi %d", qi);
+    fprintf(stderr, "Error: Could not find val for qi %d", qi);
     exit(EXIT_FAILURE);
 }
 
@@ -75,7 +75,7 @@ void com_data_bus_step(struct com_data_bus *cbd)
 {
     for (uint32_t i = 0; i < cbd->num_entries; i++)
     {
-        // printf("qi: %d, value: %d\n", cbd->entries[i].qi, cbd->entries[i].value);
+        // printf("qi: %d, val: %d\n", cbd->entries[i].qi, cbd->entries[i].val);
         cbd->entries[i].qi = 0;
     }
 }

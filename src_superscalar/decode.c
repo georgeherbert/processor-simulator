@@ -5,11 +5,12 @@
 #include "decoded_inst.h"
 #include "rv32i.h"
 #include "inst_queue.h"
+#include "reg.h"
 
 #define NA 0
 
 struct decode_unit *decode_init(
-    uint32_t *reg_inst,
+    struct reg *reg_inst,
     uint32_t *reg_pc,
     struct inst_queue *inst_queue)
 {
@@ -539,10 +540,10 @@ void decode_step(struct decode_unit *decode_unit)
 {
     if (inst_queue_is_not_full(decode_unit->inst_queue))
     {
-        uint32_t inst = *decode_unit->reg_inst;
+        uint32_t inst = reg_read(decode_unit->reg_inst);
         uint32_t opcode = get_opcode(inst);
 
-        uint32_t inst_pc = *decode_unit->reg_pc;
+        uint32_t inst_pc = *decode_unit->reg_pc; // TODO: Change this
 
         switch (opcode)
         {

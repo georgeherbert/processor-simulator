@@ -15,6 +15,7 @@
 #include "branch.h"
 #include "memory.h"
 #include "control.h"
+#include "reg.h"
 
 #define NUM_WORDS_OUTPUT 2048
 
@@ -33,10 +34,11 @@ struct cpu *cpu_init(char *file_name)
 
     cpu->cdb = com_data_bus_init(3); // One entry for each functional unit
     cpu->reg_file = reg_file_init(cpu->cdb);
-    cpu->pc_src = PC_SRC_PLUS_4;
+
+    cpu->pc_src.val_current = PC_SRC_PLUS_4;
     cpu->reg_pc = 0;
     cpu->reg_npc = 0;
-    cpu->branch_in_pipeline = BRANCH_NOT_IN_PIPELINE;
+    cpu->branch_in_pipeline.val_current = BRANCH_NOT_IN_PIPELINE;
     cpu->mm = main_memory_init(file_name);
     cpu->inst_queue = inst_queue_init();
     cpu->fetch_unit = fetch_init(
@@ -116,12 +118,13 @@ void print_reg_file(struct reg_file *reg_file)
     printf("\nRegisters:\n");
     for (int i = 0; i < NUM_REGS; i++)
     {
-        printf("x%02d: %-11d ", i, reg_file->regs[i].value);
+        printf("x%02d: %-11d ", i, reg_file->regs[i].val);
         if ((i + 1) % 4 == 0)
         {
             printf("\n");
         }
     }
+    printf("\n");
 }
 
 void cpu_destroy(struct cpu *cpu)
@@ -143,6 +146,37 @@ void cpu_destroy(struct cpu *cpu)
     free(cpu);
 }
 
+void update_current(struct cpu *cpu)
+{
+    reg_update_current(&cpu->reg_pc_target);
+    reg_update_current(&cpu->reg_inst);
+    reg_update_current(&cpu->pc_src);
+    reg_update_current(&cpu->branch_in_pipeline);
+}
+
+void step(struct cpu *cpu)
+{
+    fetch_step(cpu->fetch_unit);
+
+    reg_update_current(&cpu->reg_inst);
+    reg_update_current(&cpu->branch_in_pipeline);
+
+    decode_step(cpu->decode_unit);
+    issue_step(cpu->issue_unit);
+    alu_step(cpu->alu_unit);
+    branch_step(cpu->branch_unit);
+    memory_step(cpu->memory_unit);
+    res_stations_step(cpu->alu_res_stations);
+    res_stations_step(cpu->branch_res_stations);
+    res_stations_step(cpu->memory_res_stations);
+    reg_file_step(cpu->reg_file);
+    com_data_bus_step(cpu->cdb);
+
+    reg_update_current(&cpu->reg_pc_target);
+    reg_update_current(&cpu->pc_src);
+    reg_update_current(&cpu->branch_in_pipeline);
+}
+
 int main(int argc, char *argv[])
 {
     if (argc != 2)
@@ -157,20 +191,11 @@ int main(int argc, char *argv[])
     uint64_t cycles = 0;
 
     // Cycle until PC will be 0
-    while (!(cpu->pc_src == PC_SRC_BRANCH && cpu->reg_pc_target == 0))
+    while (!(cpu->pc_src.val_current == PC_SRC_BRANCH && cpu->reg_pc_target.val_current == 0))
     {
-        fetch_step(cpu->fetch_unit);
-        decode_step(cpu->decode_unit);
-        issue_step(cpu->issue_unit);
-        alu_step(cpu->alu_unit);
-        branch_step(cpu->branch_unit);
-        memory_step(cpu->memory_unit);
-        res_stations_step(cpu->alu_res_stations);
-        res_stations_step(cpu->branch_res_stations);
-        res_stations_step(cpu->memory_res_stations);
-        reg_file_step(cpu->reg_file);
-        com_data_bus_step(cpu->cdb);
+        step(cpu);
 
+        // update_current(cpu);
         // print_reg_file(cpu->reg_file);
 
         instructions++;

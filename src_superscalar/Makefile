@@ -2,7 +2,20 @@
 CFLAGS = -Wall -Wextra -pedantic -O3 -std=c11
 
 # Source files
-SRCS = cpu.c main_memory.c reg_file.c fetch.c decode.c inst_queue.c issue.c res_stations.c alu.c branch.c memory.c com_data_bus.c
+SRCS = \
+	cpu.c \
+	main_memory.c \
+	reg_file.c \
+	reg.c \
+	fetch.c \
+	decode.c \
+	inst_queue.c \
+	issue.c \
+	res_stations.c \
+	alu.c \
+	branch.c \
+	memory.c \
+	com_data_bus.c
 
 # Object files
 OBJS = $(SRCS:.c=.o)

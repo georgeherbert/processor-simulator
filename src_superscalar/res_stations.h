@@ -14,9 +14,9 @@ struct res_station
     enum op op;       // Operation to perform
     uint32_t qj;      // Reservation station ID of first operand
     uint32_t qk;      // Reservation station ID of second operand
-    uint32_t vj;      // Value of first operand
-    uint32_t vk;      // Value of second operand
-    uint32_t a;       // Immediate value or address
+    uint32_t vj;      // val of first operand
+    uint32_t vk;      // val of second operand
+    uint32_t a;       // Immediate val or address
     uint32_t inst_pc; // Program counter of instruction
 };
 
