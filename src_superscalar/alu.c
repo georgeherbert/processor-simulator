@@ -3,8 +3,9 @@
 #include "alu.h"
 #include "res_stations.h"
 #include "decoded_inst.h"
+#include "com_data_bus.h"
 
-struct alu_unit *alu_init(struct res_stations *alu_res_stations, struct reg_file *reg_file)
+struct alu_unit *alu_init(struct res_stations *alu_res_stations, struct reg_file *reg_file, struct com_data_bus *cdb)
 {
     struct alu_unit *alu_unit = malloc(sizeof(struct alu_unit));
 
@@ -16,6 +17,7 @@ struct alu_unit *alu_init(struct res_stations *alu_res_stations, struct reg_file
 
     alu_unit->alu_res_stations = alu_res_stations;
     alu_unit->reg_file = reg_file;
+    alu_unit->cdb = cdb;
 
     return alu_unit;
 }
@@ -81,8 +83,9 @@ void alu_step(struct alu_unit *alu_unit)
         }
 
         // TODO: This should be two steps really...
-        if (entry.dest != 0) {
-            alu_unit->reg_file->regs[entry.dest].value = out;
+        if (entry.dest != 0)
+        {
+            com_data_bus_add_entry(alu_unit->cdb, entry.id, out);
         }
 
         res_stations_set_station_not_busy(alu_unit->alu_res_stations, entry.id);

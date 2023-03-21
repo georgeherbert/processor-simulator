@@ -12,7 +12,7 @@ _start:
 	sw	ra,12(sp)
 	sw	s0,8(sp)
 	addi	s0,sp,16
-	li	a0,47
+	li	a0,46
 	call	fibonacci
 	mv	a5,a0
 	mv	a0,a5

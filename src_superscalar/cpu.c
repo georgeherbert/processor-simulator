@@ -31,16 +31,11 @@ struct cpu *cpu_init(char *file_name)
         exit(EXIT_FAILURE);
     }
 
-    cpu->reg_file = reg_file_init();
-    // Set frame pointer and stack pointer
-    cpu->reg_file->regs[8].value = MEMORY_SIZE;
-    cpu->reg_file->regs[2].value = MEMORY_SIZE;
-
+    cpu->cdb = com_data_bus_init(3); // One entry for each functional unit
+    cpu->reg_file = reg_file_init(cpu->cdb);
     cpu->pc_src = PC_SRC_PLUS_4;
-
     cpu->reg_pc = 0;
     cpu->reg_npc = 0;
-
     cpu->mm = main_memory_init(file_name);
     cpu->inst_queue = inst_queue_init();
     cpu->fetch_unit = fetch_init(
@@ -57,13 +52,19 @@ struct cpu *cpu_init(char *file_name)
         cpu->inst_queue);
     cpu->alu_res_stations = res_stations_init(
         NUM_ALU_RES_STATIONS,
-        1); // 1 is used because 0 indicates operands are ready
+        1, // 1 is used because 0 indicates operands are ready
+        cpu->reg_file,
+        cpu->cdb);
     cpu->branch_res_stations = res_stations_init(
         NUM_BRANCH_RES_STATIONS,
-        NUM_ALU_RES_STATIONS);
+        NUM_ALU_RES_STATIONS,
+        cpu->reg_file,
+        cpu->cdb);
     cpu->memory_res_stations = res_stations_init(
         NUM_MEMORY_RES_STATIONS,
-        NUM_ALU_RES_STATIONS + NUM_BRANCH_RES_STATIONS);
+        NUM_ALU_RES_STATIONS + NUM_BRANCH_RES_STATIONS,
+        cpu->reg_file,
+        cpu->cdb);
     cpu->issue_unit = issue_init(
         cpu->inst_queue,
         cpu->reg_file,
@@ -72,16 +73,19 @@ struct cpu *cpu_init(char *file_name)
         cpu->memory_res_stations);
     cpu->alu_unit = alu_init(
         cpu->alu_res_stations,
-        cpu->reg_file);
+        cpu->reg_file,
+        cpu->cdb);
     cpu->branch_unit = branch_init(
         cpu->branch_res_stations,
         cpu->reg_file,
         &cpu->reg_pc_target,
-        &cpu->pc_src);
+        &cpu->pc_src,
+        cpu->cdb);
     cpu->memory_unit = memory_init(
         cpu->memory_res_stations,
         cpu->mm,
-        cpu->reg_file);
+        cpu->reg_file,
+        cpu->cdb);
 
     printf("CPU successfully initialised\n");
 
@@ -119,6 +123,8 @@ void print_reg_file(struct reg_file *reg_file)
 
 void cpu_destroy(struct cpu *cpu)
 {
+    com_data_bus_destroy(cpu->cdb);
+    reg_file_destroy(cpu->reg_file);
     main_memory_destroy(cpu->mm);
     fetch_destroy(cpu->fetch_unit);
     decode_destroy(cpu->decode_unit);
@@ -156,9 +162,13 @@ int main(int argc, char *argv[])
         alu_step(cpu->alu_unit);
         branch_step(cpu->branch_unit);
         memory_step(cpu->memory_unit);
-        // execute_step(cpu->execute_unit);
-        // memory_step(cpu->memory_unit);
-        // writeback_step(cpu->writeback_unit);
+        res_stations_step(cpu->alu_res_stations);
+        res_stations_step(cpu->branch_res_stations);
+        res_stations_step(cpu->memory_res_stations);
+        reg_file_step(cpu->reg_file);
+        com_data_bus_step(cpu->cdb);
+
+        // print_reg_file(cpu->reg_file);
 
         instructions++;
         cycles += 5;

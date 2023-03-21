@@ -8,7 +8,8 @@
 struct memory_unit *memory_init(
     struct res_stations *memory_res_stations,
     struct main_memory *mm,
-    struct reg_file *reg_file)
+    struct reg_file *reg_file,
+    struct com_data_bus *cdb)
 {
     struct memory_unit *memory_unit = malloc(sizeof(struct memory_unit));
 
@@ -21,6 +22,7 @@ struct memory_unit *memory_init(
     memory_unit->memory_res_stations = memory_res_stations;
     memory_unit->mm = mm;
     memory_unit->reg_file = reg_file;
+    memory_unit->cdb = cdb;
 
     return memory_unit;
 }
@@ -38,31 +40,31 @@ void memory_step(struct memory_unit *memory_unit)
         case LW:
             if (entry.dest != 0)
             {
-                memory_unit->reg_file->regs[entry.dest].value = main_memory_load_word(memory_unit->mm, address);
+                com_data_bus_add_entry(memory_unit->cdb, entry.id, main_memory_load_word(memory_unit->mm, address));
             }
             break;
         case LH:
             if (entry.dest != 0)
             {
-                memory_unit->reg_file->regs[entry.dest].value = (int32_t)(int16_t)main_memory_load_half(memory_unit->mm, address);
+                com_data_bus_add_entry(memory_unit->cdb, entry.id, (int32_t)(int16_t)main_memory_load_half(memory_unit->mm, address));
             }
             break;
         case LHU:
             if (entry.dest != 0)
             {
-                memory_unit->reg_file->regs[entry.dest].value = main_memory_load_half(memory_unit->mm, address);
+                com_data_bus_add_entry(memory_unit->cdb, entry.id, main_memory_load_half(memory_unit->mm, address));
             }
             break;
         case LB:
             if (entry.dest != 0)
             {
-                memory_unit->reg_file->regs[entry.dest].value = (int32_t)(int8_t)main_memory_load_byte(memory_unit->mm, address);
+                com_data_bus_add_entry(memory_unit->cdb, entry.id, (int32_t)(int8_t)main_memory_load_byte(memory_unit->mm, address));
             }
             break;
         case LBU:
             if (entry.dest != 0)
             {
-                memory_unit->reg_file->regs[entry.dest].value = main_memory_load_byte(memory_unit->mm, address);
+                com_data_bus_add_entry(memory_unit->cdb, entry.id, main_memory_load_byte(memory_unit->mm, address));
             }
             break;
         case SW:

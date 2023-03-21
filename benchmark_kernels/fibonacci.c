@@ -4,7 +4,7 @@ uint32_t fibonacci(uint8_t n);
 
 uint32_t _start()
 {
-    return fibonacci(47);
+    return fibonacci(46);
 }
 
 uint32_t fibonacci(uint8_t n)

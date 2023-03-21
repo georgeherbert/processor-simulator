@@ -13,6 +13,7 @@
 #include "branch.h"
 #include "memory.h"
 #include "control.h"
+#include "com_data_bus.h"
 
 struct cpu
 {
@@ -27,6 +28,7 @@ struct cpu
     struct alu_unit *alu_unit;                // Pointer to ALU unit
     struct branch_unit *branch_unit;          // Pointer to branch unit
     struct memory_unit *memory_unit;          // Pointer to memory unit
+    struct com_data_bus *cdb;                 // Pointer to common data bus
 
     struct reg_file *reg_file; // Pointer to register file
     enum pc_src pc_src;        // Control signal for PC source

@@ -5,12 +5,14 @@
 #include "res_stations.h"
 #include "reg_file.h"
 #include "control.h"
+#include "com_data_bus.h"
 
 struct branch_unit *branch_init(
     struct res_stations *branch_res_stations,
     struct reg_file *reg_file,
     uint32_t *reg_pc_target,
-    enum pc_src *pc_src)
+    enum pc_src *pc_src,
+    struct com_data_bus *cdb)
 {
     struct branch_unit *branch_unit = malloc(sizeof(struct branch_unit));
 
@@ -24,6 +26,7 @@ struct branch_unit *branch_init(
     branch_unit->reg_file = reg_file;
     branch_unit->reg_pc_target = reg_pc_target;
     branch_unit->pc_src = pc_src;
+    branch_unit->cdb = cdb;
 
     return branch_unit;
 }
@@ -41,7 +44,7 @@ void branch_step(struct branch_unit *branch_unit)
             *branch_unit->reg_pc_target = entry.a + entry.inst_pc;
             if (entry.dest != 0)
             {
-                branch_unit->reg_file->regs[entry.dest].value = entry.inst_pc + 4;
+                com_data_bus_add_entry(branch_unit->cdb, entry.id, entry.inst_pc + 4);
             }
             break;
         case JALR:
@@ -49,7 +52,7 @@ void branch_step(struct branch_unit *branch_unit)
             *branch_unit->reg_pc_target = (entry.vj + entry.a) & ~1;
             if (entry.dest != 0)
             {
-                branch_unit->reg_file->regs[entry.dest].value = entry.inst_pc + 4;
+                com_data_bus_add_entry(branch_unit->cdb, entry.id, entry.inst_pc + 4);
             }
             break;
         case BEQ:

@@ -50,9 +50,9 @@ void handle_al_operation(struct decoded_inst inst, struct reg_file *reg_file, st
         res_stations_add(
             alu_res_stations,
             inst.op,
-            0,
+            reg_file_get_reg_qi(reg_file, inst.rs1_addr),
             NA, // Integer register-immediate operations don't use rs2
-            reg_file->regs[inst.rs1_addr].value,
+            reg_file_get_reg_value_or_na(reg_file, inst.rs1_addr),
             inst.imm,
             NA, // Only used in branch and memory instructions
             inst.rd_addr,
@@ -95,10 +95,10 @@ void handle_al_operation(struct decoded_inst inst, struct reg_file *reg_file, st
         res_stations_add(
             alu_res_stations,
             inst.op,
-            0,
-            0,
-            reg_file->regs[inst.rs1_addr].value,
-            reg_file->regs[inst.rs2_addr].value,
+            reg_file_get_reg_qi(reg_file, inst.rs1_addr),
+            reg_file_get_reg_qi(reg_file, inst.rs2_addr),
+            reg_file_get_reg_value_or_na(reg_file, inst.rs1_addr),
+            reg_file_get_reg_value_or_na(reg_file, inst.rs2_addr),
             NA, // Only used in branch and memory instructions
             inst.rd_addr,
             inst.inst_pc);
@@ -130,9 +130,9 @@ void handle_branch_operation(struct decoded_inst inst, struct reg_file *reg_file
         res_stations_add(
             branch_res_stations,
             inst.op,
-            0,
+            reg_file_get_reg_qi(reg_file, inst.rs1_addr),
             NA, // JALR doesn't use rs2
-            reg_file->regs[inst.rs1_addr].value,
+            reg_file_get_reg_value_or_na(reg_file, inst.rs1_addr),
             NA, // JALR only has base and offset operands
             inst.imm,
             inst.rd_addr,
@@ -148,10 +148,10 @@ void handle_branch_operation(struct decoded_inst inst, struct reg_file *reg_file
         res_stations_add(
             branch_res_stations,
             inst.op,
-            0,
-            0,
-            reg_file->regs[inst.rs1_addr].value,
-            reg_file->regs[inst.rs2_addr].value,
+            reg_file_get_reg_qi(reg_file, inst.rs1_addr),
+            reg_file_get_reg_qi(reg_file, inst.rs2_addr),
+            reg_file_get_reg_value_or_na(reg_file, inst.rs1_addr),
+            reg_file_get_reg_value_or_na(reg_file, inst.rs2_addr),
             inst.imm,
             inst.rd_addr,
             inst.inst_pc);
@@ -176,9 +176,9 @@ void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, s
         res_stations_add(
             memory_res_stations,
             inst.op,
-            0,
+            reg_file_get_reg_qi(reg_file, inst.rs1_addr),
             NA, // Load operations don't use rs2
-            reg_file->regs[inst.rs1_addr].value,
+            reg_file_get_reg_value_or_na(reg_file, inst.rs1_addr),
             NA, // Load operations only have base and offset operands
             inst.imm,
             inst.rd_addr,
@@ -190,10 +190,10 @@ void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, s
         res_stations_add(
             memory_res_stations,
             inst.op,
-            0,
-            0,
-            reg_file->regs[inst.rs1_addr].value,
-            reg_file->regs[inst.rs2_addr].value,
+            reg_file_get_reg_qi(reg_file, inst.rs1_addr),
+            reg_file_get_reg_qi(reg_file, inst.rs2_addr),
+            reg_file_get_reg_value_or_na(reg_file, inst.rs1_addr),
+            reg_file_get_reg_value_or_na(reg_file, inst.rs2_addr),
             inst.imm,
             inst.rd_addr,
             inst.inst_pc);

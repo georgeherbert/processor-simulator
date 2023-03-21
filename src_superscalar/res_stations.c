@@ -2,8 +2,13 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "res_stations.h"
+#include "reg_file.h"
 
-struct res_stations *res_stations_init(uint32_t num_stations, uint32_t id_offset)
+struct res_stations *res_stations_init(
+    uint32_t num_stations,
+    uint32_t id_offset,
+    struct reg_file *reg_file,
+    struct com_data_bus *cdb)
 {
     struct res_stations *rs = malloc(sizeof(struct res_stations));
     if (rs == NULL)
@@ -20,6 +25,8 @@ struct res_stations *res_stations_init(uint32_t num_stations, uint32_t id_offset
     }
 
     rs->num_stations = num_stations;
+    rs->reg_file = reg_file;
+    rs->cdb = cdb;
 
     for (uint32_t i = 0; i < num_stations; i++)
     {
@@ -32,6 +39,28 @@ struct res_stations *res_stations_init(uint32_t num_stations, uint32_t id_offset
 
 void res_stations_step(struct res_stations *rs)
 {
+    for (uint32_t i = 0; i < rs->num_stations; i++)
+    {
+        if (rs->stations[i].busy)
+        {
+            if (rs->stations[i].qj != 0)
+            {
+                if (com_data_bus_is_value_ready(rs->cdb, rs->stations[i].qj))
+                {
+                    rs->stations[i].vj = com_data_bus_get_value(rs->cdb, rs->stations[i].qj);
+                    rs->stations[i].qj = 0;
+                }
+            }
+            if (rs->stations[i].qk != 0)
+            {
+                if (com_data_bus_is_value_ready(rs->cdb, rs->stations[i].qk))
+                {
+                    rs->stations[i].vk = com_data_bus_get_value(rs->cdb, rs->stations[i].qk);
+                    rs->stations[i].qk = 0;
+                }
+            }
+        }
+    }
 }
 
 void res_stations_add(
@@ -60,6 +89,7 @@ void res_stations_add(
                 rs->stations[i].dest = dest;
                 rs->stations[i].a = a;
                 rs->stations[i].inst_pc = inst_pc;
+                reg_file_set_reg_qi(rs->reg_file, dest, rs->stations[i].id);
                 break;
             }
         }

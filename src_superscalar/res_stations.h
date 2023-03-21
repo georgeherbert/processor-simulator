@@ -4,30 +4,36 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "decode.h"
+#include "reg_file.h"
+#include "com_data_bus.h"
 
 struct res_station
 {
-    uint32_t id;
-    bool busy;
-    enum op op;
-    uint32_t qj;
-    uint32_t qk;
-    uint32_t vj;
-    uint32_t vk;
-    uint32_t a;
-    uint32_t inst_pc;
-    uint32_t dest; // TODO: Remove this eventually
+    uint32_t id;      // ID of reservation station
+    bool busy;        // Whether reservation station is busy
+    enum op op;       // Operation to perform
+    uint32_t qj;      // Reservation station ID of first operand
+    uint32_t qk;      // Reservation station ID of second operand
+    uint32_t vj;      // Value of first operand
+    uint32_t vk;      // Value of second operand
+    uint32_t a;       // Immediate value or address
+    uint32_t inst_pc; // Program counter of instruction
+    uint32_t dest;    // TODO: Remove this eventually
 };
 
 struct res_stations
 {
-    struct res_station *stations;
-    uint32_t num_stations;
+    struct res_station *stations; // Array of reservation stations
+    struct reg_file *reg_file;    // Pointer to register file
+    uint32_t num_stations;        // Number of reservation stations
+    struct com_data_bus *cdb;     // Pointer to common data bus
 };
 
 struct res_stations *res_stations_init(
     uint32_t num_stations,
-    uint32_t id_offset);                         // Initialise reservation stations
+    uint32_t id_offset,
+    struct reg_file *reg_file,
+    struct com_data_bus *cdb);                   // Initialise reservation stations
 void res_stations_step(struct res_stations *rs); // Step reservation stations
 void res_stations_add(
     struct res_stations *rs,
