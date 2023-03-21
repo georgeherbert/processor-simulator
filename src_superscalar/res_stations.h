@@ -20,12 +20,18 @@ struct res_station
     uint32_t inst_pc; // Program counter of instruction
 };
 
+struct res_stations_init
+{
+    struct res_station *stations;
+};
+
 struct res_stations
 {
-    struct res_station *stations; // Array of reservation stations
-    struct reg_file *reg_file;    // Pointer to register file
-    uint32_t num_stations;        // Number of reservation stations
-    struct com_data_bus *cdb;     // Pointer to common data bus
+    struct res_stations_init current; // Array of current reservation stations
+    struct res_stations_init next;    // Array of next reservation stations
+    struct reg_file *reg_file;        // Pointer to register file
+    uint32_t num_stations;            // Number of reservation stations
+    struct com_data_bus *cdb;         // Pointer to common data bus
 };
 
 struct res_stations *res_stations_init(
@@ -47,8 +53,8 @@ void res_stations_add(
 struct res_station res_stations_remove(struct res_stations *rs);              // Remove instruction from reservation stations
 bool res_stations_is_ready(struct res_stations *rs);                          // Check if any busy reservation stations have all operands
 void res_stations_set_station_not_busy(struct res_stations *rs, uint32_t id); // Set a reservation station to not busy
+void res_stations_update_current(struct res_stations *rs);                    // Update current reservation stations
 bool res_stations_not_full(struct res_stations *rs);                          // Check if reservation stations are not full
-
-void res_stations_destroy(struct res_stations *rs); // Free reservation stations
+void res_stations_destroy(struct res_stations *rs);                           // Free reservation stations
 
 #endif // RES_STATIONS_H

@@ -76,7 +76,7 @@ enum op_type inst_queue_peek_op_type(struct inst_queue *inst_queue)
 {
     if (inst_queue_is_not_empty(inst_queue))
     {
-        return inst_queue->current.insts[0].op_type;
+        return inst_queue->current.insts[inst_queue->current.front].op_type;
     }
     else
     {

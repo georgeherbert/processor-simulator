@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
 
         instructions++;
         cycles += 5;
-        print_regs(cpu->regs);
+        // print_regs(cpu->regs);
     }
 
     print_main_memory(cpu->mm);

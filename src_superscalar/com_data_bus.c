@@ -6,58 +6,49 @@
 
 struct com_data_bus *com_data_bus_init(uint32_t num_entries)
 {
-    struct com_data_bus *cbd = malloc(sizeof(struct com_data_bus));
-    if (cbd == NULL)
+    struct com_data_bus *cdb = malloc(sizeof(struct com_data_bus));
+    if (cdb == NULL)
     {
         fprintf(stderr, "Error: Could not allocate memory for common data bus");
         exit(EXIT_FAILURE);
     }
 
-    cbd->current.entries = malloc(sizeof(struct com_data_bus_entry) * num_entries);
-    if (cbd->current.entries == NULL)
+    cdb->entries = malloc(sizeof(struct com_data_bus_entry) * num_entries);
+    if (cdb->entries == NULL)
     {
-        fprintf(stderr, "Error: Could not allocate memory for current common data bus entries");
-        exit(EXIT_FAILURE);
-    }
-
-    cbd->next.entries = malloc(sizeof(struct com_data_bus_entry) * num_entries);
-    if (cbd->next.entries == NULL)
-    {
-        fprintf(stderr, "Error: Could not allocate memory for next data bus entries");
+        fprintf(stderr, "Error: Could not allocate memory for common data bus entries");
         exit(EXIT_FAILURE);
     }
 
     for (uint32_t i = 0; i < num_entries; i++)
     {
-        cbd->current.entries[i].qi = 0;
-        cbd->current.entries[i].val = 0;
-        cbd->next.entries[i].qi = 0;
-        cbd->next.entries[i].val = 0;
+        cdb->entries[i].qi = 0;
+        cdb->entries[i].val = 0;
     }
 
-    cbd->num_entries = num_entries;
+    cdb->num_entries = num_entries;
 
-    return cbd;
+    return cdb;
 }
 
-void com_data_bus_add_entry(struct com_data_bus *cbd, uint32_t qi, uint32_t val)
+void com_data_bus_add_entry(struct com_data_bus *cdb, uint32_t qi, uint32_t val)
 {
-    for (uint32_t i = 0; i < cbd->num_entries; i++)
+    for (uint32_t i = 0; i < cdb->num_entries; i++)
     {
-        if (cbd->next.entries[i].qi == 0)
+        if (cdb->entries[i].qi == 0)
         {
-            cbd->next.entries[i].qi = qi;
-            cbd->next.entries[i].val = val;
+            cdb->entries[i].qi = qi;
+            cdb->entries[i].val = val;
             return;
         }
     }
 }
 
-bool com_data_bus_is_val_ready(struct com_data_bus *cbd, uint32_t qi)
+bool com_data_bus_is_val_ready(struct com_data_bus *cdb, uint32_t qi)
 {
-    for (uint32_t i = 0; i < cbd->num_entries; i++)
+    for (uint32_t i = 0; i < cdb->num_entries; i++)
     {
-        if (cbd->current.entries[i].qi == qi)
+        if (cdb->entries[i].qi == qi)
         {
             return true;
         }
@@ -66,13 +57,13 @@ bool com_data_bus_is_val_ready(struct com_data_bus *cbd, uint32_t qi)
     return false;
 }
 
-uint32_t com_data_bus_get_val(struct com_data_bus *cbd, uint32_t qi)
+uint32_t com_data_bus_get_val(struct com_data_bus *cdb, uint32_t qi)
 {
-    for (uint32_t i = 0; i < cbd->num_entries; i++)
+    for (uint32_t i = 0; i < cdb->num_entries; i++)
     {
-        if (cbd->current.entries[i].qi == qi)
+        if (cdb->entries[i].qi == qi)
         {
-            return cbd->current.entries[i].val;
+            return cdb->entries[i].val;
         }
     }
 
@@ -80,27 +71,17 @@ uint32_t com_data_bus_get_val(struct com_data_bus *cbd, uint32_t qi)
     exit(EXIT_FAILURE);
 }
 
-void com_data_bus_step(struct com_data_bus *cbd)
+void com_data_bus_step(struct com_data_bus *cdb)
 {
-    for (uint32_t i = 0; i < cbd->num_entries; i++)
+    for (uint32_t i = 0; i < cdb->num_entries; i++)
     {
-        // printf("qi: %d, val: %d\n", cbd->entries[i].qi, cbd->entries[i].val);
-        cbd->next.entries[i].qi = 0;
+        // printf("qi: %d, val: %d\n", cdb->entries[i].qi, cdb->entries[i].val);
+        cdb->entries[i].qi = 0;
     }
 }
 
-void com_data_bus_update_current(struct com_data_bus *cbd)
+void com_data_bus_destroy(struct com_data_bus *cdb)
 {
-    for (uint32_t i = 0; i < cbd->num_entries; i++)
-    {
-        cbd->current.entries[i].qi = cbd->next.entries[i].qi;
-        cbd->current.entries[i].val = cbd->next.entries[i].val;
-    }
-}
-
-void com_data_bus_destroy(struct com_data_bus *cbd)
-{
-    free(cbd->current.entries);
-    free(cbd->next.entries);
-    free(cbd);
+    free(cdb->entries);
+    free(cdb);
 }

@@ -37,6 +37,7 @@ struct cpu *cpu_init(char *file_name)
 
     cpu->pc_src.val_current = PC_SRC_PLUS_4;
     cpu->branch_in_pipeline.val_current = BRANCH_NOT_IN_PIPELINE;
+    cpu->reg_inst.val_current = 0x0;
     cpu->mm = main_memory_init(file_name);
     cpu->inst_queue = inst_queue_init();
     cpu->fetch_unit = fetch_init(
@@ -115,7 +116,16 @@ void print_reg_file(struct reg_file *reg_file)
     printf("\nRegisters:\n");
     for (int i = 0; i < NUM_REGS; i++)
     {
-        printf("x%02d: %-11d ", i, reg_file->regs[i].val);
+        printf("x%02d: ", i);
+        if (reg_file->regs[i].qi == 0)
+        {
+            printf("%-11d ", reg_file->regs[i].val);
+        }
+        else
+        {
+            printf("#%-10d ", reg_file->regs[i].qi);
+        }
+
         if ((i + 1) % 4 == 0)
         {
             printf("\n");
@@ -145,45 +155,32 @@ void cpu_destroy(struct cpu *cpu)
 
 void update_current(struct cpu *cpu)
 {
-    // reg_update_current(&cpu->reg_pc_target);
-    // reg_update_current(&cpu->reg_inst);
-    // reg_update_current(&cpu->pc_src);
-    // reg_update_current(&cpu->branch_in_pipeline);
+    reg_update_current(&cpu->pc_src);
+    reg_update_current(&cpu->branch_in_pipeline);
+    reg_update_current(&cpu->reg_pc_target);
+    reg_update_current(&cpu->reg_inst);
+    reg_update_current(&cpu->reg_inst_pc);
+
+    inst_queue_update_current(cpu->inst_queue);
+
+    res_stations_update_current(cpu->alu_res_stations);
+    res_stations_update_current(cpu->branch_res_stations);
+    res_stations_update_current(cpu->memory_res_stations);
 }
 
 void step(struct cpu *cpu)
 {
     fetch_step(cpu->fetch_unit);
-
-    reg_update_current(&cpu->reg_inst); // TODO: Remove
-    reg_update_current(&cpu->reg_inst_pc); // TODO: Remove
-    reg_update_current(&cpu->branch_in_pipeline); // TODO: Remove
-
     decode_step(cpu->decode_unit);
-
-    inst_queue_update_current(cpu->inst_queue); // TODO: Remove
-
     issue_step(cpu->issue_unit);
-
-    com_data_bus_update_current(cpu->cdb); // TODO: Remove
-
     alu_step(cpu->alu_unit);
     branch_step(cpu->branch_unit);
     memory_step(cpu->memory_unit);
-
-    com_data_bus_update_current(cpu->cdb); // TODO: Remove
-
     res_stations_step(cpu->alu_res_stations);
     res_stations_step(cpu->branch_res_stations);
     res_stations_step(cpu->memory_res_stations);
     reg_file_step(cpu->reg_file);
     com_data_bus_step(cpu->cdb);
-
-    com_data_bus_update_current(cpu->cdb); // TODO: Remove
-
-    reg_update_current(&cpu->reg_pc_target); // TODO: Remove
-    reg_update_current(&cpu->pc_src); // TODO: Remove
-    reg_update_current(&cpu->branch_in_pipeline); // TODO: Remove
 }
 
 int main(int argc, char *argv[])
@@ -202,13 +199,15 @@ int main(int argc, char *argv[])
     // Cycle until PC will be 0
     while (!(cpu->pc_src.val_current == PC_SRC_BRANCH && cpu->reg_pc_target.val_current == 0))
     {
-        step(cpu);
+        // printf("\nCycle %" PRIu64 "\n", cycles);
 
-        // update_current(cpu);
+        step(cpu);
+        update_current(cpu);
+
         // print_reg_file(cpu->reg_file);
 
         instructions++;
-        cycles += 5;
+        cycles++;
     }
 
     print_main_memory(cpu->mm);

@@ -66,6 +66,12 @@ void fetch_step(struct fetch_unit *fetch_unit)
         reg_write(fetch_unit->reg_inst_pc, fetch_unit->reg_pc);
         fetch_unit->reg_npc = fetch_unit->reg_pc + 4;
     }
+
+    // TODO: Should probably find a better way to deal with this.
+    if (inst_queue_is_not_full(fetch_unit->inst_queue) && reg_read(fetch_unit->branch_in_pipeline) == BRANCH_IN_PIPELINE)
+    {
+        reg_write(fetch_unit->reg_inst, 0x0);
+    }
 }
 
 void fetch_destroy(struct fetch_unit *fetch_unit)

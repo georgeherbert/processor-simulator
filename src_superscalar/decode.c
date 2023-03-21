@@ -541,6 +541,12 @@ void decode_step(struct decode_unit *decode_unit)
     if (inst_queue_is_not_full(decode_unit->inst_queue))
     {
         uint32_t inst = reg_read(decode_unit->reg_inst);
+
+        // TODO: Quick fix. Find a better way to handle this.
+        if (inst == 0x0) {
+            return;
+        }
+
         uint32_t opcode = get_opcode(inst);
 
         uint32_t inst_pc = reg_read(decode_unit->reg_inst_pc);

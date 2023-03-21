@@ -104,7 +104,7 @@ void handle_al_operation(struct decoded_inst inst, struct reg_file *reg_file, st
             inst.inst_pc);
         break;
     default:
-        fprintf(stderr, "Error: Unknown arithmetic or logical op");
+        fprintf(stderr, "Error: Unknown arithmetic or logical op %d", inst.op);
         exit(EXIT_FAILURE);
         break;
     }
@@ -144,7 +144,6 @@ void handle_branch_operation(struct decoded_inst inst, struct reg_file *reg_file
     case BLTU:
     case BGE:
     case BGEU:
-        // TODO: Decide what to do about the destination register
         res_stations_add(
             branch_res_stations,
             inst.op,
@@ -165,7 +164,6 @@ void handle_branch_operation(struct decoded_inst inst, struct reg_file *reg_file
 
 void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, struct res_stations *memory_res_stations)
 {
-    // TODO: Decide what to do about the destination register for stores here
     switch (inst.op)
     {
     case LW:
