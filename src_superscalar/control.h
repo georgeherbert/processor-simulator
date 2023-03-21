@@ -7,4 +7,10 @@ enum pc_src
     PC_SRC_BRANCH
 };
 
+enum branch_in_pipeline
+{
+    BRANCH_NOT_IN_PIPELINE,
+    BRANCH_IN_PIPELINE
+};
+
 #endif // CONTROL_H

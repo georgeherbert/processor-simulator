@@ -36,11 +36,13 @@ struct cpu *cpu_init(char *file_name)
     cpu->pc_src = PC_SRC_PLUS_4;
     cpu->reg_pc = 0;
     cpu->reg_npc = 0;
+    cpu->branch_in_pipeline = BRANCH_NOT_IN_PIPELINE;
     cpu->mm = main_memory_init(file_name);
     cpu->inst_queue = inst_queue_init();
     cpu->fetch_unit = fetch_init(
         cpu->mm,
         &cpu->pc_src,
+        &cpu->branch_in_pipeline,
         cpu->inst_queue,
         &cpu->reg_pc_target,
         &cpu->reg_inst,
@@ -80,7 +82,8 @@ struct cpu *cpu_init(char *file_name)
         cpu->reg_file,
         &cpu->reg_pc_target,
         &cpu->pc_src,
-        cpu->cdb);
+        cpu->cdb,
+        &cpu->branch_in_pipeline);
     cpu->memory_unit = memory_init(
         cpu->memory_res_stations,
         cpu->mm,

@@ -12,7 +12,8 @@ struct branch_unit *branch_init(
     struct reg_file *reg_file,
     uint32_t *reg_pc_target,
     enum pc_src *pc_src,
-    struct com_data_bus *cdb)
+    struct com_data_bus *cdb,
+    enum branch_in_pipeline *branch_in_pipeline)
 {
     struct branch_unit *branch_unit = malloc(sizeof(struct branch_unit));
 
@@ -27,6 +28,7 @@ struct branch_unit *branch_init(
     branch_unit->reg_pc_target = reg_pc_target;
     branch_unit->pc_src = pc_src;
     branch_unit->cdb = cdb;
+    branch_unit->branch_in_pipeline = branch_in_pipeline;
 
     return branch_unit;
 }
@@ -84,6 +86,7 @@ void branch_step(struct branch_unit *branch_unit)
             exit(EXIT_FAILURE);
         }
 
+        *branch_unit->branch_in_pipeline = BRANCH_NOT_IN_PIPELINE;
         res_stations_set_station_not_busy(branch_unit->branch_res_stations, entry.id);
     }
 }

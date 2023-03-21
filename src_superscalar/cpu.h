@@ -30,12 +30,13 @@ struct cpu
     struct memory_unit *memory_unit;          // Pointer to memory unit
     struct com_data_bus *cdb;                 // Pointer to common data bus
 
-    struct reg_file *reg_file; // Pointer to register file
-    enum pc_src pc_src;        // Control signal for PC source
-    uint32_t reg_pc;           // Program counter
-    uint32_t reg_npc;          // Next program counter
-    uint32_t reg_pc_target;    // PC target from branch unit
-    uint32_t reg_inst;         // Instruction register
+    struct reg_file *reg_file;                  // Pointer to register file
+    enum pc_src pc_src;                         // Control signal for PC source
+    enum branch_in_pipeline branch_in_pipeline; // Control signal for presence of branch in pipeline
+    uint32_t reg_pc;                            // Program counter
+    uint32_t reg_npc;                           // Next program counter
+    uint32_t reg_pc_target;                     // PC target from branch unit
+    uint32_t reg_inst;                          // Instruction register
 };
 
 struct cpu *cpu_init(char *file_name); // Initialise cpu
