@@ -15,8 +15,9 @@ struct fetch_unit
     struct inst_queue *inst_queue;  // Pointer to instruction queue
     struct reg *reg_pc_target;      // Pointer to PC target register
     struct reg *reg_inst;           // Pointer to instruction register
-    uint32_t *reg_pc;               // Pointer to program counter register
-    uint32_t *reg_npc;              // Pointer to next program counter register
+    struct reg *reg_inst_pc;        // Pointer to program counter of instruction in instruction register
+    uint32_t reg_pc;                // Program counter register
+    uint32_t reg_npc;               // Next program counter register
 };
 
 struct fetch_unit *fetch_init(
@@ -26,8 +27,7 @@ struct fetch_unit *fetch_init(
     struct inst_queue *inst_queue,
     struct reg *reg_pc_target,
     struct reg *reg_inst,
-    uint32_t *reg_pc,
-    uint32_t *reg_npc);                            // Initialise fetch unit
+    struct reg *reg_inst_pc);                      // Initialise fetch unit
 void fetch_step(struct fetch_unit *fetch_unit);    // Step fetch unit
 void fetch_destroy(struct fetch_unit *fetch_unit); // Free fetch unit
 

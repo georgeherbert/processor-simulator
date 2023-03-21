@@ -14,8 +14,7 @@ struct fetch_unit *fetch_init(
     struct inst_queue *inst_queue,
     struct reg *reg_pc_target,
     struct reg *reg_inst,
-    uint32_t *reg_pc,
-    uint32_t *reg_npc)
+    struct reg *reg_inst_pc)
 {
     struct fetch_unit *fetch_unit = malloc(sizeof(struct fetch_unit));
     if (fetch_unit == NULL)
@@ -30,8 +29,9 @@ struct fetch_unit *fetch_init(
     fetch_unit->inst_queue = inst_queue;
     fetch_unit->reg_pc_target = reg_pc_target;
     fetch_unit->reg_inst = reg_inst;
-    fetch_unit->reg_pc = reg_pc;
-    fetch_unit->reg_npc = reg_npc;
+    fetch_unit->reg_inst_pc = reg_inst_pc;
+    fetch_unit->reg_pc = 0;
+    fetch_unit->reg_npc = 0;
 
     return fetch_unit;
 }
@@ -42,11 +42,11 @@ void fetch_step(struct fetch_unit *fetch_unit)
     {
         if (reg_read(fetch_unit->pc_src) == PC_SRC_PLUS_4)
         {
-            *fetch_unit->reg_pc = *fetch_unit->reg_npc;
+            fetch_unit->reg_pc = fetch_unit->reg_npc;
         }
         else if (reg_read(fetch_unit->pc_src) == PC_SRC_BRANCH)
         {
-            *fetch_unit->reg_pc = reg_read(fetch_unit->reg_pc_target);
+            fetch_unit->reg_pc = reg_read(fetch_unit->reg_pc_target);
             reg_write(fetch_unit->pc_src, PC_SRC_PLUS_4);
         }
         else
@@ -54,7 +54,7 @@ void fetch_step(struct fetch_unit *fetch_unit)
             fprintf(stderr, "Error: Invalid PC source control signal %d\n", reg_read(fetch_unit->pc_src));
             exit(EXIT_FAILURE);
         }
-        uint32_t inst = main_memory_load_word(fetch_unit->mm, *fetch_unit->reg_pc);
+        uint32_t inst = main_memory_load_word(fetch_unit->mm, fetch_unit->reg_pc);
 
         // TODO: Remove this. Eventually use speculative execution.
         if ((inst & 0x7F) == 0x6f || (inst & 0x7F) == 0x67 || (inst & 0x7F) == 0x63)
@@ -63,7 +63,8 @@ void fetch_step(struct fetch_unit *fetch_unit)
         }
 
         reg_write(fetch_unit->reg_inst, inst);
-        *fetch_unit->reg_npc = *fetch_unit->reg_pc + 4;
+        reg_write(fetch_unit->reg_inst_pc, fetch_unit->reg_pc);
+        fetch_unit->reg_npc = fetch_unit->reg_pc + 4;
     }
 }
 

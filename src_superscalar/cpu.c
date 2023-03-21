@@ -36,8 +36,6 @@ struct cpu *cpu_init(char *file_name)
     cpu->reg_file = reg_file_init(cpu->cdb);
 
     cpu->pc_src.val_current = PC_SRC_PLUS_4;
-    cpu->reg_pc = 0;
-    cpu->reg_npc = 0;
     cpu->branch_in_pipeline.val_current = BRANCH_NOT_IN_PIPELINE;
     cpu->mm = main_memory_init(file_name);
     cpu->inst_queue = inst_queue_init();
@@ -48,11 +46,10 @@ struct cpu *cpu_init(char *file_name)
         cpu->inst_queue,
         &cpu->reg_pc_target,
         &cpu->reg_inst,
-        &cpu->reg_pc,
-        &cpu->reg_npc);
+        &cpu->reg_inst_pc);
     cpu->decode_unit = decode_init(
         &cpu->reg_inst,
-        &cpu->reg_pc,
+        &cpu->reg_inst_pc, // TODO: Remove this
         cpu->inst_queue);
     cpu->alu_res_stations = res_stations_init(
         NUM_ALU_RES_STATIONS,
@@ -159,6 +156,7 @@ void step(struct cpu *cpu)
     fetch_step(cpu->fetch_unit);
 
     reg_update_current(&cpu->reg_inst);
+    reg_update_current(&cpu->reg_inst_pc);
     reg_update_current(&cpu->branch_in_pipeline);
 
     decode_step(cpu->decode_unit);

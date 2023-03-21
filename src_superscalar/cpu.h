@@ -34,10 +34,9 @@ struct cpu
     struct reg_file *reg_file;     // Pointer to register file
     struct reg pc_src;             // Control signal for PC source
     struct reg branch_in_pipeline; // Control signal for presence of branch in pipeline
-    uint32_t reg_pc;               // Program counter
-    uint32_t reg_npc;              // Next program counter
     struct reg reg_pc_target;      // PC target from branch unit
     struct reg reg_inst;           // Instruction register
+    struct reg reg_inst_pc;        // Program counter of instruction in instruction register
 };
 
 struct cpu *cpu_init(char *file_name); // Initialise cpu

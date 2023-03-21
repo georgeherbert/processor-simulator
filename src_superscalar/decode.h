@@ -9,13 +9,13 @@
 struct decode_unit
 {
     struct reg *reg_inst;          // Pointer to instruction register
-    uint32_t *reg_pc;              // Pointer to program counter
+    struct reg *reg_inst_pc;       // Pointer to program counter of instruction in instruction register
     struct inst_queue *inst_queue; // Pointer to instruction queue
 };
 
 struct decode_unit *decode_init(
     struct reg *reg_inst,
-    uint32_t *reg_pc,
+    struct reg *reg_inst_pc,
     struct inst_queue *inst_queue);                   // Initialise decode unit
 void decode_step(struct decode_unit *decode_unit);    // Step decode unit
 void decode_destroy(struct decode_unit *decode_unit); // Free decode unit

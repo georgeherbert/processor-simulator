@@ -113,6 +113,7 @@ void print_regs(uint32_t *regs)
             printf("\n");
         }
     }
+    printf("\n");
 }
 
 void cpu_destroy(struct cpu *cpu)
@@ -151,7 +152,7 @@ int main(int argc, char *argv[])
 
         instructions++;
         cycles += 5;
-        // print_regs(cpu->regs);
+        print_regs(cpu->regs);
     }
 
     print_main_memory(cpu->mm);
