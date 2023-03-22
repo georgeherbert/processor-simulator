@@ -15,6 +15,7 @@
 #include "control.h"
 #include "reg.h"
 #include "com_data_bus.h"
+#include "reorder_buffer.h"
 
 struct cpu
 {
@@ -30,6 +31,7 @@ struct cpu
     struct branch_unit *branch_unit;          // Pointer to branch unit
     struct memory_unit *memory_unit;          // Pointer to memory unit
     struct com_data_bus *cdb;                 // Pointer to common data bus
+    struct reorder_buffer *rob;               // Pointer to reorder buffer
 
     struct reg_file *reg_file;     // Pointer to register file
     struct reg pc_src;             // Control signal for PC source
@@ -37,6 +39,8 @@ struct cpu
     struct reg reg_pc_target;      // PC target from branch unit
     struct reg reg_inst;           // Instruction register
     struct reg reg_inst_pc;        // Program counter of instruction in instruction register
+    struct reg inst_queue_empty;   // Indicates whether the instruction queue is empty
+    struct reg inst_queue_full;    // Indicates whether the instruction queue is full
 
     bool jump_to_zero; // Indicates whether we have had a jump to zero (i.e. final instruction)
 };

@@ -15,7 +15,8 @@ struct issue_unit *issue_init(
     struct reg_file *reg_file,
     struct res_stations *alu_res_stations,
     struct res_stations *branch_res_stations,
-    struct res_stations *memory_res_stations)
+    struct res_stations *memory_res_stations,
+    struct reg *inst_queue_empty)
 {
     struct issue_unit *issue_unit = malloc(sizeof(struct issue_unit));
 
@@ -30,6 +31,7 @@ struct issue_unit *issue_init(
     issue_unit->alu_res_stations = alu_res_stations;
     issue_unit->branch_res_stations = branch_res_stations;
     issue_unit->memory_res_stations = memory_res_stations;
+    issue_unit->inst_queue_empty = inst_queue_empty;
 
     return issue_unit;
 }
@@ -205,7 +207,7 @@ void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, s
 
 void issue_step(struct issue_unit *issue_unit)
 {
-    if (inst_queue_is_not_empty(issue_unit->inst_queue))
+    if (!reg_read(issue_unit->inst_queue_empty))
     {
         enum op_type op_type = inst_queue_peek_op_type(issue_unit->inst_queue);
         switch (op_type)

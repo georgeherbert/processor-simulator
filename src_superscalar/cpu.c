@@ -34,12 +34,16 @@ struct cpu *cpu_init(char *file_name)
 
     cpu->cdb = com_data_bus_init(3); // One entry for each functional unit
     cpu->reg_file = reg_file_init(cpu->cdb);
+    cpu->inst_queue_empty.val_current = true;
+    cpu->inst_queue_full.val_current = false;
 
     cpu->pc_src.val_current = PC_SRC_PLUS_4;
     cpu->branch_in_pipeline.val_current = BRANCH_NOT_IN_PIPELINE;
     cpu->reg_inst.val_current = 0x0;
     cpu->mm = main_memory_init(file_name);
-    cpu->inst_queue = inst_queue_init();
+    cpu->inst_queue = inst_queue_init(
+        &cpu->inst_queue_empty,
+        &cpu->inst_queue_full);
     cpu->fetch_unit = fetch_init(
         cpu->mm,
         &cpu->pc_src,
@@ -47,11 +51,13 @@ struct cpu *cpu_init(char *file_name)
         cpu->inst_queue,
         &cpu->reg_pc_target,
         &cpu->reg_inst,
-        &cpu->reg_inst_pc);
+        &cpu->reg_inst_pc,
+        &cpu->inst_queue_full);
     cpu->decode_unit = decode_init(
         &cpu->reg_inst,
         &cpu->reg_inst_pc, // TODO: Remove this
-        cpu->inst_queue);
+        cpu->inst_queue,
+        &cpu->inst_queue_full);
     cpu->alu_res_stations = res_stations_init(
         NUM_ALU_RES_STATIONS,
         1, // 1 is used because 0 indicates operands are ready
@@ -72,7 +78,8 @@ struct cpu *cpu_init(char *file_name)
         cpu->reg_file,
         cpu->alu_res_stations,
         cpu->branch_res_stations,
-        cpu->memory_res_stations);
+        cpu->memory_res_stations,
+        &cpu->inst_queue_empty);
     cpu->alu_unit = alu_init(
         cpu->alu_res_stations,
         cpu->reg_file,
@@ -160,6 +167,8 @@ void update_current(struct cpu *cpu)
     reg_update_current(&cpu->reg_pc_target);
     reg_update_current(&cpu->reg_inst);
     reg_update_current(&cpu->reg_inst_pc);
+    reg_update_current(&cpu->inst_queue_empty);
+    reg_update_current(&cpu->inst_queue_full);
 
     inst_queue_update_current(cpu->inst_queue);
 
@@ -176,6 +185,7 @@ void step(struct cpu *cpu)
         decode_step(cpu->decode_unit);
     }
     issue_step(cpu->issue_unit);
+    inst_queue_step(cpu->inst_queue);
     alu_step(cpu->alu_unit);
     branch_step(cpu->branch_unit);
     memory_step(cpu->memory_unit);

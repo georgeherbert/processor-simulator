@@ -43,44 +43,36 @@ void branch_step(struct branch_unit *branch_unit)
         switch (entry.op)
         {
         case JAL:
-            // printf("JAL\n")
             reg_write(branch_unit->pc_src, PC_SRC_BRANCH);
             reg_write(branch_unit->reg_pc_target, entry.a + entry.inst_pc);
             com_data_bus_add_entry(branch_unit->cdb, entry.id, entry.inst_pc + 4);
             break;
         case JALR:
-            // printf("JALR\n");
             reg_write(branch_unit->pc_src, PC_SRC_BRANCH);
             reg_write(branch_unit->reg_pc_target, (entry.vj + entry.a) & ~1);
             com_data_bus_add_entry(branch_unit->cdb, entry.id, entry.inst_pc + 4);
             break;
         case BEQ:
-            // printf("BEQ\n");
             reg_write(branch_unit->pc_src, entry.vj == entry.vk ? PC_SRC_BRANCH : PC_SRC_PLUS_4);
             reg_write(branch_unit->reg_pc_target, (entry.a + entry.inst_pc));
             break;
         case BNE:
-            // printf("BNE\n");
             reg_write(branch_unit->pc_src, entry.vj != entry.vk ? PC_SRC_BRANCH : PC_SRC_PLUS_4);
             reg_write(branch_unit->reg_pc_target, (entry.a + entry.inst_pc));
             break;
         case BLT:
-            // printf("BLT\n");
             reg_write(branch_unit->pc_src, (int32_t)entry.vj < (int32_t)entry.vk ? PC_SRC_BRANCH : PC_SRC_PLUS_4);
             reg_write(branch_unit->reg_pc_target, (entry.a + entry.inst_pc));
             break;
         case BLTU:
-            // printf("BLTU
             reg_write(branch_unit->pc_src, entry.vj < entry.vk ? PC_SRC_BRANCH : PC_SRC_PLUS_4);
             reg_write(branch_unit->reg_pc_target, (entry.a + entry.inst_pc));
             break;
         case BGE:
-            // printf("BGE\n");
             reg_write(branch_unit->pc_src, (int32_t)entry.vj >= (int32_t)entry.vk ? PC_SRC_BRANCH : PC_SRC_PLUS_4);
             reg_write(branch_unit->reg_pc_target, (entry.a + entry.inst_pc));
             break;
         case BGEU:
-            // printf("BGEU\n");
             reg_write(branch_unit->pc_src, entry.vj >= entry.vk ? PC_SRC_BRANCH : PC_SRC_PLUS_4);
             reg_write(branch_unit->reg_pc_target, (entry.a + entry.inst_pc));
             break;

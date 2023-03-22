@@ -33,7 +33,6 @@ struct com_data_bus *com_data_bus_init(uint32_t num_entries)
 
 void com_data_bus_add_entry(struct com_data_bus *cdb, uint32_t qi, uint32_t val)
 {
-    // printf("\n#%d = %d\n", qi, val);
     for (uint32_t i = 0; i < cdb->num_entries; i++)
     {
         if (cdb->entries[i].qi == 0)

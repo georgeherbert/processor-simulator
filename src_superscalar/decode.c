@@ -6,13 +6,15 @@
 #include "rv32i.h"
 #include "inst_queue.h"
 #include "reg.h"
+#include "control.h"
 
 #define NA 0
 
 struct decode_unit *decode_init(
     struct reg *reg_inst,
     struct reg *reg_inst_pc,
-    struct inst_queue *inst_queue)
+    struct inst_queue *inst_queue,
+    struct reg *inst_queue_full)
 {
     struct decode_unit *decode_unit = malloc(sizeof(struct decode_unit));
     if (decode_unit == NULL)
@@ -24,6 +26,7 @@ struct decode_unit *decode_init(
     decode_unit->reg_inst = reg_inst;
     decode_unit->reg_inst_pc = reg_inst_pc;
     decode_unit->inst_queue = inst_queue;
+    decode_unit->inst_queue_full = inst_queue_full;
 
     return decode_unit;
 }
@@ -538,51 +541,47 @@ void handle_store(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc
 
 void decode_step(struct decode_unit *decode_unit)
 {
-    if (inst_queue_is_not_full(decode_unit->inst_queue))
+    if (!reg_read(decode_unit->inst_queue_full))
     {
+        uint32_t inst_pc = reg_read(decode_unit->reg_inst_pc);
         uint32_t inst = reg_read(decode_unit->reg_inst);
-
-        // TODO: Quick fix. Find a better way to handle this.
-        if (inst == 0x0) {
-            return;
-        }
-
         uint32_t opcode = get_opcode(inst);
 
-        uint32_t inst_pc = reg_read(decode_unit->reg_inst_pc);
-        
-        switch (opcode)
+        if (inst != 0x0) // Instruction 0x0 indicates fetch unit is stalled
         {
-        case OPCODE_OP_IMM:
-            handle_op_imm(decode_unit->inst_queue, inst, inst_pc);
-            break;
-        case OPCODE_LUI:
-            handle_lui(decode_unit->inst_queue, inst, inst_pc);
-            break;
-        case OPCODE_AUIPC:
-            handle_auipc(decode_unit->inst_queue, inst, inst_pc);
-            break;
-        case OPCODE_OP:
-            handle_op(decode_unit->inst_queue, inst, inst_pc);
-            break;
-        case OPCODE_JAL:
-            handle_jal(decode_unit->inst_queue, inst, inst_pc);
-            break;
-        case OPCODE_JALR:
-            handle_jalr(decode_unit->inst_queue, inst, inst_pc);
-            break;
-        case OPCODE_BRANCH:
-            handle_branch(decode_unit->inst_queue, inst, inst_pc);
-            break;
-        case OPCODE_LOAD:
-            handle_load(decode_unit->inst_queue, inst, inst_pc);
-            break;
-        case OPCODE_STORE:
-            handle_store(decode_unit->inst_queue, inst, inst_pc);
-            break;
-        default:
-            fprintf(stderr, "Error: Unknown opcode: %08x", opcode);
-            exit(EXIT_FAILURE);
+            switch (opcode)
+            {
+            case OPCODE_OP_IMM:
+                handle_op_imm(decode_unit->inst_queue, inst, inst_pc);
+                break;
+            case OPCODE_LUI:
+                handle_lui(decode_unit->inst_queue, inst, inst_pc);
+                break;
+            case OPCODE_AUIPC:
+                handle_auipc(decode_unit->inst_queue, inst, inst_pc);
+                break;
+            case OPCODE_OP:
+                handle_op(decode_unit->inst_queue, inst, inst_pc);
+                break;
+            case OPCODE_JAL:
+                handle_jal(decode_unit->inst_queue, inst, inst_pc);
+                break;
+            case OPCODE_JALR:
+                handle_jalr(decode_unit->inst_queue, inst, inst_pc);
+                break;
+            case OPCODE_BRANCH:
+                handle_branch(decode_unit->inst_queue, inst, inst_pc);
+                break;
+            case OPCODE_LOAD:
+                handle_load(decode_unit->inst_queue, inst, inst_pc);
+                break;
+            case OPCODE_STORE:
+                handle_store(decode_unit->inst_queue, inst, inst_pc);
+                break;
+            default:
+                fprintf(stderr, "Error: Unknown opcode: %08x", opcode);
+                exit(EXIT_FAILURE);
+            }
         }
     }
 }

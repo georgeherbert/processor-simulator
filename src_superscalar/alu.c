@@ -39,59 +39,47 @@ void alu_step(struct alu_unit *alu_unit)
         {
         case ADD:
         case ADDI:
-            // printf("ADD(I)\n");
             out = entry.vj + entry.vk;
             break;
         case LUI:
-            // printf("LUI\n");
             out = entry.vj;
             break;
         case AUIPC:
-            // printf("AUIPC\n");
             out = entry.vj + entry.inst_pc;
             break;
         case SUB:
-            // printf("SUB\n");
             out = entry.vj - entry.vk;
             break;
         case SLL:
         case SLLI:
-            // printf("SLL(I)\n");
             out = entry.vj << entry.vk;
             break;
         case SLT:
         case SLTI:
-            // printf("SLT(I)\n");
             out = (int32_t)entry.vj < (int32_t)entry.vk;
             break;
         case SLTU:
         case SLTIU:
-            // printf("SLTU(I)\n");
             out = entry.vj < entry.vk;
             break;
         case XOR:
         case XORI:
-            // printf("XOR(I)\n");
             out = entry.vj ^ entry.vk;
             break;
         case SRL:
         case SRLI:
-            // printf("SRL(I)\n");
             out = entry.vj >> entry.vk;
             break;
         case SRA:
         case SRAI:
-            // printf("SRA(I)\n");
             out = (int32_t)entry.vj >> entry.vk;
             break;
         case OR:
         case ORI:
-            // printf("OR(I)\n");
             out = entry.vj | entry.vk;
             break;
         case AND:
         case ANDI:
-            // printf("AND(I)\n");
             out = entry.vj & entry.vk;
             break;
         default:

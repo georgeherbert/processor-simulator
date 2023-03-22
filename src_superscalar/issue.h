@@ -5,6 +5,7 @@
 #include "inst_queue.h"
 #include "res_stations.h"
 #include "reg_file.h"
+#include "reg.h"
 
 struct issue_unit
 {
@@ -13,6 +14,7 @@ struct issue_unit
     struct res_stations *alu_res_stations;    // Pointer to ALU reservation station
     struct res_stations *memory_res_stations; // Pointer to memory reservation station
     struct res_stations *branch_res_stations; // Pointer to branch reservation station
+    struct reg *inst_queue_empty;             // Pointer to register indicating whether the instruction queue is empty
 };
 
 struct issue_unit *issue_init(
@@ -20,7 +22,8 @@ struct issue_unit *issue_init(
     struct reg_file *reg_file,
     struct res_stations *alu_res_stations,
     struct res_stations *branch_res_stations,
-    struct res_stations *memory_res_stations);     // Initialise issue unit
+    struct res_stations *memory_res_stations,
+    struct reg *inst_queue_empty);                 // Initialise issue unit
 void issue_step(struct issue_unit *issue_unit);    // Step issue unit
 void issue_destroy(struct issue_unit *issue_unit); // Free issue unit
 
