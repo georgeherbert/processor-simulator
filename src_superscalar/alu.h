@@ -10,9 +10,8 @@ struct alu_unit
     struct res_stations *alu_res_stations; // Pointer to ALU reservation station
     struct reg_file *reg_file;             // Pointer to register file
     struct com_data_bus *cdb;              // Pointer to common data bus
-    // uint32_t step;
-    // uint32_t entry_id;
-    // uint32_t out;
+    uint32_t step;
+    uint32_t entry_id;
 };
 
 struct alu_unit *alu_init(

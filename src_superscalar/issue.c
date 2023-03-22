@@ -213,6 +213,7 @@ void issue_step(struct issue_unit *issue_unit)
         case AL:
             if (res_stations_not_full(issue_unit->alu_res_stations))
             {
+                // printf("Dequeue: AL\n");
                 struct decoded_inst inst = inst_queue_dequeue(issue_unit->inst_queue);
                 handle_al_operation(inst, issue_unit->reg_file, issue_unit->alu_res_stations);
             }
@@ -220,6 +221,7 @@ void issue_step(struct issue_unit *issue_unit)
         case BRANCH:
             if (res_stations_not_full(issue_unit->branch_res_stations))
             {
+                // printf("Dequeue: BRANCH\n");
                 struct decoded_inst inst = inst_queue_dequeue(issue_unit->inst_queue);
                 handle_branch_operation(inst, issue_unit->reg_file, issue_unit->branch_res_stations);
             }
@@ -227,6 +229,7 @@ void issue_step(struct issue_unit *issue_unit)
         case MEMORY:
             if (res_stations_not_full(issue_unit->memory_res_stations))
             {
+                // printf("Dequeue: MEMORY\n");
                 struct decoded_inst inst = inst_queue_dequeue(issue_unit->inst_queue);
                 handle_mem_operation(inst, issue_unit->reg_file, issue_unit->memory_res_stations);
             }

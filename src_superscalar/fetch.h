@@ -2,6 +2,7 @@
 #define FETCH_UNIT_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "main_memory.h"
 #include "control.h"
 #include "inst_queue.h"

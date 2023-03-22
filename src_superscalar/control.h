@@ -4,7 +4,7 @@
 enum pc_src
 {
     PC_SRC_PLUS_4,
-    PC_SRC_BRANCH
+    PC_SRC_BRANCH,
 };
 
 enum branch_in_pipeline

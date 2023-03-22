@@ -38,27 +38,35 @@ void memory_step(struct memory_unit *memory_unit)
         switch (entry.op)
         {
         case LW:
+            // printf("LW\n");
             com_data_bus_add_entry(memory_unit->cdb, entry.id, main_memory_load_word(memory_unit->mm, address));
             break;
         case LH:
+            // printf("LH\n");
             com_data_bus_add_entry(memory_unit->cdb, entry.id, (int32_t)(int16_t)main_memory_load_half(memory_unit->mm, address));
             break;
         case LHU:
+            // printf("LHU\n");
             com_data_bus_add_entry(memory_unit->cdb, entry.id, main_memory_load_half(memory_unit->mm, address));
             break;
         case LB:
+            // printf("LB\n");
             com_data_bus_add_entry(memory_unit->cdb, entry.id, (int32_t)(int8_t)main_memory_load_byte(memory_unit->mm, address));
             break;
         case LBU:
+            // printf("LBU\n");
             com_data_bus_add_entry(memory_unit->cdb, entry.id, main_memory_load_byte(memory_unit->mm, address));
             break;
         case SW:
+            // printf("SW\n");
             main_memory_store_word(memory_unit->mm, address, entry.vk);
             break;
         case SH:
+            // printf("SH\n");
             main_memory_store_half(memory_unit->mm, address, entry.vk);
             break;
         case SB:
+            // printf("SB\n");
             main_memory_store_byte(memory_unit->mm, address, entry.vk);
             break;
         default:

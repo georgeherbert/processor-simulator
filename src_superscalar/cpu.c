@@ -21,7 +21,7 @@
 
 #define NUM_ALU_RES_STATIONS 32
 #define NUM_BRANCH_RES_STATIONS 32
-#define NUM_MEMORY_RES_STATIONS 32
+#define NUM_MEMORY_RES_STATIONS 1
 
 struct cpu *cpu_init(char *file_name)
 {
@@ -59,12 +59,12 @@ struct cpu *cpu_init(char *file_name)
         cpu->cdb);
     cpu->branch_res_stations = res_stations_init(
         NUM_BRANCH_RES_STATIONS,
-        NUM_ALU_RES_STATIONS,
+        1 + NUM_ALU_RES_STATIONS,
         cpu->reg_file,
         cpu->cdb);
     cpu->memory_res_stations = res_stations_init(
         NUM_MEMORY_RES_STATIONS,
-        NUM_ALU_RES_STATIONS + NUM_BRANCH_RES_STATIONS,
+        1 + NUM_ALU_RES_STATIONS + NUM_BRANCH_RES_STATIONS,
         cpu->reg_file,
         cpu->cdb);
     cpu->issue_unit = issue_init(
@@ -170,8 +170,11 @@ void update_current(struct cpu *cpu)
 
 void step(struct cpu *cpu)
 {
-    fetch_step(cpu->fetch_unit);
-    decode_step(cpu->decode_unit);
+    if (!cpu->jump_to_zero)
+    {
+        fetch_step(cpu->fetch_unit);
+        decode_step(cpu->decode_unit);
+    }
     issue_step(cpu->issue_unit);
     alu_step(cpu->alu_unit);
     branch_step(cpu->branch_unit);
@@ -181,6 +184,25 @@ void step(struct cpu *cpu)
     res_stations_step(cpu->memory_res_stations);
     reg_file_step(cpu->reg_file);
     com_data_bus_step(cpu->cdb);
+}
+
+bool ready_to_exit(struct cpu *cpu)
+{
+    // Is the last instruction a jump to zero?
+    bool jump_to_zero = cpu->pc_src.val_current == PC_SRC_BRANCH && cpu->reg_pc_target.val_current == 0;
+    cpu->jump_to_zero = cpu->jump_to_zero || jump_to_zero;
+    return cpu->jump_to_zero;
+
+    bool all_regs_written = true;
+    for (int i = 0; i < NUM_REGS; i++)
+    {
+        all_regs_written &= cpu->reg_file->regs[i].qi == 0;
+    }
+
+    // If we have had a jump to zero and all registers have been written, the program we exit
+    bool ready_to_exit = cpu->jump_to_zero && all_regs_written;
+
+    return ready_to_exit;
 }
 
 int main(int argc, char *argv[])
@@ -197,9 +219,9 @@ int main(int argc, char *argv[])
     uint64_t cycles = 0;
 
     // Cycle until PC will be 0
-    while (!(cpu->pc_src.val_current == PC_SRC_BRANCH && cpu->reg_pc_target.val_current == 0))
+    while (!ready_to_exit(cpu))
     {
-        // printf("\nCycle %" PRIu64 "\n", cycles);
+        // printf("\nCycle: %" PRIu64 "\n", cycles);
 
         step(cpu);
         update_current(cpu);

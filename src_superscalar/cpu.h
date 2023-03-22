@@ -37,6 +37,8 @@ struct cpu
     struct reg reg_pc_target;      // PC target from branch unit
     struct reg reg_inst;           // Instruction register
     struct reg reg_inst_pc;        // Program counter of instruction in instruction register
+
+    bool jump_to_zero; // Indicates whether we have had a jump to zero (i.e. final instruction)
 };
 
 struct cpu *cpu_init(char *file_name); // Initialise cpu

@@ -550,7 +550,7 @@ void decode_step(struct decode_unit *decode_unit)
         uint32_t opcode = get_opcode(inst);
 
         uint32_t inst_pc = reg_read(decode_unit->reg_inst_pc);
-
+        
         switch (opcode)
         {
         case OPCODE_OP_IMM:
