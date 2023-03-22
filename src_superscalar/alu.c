@@ -19,13 +19,18 @@ struct alu_unit *alu_init(struct res_stations *alu_res_stations, struct reg_file
     alu_unit->reg_file = reg_file;
     alu_unit->cdb = cdb;
 
+    // alu_unit->step = 0;
+
     return alu_unit;
 }
 
 void alu_step(struct alu_unit *alu_unit)
 {
+    // if (alu_unit->step == 0 && res_stations_is_ready(alu_unit->alu_res_stations))
     if (res_stations_is_ready(alu_unit->alu_res_stations))
     {
+        // alu_unit->step++;
+
         struct res_station entry = res_stations_remove(alu_unit->alu_res_stations);
 
         uint32_t out;
@@ -82,11 +87,25 @@ void alu_step(struct alu_unit *alu_unit)
             exit(EXIT_FAILURE);
         }
 
-        // TODO: This should be two steps really...
-        com_data_bus_add_entry(alu_unit->cdb, entry.id, out);
+        // alu_unit->entry_id = entry.id;
+        // alu_unit->out = out;
 
+        // TODO: Separate write stage
+        com_data_bus_add_entry(alu_unit->cdb, entry.id, out);
         res_stations_set_station_not_busy(alu_unit->alu_res_stations, entry.id);
     }
+    // if (alu_unit->step > 0 && alu_unit->step < 10)
+    // {
+        // alu_unit->step++;
+    // }
+
+    // if (alu_unit->step == 10)
+    // {
+        // com_data_bus_add_entry(alu_unit->cdb, alu_unit->entry_id, alu_unit->out);
+        // res_stations_set_station_not_busy(alu_unit->alu_res_stations, alu_unit->entry_id);
+        // alu_unit->step = 0;
+    // }
+
 }
 
 void alu_destroy(struct alu_unit *alu_unit)

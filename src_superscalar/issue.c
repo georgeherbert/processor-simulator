@@ -152,7 +152,7 @@ void handle_branch_operation(struct decoded_inst inst, struct reg_file *reg_file
             reg_file_get_reg_val_or_na(reg_file, inst.rs1_addr),
             reg_file_get_reg_val_or_na(reg_file, inst.rs2_addr),
             inst.imm,
-            inst.rd_addr,
+            NA, // Branch operations don't write to a register
             inst.inst_pc);
         break;
     default:
@@ -193,7 +193,7 @@ void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, s
             reg_file_get_reg_val_or_na(reg_file, inst.rs1_addr),
             reg_file_get_reg_val_or_na(reg_file, inst.rs2_addr),
             inst.imm,
-            inst.rd_addr,
+            NA, // Store operations don't write to a register
             inst.inst_pc);
         break;
     default:

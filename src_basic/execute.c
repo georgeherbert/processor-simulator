@@ -164,6 +164,7 @@ void set_cmp_out(uint32_t *reg_src_a, uint32_t *reg_src_b, enum ctrl_cmp *ctrl_c
         *ctrl_pc_src = (int32_t)*reg_src_a < (int32_t)*reg_src_b ? CTRL_PC_SRC_ALU_OUT : CTRL_PC_SRC_NPC;
         break;
     case CTRL_CMP_LTU:
+        printf("%d %d\n", *reg_src_a, *reg_src_b);
         *ctrl_pc_src = *reg_src_a < *reg_src_b ? CTRL_PC_SRC_ALU_OUT : CTRL_PC_SRC_NPC;
         break;
     case CTRL_CMP_GE:

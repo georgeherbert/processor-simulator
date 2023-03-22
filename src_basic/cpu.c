@@ -11,7 +11,7 @@
 #include "writeback.h"
 #include "control.h"
 
-#define NUM_WORDS_OUTPUT 2048
+#define NUM_WORDS_OUTPUT 128
 
 struct cpu *cpu_init(char *file_name)
 {
@@ -152,7 +152,8 @@ int main(int argc, char *argv[])
 
         instructions++;
         cycles += 5;
-        // print_regs(cpu->regs);
+        print_main_memory(cpu->mm);
+        print_regs(cpu->regs);
     }
 
     print_main_memory(cpu->mm);

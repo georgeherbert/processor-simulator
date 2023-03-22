@@ -65,6 +65,7 @@ void branch_step(struct branch_unit *branch_unit)
             reg_write(branch_unit->reg_pc_target, (entry.a + entry.inst_pc));
             break;
         case BLTU:
+            printf("%d %d\n", entry.vj, entry.vk);
             reg_write(branch_unit->pc_src, entry.vj < entry.vk ? PC_SRC_BRANCH : PC_SRC_PLUS_4);
             reg_write(branch_unit->reg_pc_target, (entry.a + entry.inst_pc));
             break;
