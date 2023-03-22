@@ -17,7 +17,7 @@
 #include "control.h"
 #include "reg.h"
 
-#define NUM_WORDS_OUTPUT 128
+#define NUM_WORDS_OUTPUT 2048
 
 #define NUM_ALU_RES_STATIONS 32
 #define NUM_BRANCH_RES_STATIONS 32
