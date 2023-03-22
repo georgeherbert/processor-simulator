@@ -58,7 +58,7 @@ void handle_al_operation(struct decoded_inst inst, struct reg_file *reg_file, st
             inst.imm,
             NA, // Only used in branch and memory instructions
             inst.rd_addr,
-            inst.inst_pc);
+            NA); // Only used in branches and AUIPC
         break;
     case LUI:
         res_stations_add(
@@ -70,7 +70,7 @@ void handle_al_operation(struct decoded_inst inst, struct reg_file *reg_file, st
             NA, // LUI only has one operand
             NA, // Only used in branch and memory instructions
             inst.rd_addr,
-            inst.inst_pc);
+            NA); // Only used in branches and AUIPC
         break;
     case AUIPC:
         res_stations_add(
@@ -103,7 +103,7 @@ void handle_al_operation(struct decoded_inst inst, struct reg_file *reg_file, st
             reg_file_get_reg_val_or_na(reg_file, inst.rs2_addr),
             NA, // Only used in branch and memory instructions
             inst.rd_addr,
-            inst.inst_pc);
+            NA); // Only used in branches and AUIPC
         break;
     default:
         fprintf(stderr, "Error: Unknown arithmetic or logical op %d", inst.op);
@@ -182,7 +182,7 @@ void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, s
             NA, // Load operations only have base and offset operands
             inst.imm,
             inst.rd_addr,
-            inst.inst_pc);
+            NA); // Only used in branches and AUIPC
         break;
     case SW:
     case SH:
@@ -196,7 +196,7 @@ void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, s
             reg_file_get_reg_val_or_na(reg_file, inst.rs2_addr),
             inst.imm,
             NA, // Store operations don't write to a register
-            inst.inst_pc);
+            NA);
         break;
     default:
         fprintf(stderr, "Error: Unknown memory op");

@@ -7,17 +7,14 @@
 
 #define INST_QUEUE_SIZE 32
 
-struct inst_queue_inst
-{
-    struct decoded_inst insts[INST_QUEUE_SIZE];
-    int32_t front;
-    int32_t rear;
-};
-
 struct inst_queue
 {
-    struct inst_queue_inst current;
-    struct inst_queue_inst next;
+    struct decoded_inst queue_current[INST_QUEUE_SIZE];
+    struct decoded_inst queue_next[INST_QUEUE_SIZE];
+    int32_t front_current;
+    int32_t front_next;
+    int32_t rear_next;
+
     struct reg *inst_queue_empty;
     struct reg *inst_queue_full;
 };

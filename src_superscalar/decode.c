@@ -178,7 +178,7 @@ void create_decoded_inst(
     inst_queue_enqueue(inst_queue, decoded_inst);
 }
 
-void handle_op_imm(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
+void handle_op_imm(struct inst_queue *inst_queue, uint32_t inst)
 {
     enum op op;
     uint8_t rd_addr = get_rd_addr(inst);
@@ -247,10 +247,10 @@ void handle_op_imm(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_p
         rs1_addr,
         NA, // Integer register-immediate instructions don't use rs2
         imm,
-        inst_pc);
+        NA); // Only used in branch and AUIPC
 }
 
-void handle_lui(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
+void handle_lui(struct inst_queue *inst_queue, uint32_t inst)
 {
     uint8_t rd_addr = get_rd_addr(inst);
     uint32_t imm = get_imm_u(inst);
@@ -263,7 +263,7 @@ void handle_lui(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
         NA, // LUI doesn't use rs1
         NA, // LUI doesn't use rs2
         imm,
-        inst_pc);
+        NA);
 
     printf("lui x%d, %d\n", rd_addr, imm);
 }
@@ -286,7 +286,7 @@ void handle_auipc(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc
     printf("auipc x%d, %d", rd_addr, imm);
 }
 
-void handle_op(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
+void handle_op(struct inst_queue *inst_queue, uint32_t inst)
 {
     uint8_t rd_addr = get_rd_addr(inst);
     uint8_t rs1_addr = get_rs1_addr(inst);
@@ -364,8 +364,8 @@ void handle_op(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
         rd_addr,
         rs1_addr,
         rs2_addr,
-        NA, // Integer register-register instructions don't use immediate
-        inst_pc);
+        NA,  // Integer register-register instructions don't use immediate
+        NA); // Only used in branch and AUIPC
 }
 
 void handle_jal(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
@@ -455,7 +455,7 @@ void handle_branch(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_p
         inst_pc);
 }
 
-void handle_load(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
+void handle_load(struct inst_queue *inst_queue, uint32_t inst)
 {
     uint8_t rd_addr = get_rd_addr(inst);
     uint8_t rs1_addr = get_rs1_addr(inst);
@@ -498,10 +498,10 @@ void handle_load(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
         rs1_addr,
         NA, // Load instructions don't use rs2
         imm,
-        inst_pc);
+        NA); // Only used in branch and AUIPC
 }
 
-void handle_store(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
+void handle_store(struct inst_queue *inst_queue, uint32_t inst)
 {
     uint8_t rs1_addr = get_rs1_addr(inst);
     uint8_t rs2_addr = get_rs2_addr(inst);
@@ -536,7 +536,7 @@ void handle_store(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc
         rs1_addr,
         rs2_addr,
         imm,
-        inst_pc);
+        NA); // Only used in branch and AUIPC
 }
 
 void decode_step(struct decode_unit *decode_unit)
@@ -552,16 +552,16 @@ void decode_step(struct decode_unit *decode_unit)
             switch (opcode)
             {
             case OPCODE_OP_IMM:
-                handle_op_imm(decode_unit->inst_queue, inst, inst_pc);
+                handle_op_imm(decode_unit->inst_queue, inst);
                 break;
             case OPCODE_LUI:
-                handle_lui(decode_unit->inst_queue, inst, inst_pc);
+                handle_lui(decode_unit->inst_queue, inst);
                 break;
             case OPCODE_AUIPC:
                 handle_auipc(decode_unit->inst_queue, inst, inst_pc);
                 break;
             case OPCODE_OP:
-                handle_op(decode_unit->inst_queue, inst, inst_pc);
+                handle_op(decode_unit->inst_queue, inst);
                 break;
             case OPCODE_JAL:
                 handle_jal(decode_unit->inst_queue, inst, inst_pc);
@@ -573,10 +573,10 @@ void decode_step(struct decode_unit *decode_unit)
                 handle_branch(decode_unit->inst_queue, inst, inst_pc);
                 break;
             case OPCODE_LOAD:
-                handle_load(decode_unit->inst_queue, inst, inst_pc);
+                handle_load(decode_unit->inst_queue, inst);
                 break;
             case OPCODE_STORE:
-                handle_store(decode_unit->inst_queue, inst, inst_pc);
+                handle_store(decode_unit->inst_queue, inst);
                 break;
             default:
                 fprintf(stderr, "Error: Unknown opcode: %08x", opcode);
