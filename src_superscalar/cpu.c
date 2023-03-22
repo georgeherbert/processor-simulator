@@ -191,7 +191,6 @@ bool ready_to_exit(struct cpu *cpu)
     // Is the last instruction a jump to zero?
     bool jump_to_zero = cpu->pc_src.val_current == PC_SRC_BRANCH && cpu->reg_pc_target.val_current == 0;
     cpu->jump_to_zero = cpu->jump_to_zero || jump_to_zero;
-    return cpu->jump_to_zero;
 
     bool all_regs_written = true;
     for (int i = 0; i < NUM_REGS; i++)
