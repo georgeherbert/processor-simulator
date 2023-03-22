@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 #include "res_stations.h"
 #include "reg_file.h"
 
@@ -17,15 +18,15 @@ struct res_stations *res_stations_init(
         exit(EXIT_FAILURE);
     }
 
-    rs->current.stations = malloc(sizeof(struct res_station) * num_stations);
-    if (rs->current.stations == NULL)
+    rs->stations_current = malloc(sizeof(struct res_station) * num_stations);
+    if (rs->stations_current == NULL)
     {
         fprintf(stderr, "Error: Could not allocate memory for current individual reservation stations");
         exit(EXIT_FAILURE);
     }
 
-    rs->next.stations = malloc(sizeof(struct res_station) * num_stations);
-    if (rs->next.stations == NULL)
+    rs->stations_next = malloc(sizeof(struct res_station) * num_stations);
+    if (rs->stations_next == NULL)
     {
         fprintf(stderr, "Error: Could not allocate memory for next individual reservation stations");
         exit(EXIT_FAILURE);
@@ -37,10 +38,10 @@ struct res_stations *res_stations_init(
 
     for (uint32_t i = 0; i < num_stations; i++)
     {
-        rs->current.stations[i].id = i + id_offset;
-        rs->current.stations[i].busy = false;
-        rs->next.stations[i].id = i + id_offset;
-        rs->next.stations[i].busy = false;
+        rs->stations_current[i].id = i + id_offset;
+        rs->stations_current[i].busy = false;
+        rs->stations_next[i].id = i + id_offset;
+        rs->stations_next[i].busy = false;
     }
 
     return rs;
@@ -50,22 +51,22 @@ void res_stations_step(struct res_stations *rs)
 {
     for (uint32_t i = 0; i < rs->num_stations; i++)
     {
-        if (rs->next.stations[i].busy)
+        if (rs->stations_next[i].busy)
         {
-            if (rs->next.stations[i].qj != 0)
+            if (rs->stations_next[i].qj != 0)
             {
-                if (com_data_bus_is_val_ready(rs->cdb, rs->next.stations[i].qj))
+                if (com_data_bus_is_val_ready(rs->cdb, rs->stations_next[i].qj))
                 {
-                    rs->next.stations[i].vj = com_data_bus_get_val(rs->cdb, rs->next.stations[i].qj);
-                    rs->next.stations[i].qj = 0;
+                    rs->stations_next[i].vj = com_data_bus_get_val(rs->cdb, rs->stations_next[i].qj);
+                    rs->stations_next[i].qj = 0;
                 }
             }
-            if (rs->next.stations[i].qk != 0)
+            if (rs->stations_next[i].qk != 0)
             {
-                if (com_data_bus_is_val_ready(rs->cdb, rs->next.stations[i].qk))
+                if (com_data_bus_is_val_ready(rs->cdb, rs->stations_next[i].qk))
                 {
-                    rs->next.stations[i].vk = com_data_bus_get_val(rs->cdb, rs->next.stations[i].qk);
-                    rs->next.stations[i].qk = 0;
+                    rs->stations_next[i].vk = com_data_bus_get_val(rs->cdb, rs->stations_next[i].qk);
+                    rs->stations_next[i].qk = 0;
                 }
             }
         }
@@ -87,17 +88,17 @@ void res_stations_add(
     {
         for (uint32_t i = 0; i < rs->num_stations; i++)
         {
-            if (!rs->next.stations[i].busy)
+            if (!rs->stations_next[i].busy)
             {
-                rs->next.stations[i].busy = true;
-                rs->next.stations[i].op = op;
-                rs->next.stations[i].qj = qj;
-                rs->next.stations[i].qk = qk;
-                rs->next.stations[i].vj = vj;
-                rs->next.stations[i].vk = vk;
-                rs->next.stations[i].a = a;
-                rs->next.stations[i].inst_pc = inst_pc;
-                reg_file_set_reg_qi(rs->reg_file, dest, rs->next.stations[i].id);
+                rs->stations_next[i].busy = true;
+                rs->stations_next[i].op = op;
+                rs->stations_next[i].qj = qj;
+                rs->stations_next[i].qk = qk;
+                rs->stations_next[i].vj = vj;
+                rs->stations_next[i].vk = vk;
+                rs->stations_next[i].a = a;
+                rs->stations_next[i].inst_pc = inst_pc;
+                reg_file_set_reg_qi(rs->reg_file, dest, rs->stations_next[i].id);
                 break;
             }
         }
@@ -115,9 +116,9 @@ struct res_station res_stations_remove(struct res_stations *rs)
     {
         for (uint32_t i = 0; i < rs->num_stations; i++)
         {
-            if (rs->current.stations[i].qj == 0 && rs->current.stations[i].qk == 0 && rs->current.stations[i].busy)
+            if (rs->stations_current[i].qj == 0 && rs->stations_current[i].qk == 0 && rs->stations_current[i].busy)
             {
-                return rs->current.stations[i];
+                return rs->stations_current[i];
             }
         }
         fprintf(stderr, "Error: Cannot find a ready reservation station despite checking if there is one");
@@ -136,7 +137,7 @@ bool res_stations_is_ready(struct res_stations *rs)
 
     for (uint32_t i = 0; i < rs->num_stations; i++)
     {
-        is_ready |= rs->current.stations[i].qj == 0 && rs->current.stations[i].qk == 0 && rs->current.stations[i].busy;
+        is_ready |= rs->stations_current[i].qj == 0 && rs->stations_current[i].qk == 0 && rs->stations_current[i].busy;
     }
 
     return is_ready;
@@ -148,7 +149,7 @@ bool res_stations_not_full(struct res_stations *rs)
 
     for (uint32_t i = 0; i < rs->num_stations; i++)
     {
-        is_full &= rs->current.stations[i].busy;
+        is_full &= rs->stations_current[i].busy;
     }
 
     return !is_full;
@@ -158,9 +159,9 @@ void res_stations_set_station_not_busy(struct res_stations *rs, uint32_t id)
 {
     for (uint32_t i = 0; i < rs->num_stations; i++)
     {
-        if (rs->next.stations[i].id == id)
+        if (rs->stations_next[i].id == id)
         {
-            rs->next.stations[i].busy = false;
+            rs->stations_next[i].busy = false;
             break;
         }
     }
@@ -168,15 +169,12 @@ void res_stations_set_station_not_busy(struct res_stations *rs, uint32_t id)
 
 void res_stations_update_current(struct res_stations *rs)
 {
-    for (uint32_t i = 0; i < rs->num_stations; i++)
-    {
-        rs->current.stations[i] = rs->next.stations[i];
-    }
+    memcpy(rs->stations_current, rs->stations_next, sizeof(struct res_station) * rs->num_stations);
 }
 
 void res_stations_destroy(struct res_stations *rs)
 {
-    free(rs->current.stations);
-    free(rs->next.stations);
+    free(rs->stations_current);
+    free(rs->stations_next);
     free(rs);
 }

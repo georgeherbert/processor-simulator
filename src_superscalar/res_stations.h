@@ -20,18 +20,13 @@ struct res_station
     uint32_t inst_pc; // Program counter of instruction
 };
 
-struct res_stations_init
-{
-    struct res_station *stations;
-};
-
 struct res_stations
 {
-    struct res_stations_init current; // Array of current reservation stations
-    struct res_stations_init next;    // Array of next reservation stations
-    struct reg_file *reg_file;        // Pointer to register file
-    uint32_t num_stations;            // Number of reservation stations
-    struct com_data_bus *cdb;         // Pointer to common data bus
+    struct res_station *stations_current; // Array of current reservation stations
+    struct res_station *stations_next;    // Array of next reservation stations
+    struct reg_file *reg_file;            // Pointer to register file
+    uint32_t num_stations;                // Number of reservation stations
+    struct com_data_bus *cdb;             // Pointer to common data bus
 };
 
 struct res_stations *res_stations_init(
