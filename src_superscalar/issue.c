@@ -16,7 +16,10 @@ struct issue_unit *issue_init(
     struct res_stations *alu_res_stations,
     struct res_stations *branch_res_stations,
     struct res_stations *memory_res_stations,
-    struct reg *inst_queue_empty)
+    struct reg *inst_queue_empty,
+    struct reg *res_stations_all_busy_alu,
+    struct reg *res_stations_all_busy_branch,
+    struct reg *res_stations_all_busy_memory)
 {
     struct issue_unit *issue_unit = malloc(sizeof(struct issue_unit));
 
@@ -32,6 +35,9 @@ struct issue_unit *issue_init(
     issue_unit->branch_res_stations = branch_res_stations;
     issue_unit->memory_res_stations = memory_res_stations;
     issue_unit->inst_queue_empty = inst_queue_empty;
+    issue_unit->res_stations_all_busy_alu = res_stations_all_busy_alu;
+    issue_unit->res_stations_all_busy_branch = res_stations_all_busy_branch;
+    issue_unit->res_stations_all_busy_memory = res_stations_all_busy_memory;
 
     return issue_unit;
 }
@@ -213,25 +219,22 @@ void issue_step(struct issue_unit *issue_unit)
         switch (op_type)
         {
         case AL:
-            if (res_stations_not_full(issue_unit->alu_res_stations))
+            if (!reg_read(issue_unit->res_stations_all_busy_alu))
             {
-                // printf("Dequeue: AL\n");
                 struct decoded_inst inst = inst_queue_dequeue(issue_unit->inst_queue);
                 handle_al_operation(inst, issue_unit->reg_file, issue_unit->alu_res_stations);
             }
             break;
         case BRANCH:
-            if (res_stations_not_full(issue_unit->branch_res_stations))
+            if (!reg_read(issue_unit->res_stations_all_busy_branch))
             {
-                // printf("Dequeue: BRANCH\n");
                 struct decoded_inst inst = inst_queue_dequeue(issue_unit->inst_queue);
                 handle_branch_operation(inst, issue_unit->reg_file, issue_unit->branch_res_stations);
             }
             break;
         case MEMORY:
-            if (res_stations_not_full(issue_unit->memory_res_stations))
+            if (!reg_read(issue_unit->res_stations_all_busy_memory))
             {
-                // printf("Dequeue: MEMORY\n");
                 struct decoded_inst inst = inst_queue_dequeue(issue_unit->inst_queue);
                 handle_mem_operation(inst, issue_unit->reg_file, issue_unit->memory_res_stations);
             }

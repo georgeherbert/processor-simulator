@@ -33,14 +33,17 @@ struct cpu
     struct com_data_bus *cdb;                 // Pointer to common data bus
     struct reorder_buffer *rob;               // Pointer to reorder buffer
 
-    struct reg_file *reg_file;     // Pointer to register file
-    struct reg pc_src;             // Control signal for PC source
-    struct reg branch_in_pipeline; // Control signal for presence of branch in pipeline
-    struct reg reg_pc_target;      // PC target from branch unit
-    struct reg reg_inst;           // Instruction register
-    struct reg reg_inst_pc;        // Program counter of instruction in instruction register
-    struct reg inst_queue_empty;   // Indicates whether the instruction queue is empty
-    struct reg inst_queue_full;    // Indicates whether the instruction queue is full
+    struct reg_file *reg_file;               // Pointer to register file
+    struct reg pc_src;                       // Control signal for PC source
+    struct reg branch_in_pipeline;           // Control signal for presence of branch in pipeline
+    struct reg reg_pc_target;                // PC target from branch unit
+    struct reg reg_inst;                     // Instruction register
+    struct reg reg_inst_pc;                  // Program counter of instruction in instruction register
+    struct reg inst_queue_empty;             // Indicates whether the instruction queue is empty
+    struct reg inst_queue_full;              // Indicates whether the instruction queue is full
+    struct reg res_stations_all_busy_alu;    // Indicates whether all ALU reservation stations are busy
+    struct reg res_stations_all_busy_branch; // Indicates whether all branch reservation stations are busy
+    struct reg res_stations_all_busy_memory; // Indicates whether all memory reservation stations are busy
 
     bool jump_to_zero; // Indicates whether we have had a jump to zero (i.e. final instruction)
 };

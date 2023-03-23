@@ -4,12 +4,14 @@
 #include <string.h>
 #include "res_stations.h"
 #include "reg_file.h"
+#include "reg.h"
 
 struct res_stations *res_stations_init(
     uint32_t num_stations,
     uint32_t id_offset,
     struct reg_file *reg_file,
-    struct com_data_bus *cdb)
+    struct com_data_bus *cdb,
+    struct reg *res_stations_all_busy)
 {
     struct res_stations *rs = malloc(sizeof(struct res_stations));
     if (rs == NULL)
@@ -35,6 +37,7 @@ struct res_stations *res_stations_init(
     rs->num_stations = num_stations;
     rs->reg_file = reg_file;
     rs->cdb = cdb;
+    rs->res_stations_all_busy = res_stations_all_busy;
 
     for (uint32_t i = 0; i < num_stations; i++)
     {
@@ -71,6 +74,12 @@ void res_stations_step(struct res_stations *rs)
             }
         }
     }
+    bool all_busy = true;
+    for (uint32_t i = 0; i < rs->num_stations; i++)
+    {
+        all_busy &= rs->stations_next[i].busy;
+    }
+    reg_write(rs->res_stations_all_busy, all_busy);
 }
 
 void res_stations_add(
@@ -84,29 +93,21 @@ void res_stations_add(
     uint32_t dest,
     uint32_t inst_pc)
 {
-    if (res_stations_not_full(rs))
+    for (uint32_t i = 0; i < rs->num_stations; i++)
     {
-        for (uint32_t i = 0; i < rs->num_stations; i++)
+        if (!rs->stations_next[i].busy)
         {
-            if (!rs->stations_next[i].busy)
-            {
-                rs->stations_next[i].busy = true;
-                rs->stations_next[i].op = op;
-                rs->stations_next[i].qj = qj;
-                rs->stations_next[i].qk = qk;
-                rs->stations_next[i].vj = vj;
-                rs->stations_next[i].vk = vk;
-                rs->stations_next[i].a = a;
-                rs->stations_next[i].inst_pc = inst_pc;
-                reg_file_set_reg_qi(rs->reg_file, dest, rs->stations_next[i].id);
-                break;
-            }
+            rs->stations_next[i].busy = true;
+            rs->stations_next[i].op = op;
+            rs->stations_next[i].qj = qj;
+            rs->stations_next[i].qk = qk;
+            rs->stations_next[i].vj = vj;
+            rs->stations_next[i].vk = vk;
+            rs->stations_next[i].a = a;
+            rs->stations_next[i].inst_pc = inst_pc;
+            reg_file_set_reg_qi(rs->reg_file, dest, rs->stations_next[i].id);
+            break;
         }
-    }
-    else
-    {
-        fprintf(stderr, "Error: Cannot add since all reservation stations are busy");
-        exit(EXIT_FAILURE);
     }
 }
 
@@ -141,18 +142,6 @@ bool res_stations_is_ready(struct res_stations *rs)
     }
 
     return is_ready;
-}
-
-bool res_stations_not_full(struct res_stations *rs)
-{
-    uint32_t is_full = true;
-
-    for (uint32_t i = 0; i < rs->num_stations; i++)
-    {
-        is_full &= rs->stations_current[i].busy;
-    }
-
-    return !is_full;
 }
 
 void res_stations_set_station_not_busy(struct res_stations *rs, uint32_t id)
