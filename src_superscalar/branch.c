@@ -14,7 +14,8 @@ struct branch_unit *branch_init(
     struct reg *reg_pc_target,
     struct reg *pc_src,
     struct com_data_bus *cdb,
-    struct reg *branch_in_pipeline)
+    struct reg *branch_in_pipeline,
+    struct reg *res_stations_ready_branch)
 {
     struct branch_unit *branch_unit = malloc(sizeof(struct branch_unit));
 
@@ -30,13 +31,14 @@ struct branch_unit *branch_init(
     branch_unit->pc_src = pc_src;
     branch_unit->cdb = cdb;
     branch_unit->branch_in_pipeline = branch_in_pipeline;
+    branch_unit->res_stations_ready_branch = res_stations_ready_branch;
 
     return branch_unit;
 }
 
 void branch_step(struct branch_unit *branch_unit)
 {
-    if (res_stations_is_ready(branch_unit->branch_res_stations))
+    if (reg_read(branch_unit->res_stations_ready_branch))
     {
         struct res_station entry = res_stations_remove(branch_unit->branch_res_stations);
 

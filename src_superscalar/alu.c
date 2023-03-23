@@ -4,8 +4,13 @@
 #include "res_stations.h"
 #include "decoded_inst.h"
 #include "com_data_bus.h"
+#include "reg.h"
 
-struct alu_unit *alu_init(struct res_stations *alu_res_stations, struct reg_file *reg_file, struct com_data_bus *cdb)
+struct alu_unit *alu_init(
+    struct res_stations *alu_res_stations,
+    struct reg_file *reg_file,
+    struct com_data_bus *cdb,
+    struct reg *res_stations_ready_alu)
 {
     struct alu_unit *alu_unit = malloc(sizeof(struct alu_unit));
 
@@ -18,6 +23,7 @@ struct alu_unit *alu_init(struct res_stations *alu_res_stations, struct reg_file
     alu_unit->alu_res_stations = alu_res_stations;
     alu_unit->reg_file = reg_file;
     alu_unit->cdb = cdb;
+    alu_unit->res_stations_ready_alu = res_stations_ready_alu;
 
     alu_unit->num_cycles = 10;
     alu_unit->relative_cycle = 0;
@@ -27,7 +33,7 @@ struct alu_unit *alu_init(struct res_stations *alu_res_stations, struct reg_file
 
 void alu_step(struct alu_unit *alu_unit)
 {
-    if (alu_unit->relative_cycle == 0 && res_stations_is_ready(alu_unit->alu_res_stations))
+    if (alu_unit->relative_cycle == 0 && reg_read(alu_unit->res_stations_ready_alu))
     {
         alu_unit->relative_cycle++;
 

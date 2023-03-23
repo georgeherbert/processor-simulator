@@ -4,12 +4,14 @@
 #include "res_stations.h"
 #include "reg_file.h"
 #include "main_memory.h"
+#include "reg.h"
 
 struct memory_unit *memory_init(
     struct res_stations *memory_res_stations,
     struct main_memory *mm,
     struct reg_file *reg_file,
-    struct com_data_bus *cdb)
+    struct com_data_bus *cdb,
+    struct reg *res_stations_ready_memory)
 {
     struct memory_unit *memory_unit = malloc(sizeof(struct memory_unit));
 
@@ -23,13 +25,14 @@ struct memory_unit *memory_init(
     memory_unit->mm = mm;
     memory_unit->reg_file = reg_file;
     memory_unit->cdb = cdb;
+    memory_unit->res_stations_ready_memory = res_stations_ready_memory;
 
     return memory_unit;
 }
 
 void memory_step(struct memory_unit *memory_unit)
 {
-    if (res_stations_is_ready(memory_unit->memory_res_stations))
+    if (reg_read(memory_unit->res_stations_ready_memory))
     {
         struct res_station entry = res_stations_remove(memory_unit->memory_res_stations);
 

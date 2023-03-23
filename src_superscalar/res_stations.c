@@ -11,7 +11,8 @@ struct res_stations *res_stations_init(
     uint32_t id_offset,
     struct reg_file *reg_file,
     struct com_data_bus *cdb,
-    struct reg *res_stations_all_busy)
+    struct reg *res_stations_all_busy,
+    struct reg *reg_stations_ready)
 {
     struct res_stations *rs = malloc(sizeof(struct res_stations));
     if (rs == NULL)
@@ -38,6 +39,7 @@ struct res_stations *res_stations_init(
     rs->reg_file = reg_file;
     rs->cdb = cdb;
     rs->res_stations_all_busy = res_stations_all_busy;
+    rs->res_stations_ready = reg_stations_ready;
 
     for (uint32_t i = 0; i < num_stations; i++)
     {
@@ -75,11 +77,14 @@ void res_stations_step(struct res_stations *rs)
         }
     }
     bool all_busy = true;
+    uint32_t ready = false;
     for (uint32_t i = 0; i < rs->num_stations; i++)
     {
         all_busy &= rs->stations_next[i].busy;
+        ready |= rs->stations_next[i].qj == 0 && rs->stations_next[i].qk == 0 && rs->stations_next[i].busy;
     }
     reg_write(rs->res_stations_all_busy, all_busy);
+    reg_write(rs->res_stations_ready, ready);
 }
 
 void res_stations_add(
@@ -113,35 +118,15 @@ void res_stations_add(
 
 struct res_station res_stations_remove(struct res_stations *rs)
 {
-    if (res_stations_is_ready(rs))
-    {
-        for (uint32_t i = 0; i < rs->num_stations; i++)
-        {
-            if (rs->stations_current[i].qj == 0 && rs->stations_current[i].qk == 0 && rs->stations_current[i].busy)
-            {
-                return rs->stations_current[i];
-            }
-        }
-        fprintf(stderr, "Error: Cannot find a ready reservation station despite checking if there is one");
-        exit(EXIT_FAILURE);
-    }
-    else
-    {
-        fprintf(stderr, "Error: Cannot remove since all busy reservation stations are awaiting operands");
-        exit(EXIT_FAILURE);
-    }
-}
-
-bool res_stations_is_ready(struct res_stations *rs)
-{
-    uint32_t is_ready = false;
-
     for (uint32_t i = 0; i < rs->num_stations; i++)
     {
-        is_ready |= rs->stations_current[i].qj == 0 && rs->stations_current[i].qk == 0 && rs->stations_current[i].busy;
+        if (rs->stations_current[i].qj == 0 && rs->stations_current[i].qk == 0 && rs->stations_current[i].busy)
+        {
+            return rs->stations_current[i];
+        }
     }
-
-    return is_ready;
+    fprintf(stderr, "Error: Cannot find a ready reservation station despite checking if there is one\n");
+    exit(EXIT_FAILURE);
 }
 
 void res_stations_set_station_not_busy(struct res_stations *rs, uint32_t id)

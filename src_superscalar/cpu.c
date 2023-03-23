@@ -34,15 +34,19 @@ struct cpu *cpu_init(char *file_name)
 
     cpu->cdb = com_data_bus_init(3); // One entry for each functional unit
     cpu->reg_file = reg_file_init(cpu->cdb);
+
+    cpu->pc_src.val_current = PC_SRC_PLUS_4;
+    cpu->branch_in_pipeline.val_current = BRANCH_NOT_IN_PIPELINE;
+    cpu->reg_inst.val_current = 0x0;
     cpu->inst_queue_empty.val_current = true;
     cpu->inst_queue_full.val_current = false;
     cpu->res_stations_all_busy_alu.val_current = false;
     cpu->res_stations_all_busy_branch.val_current = false;
     cpu->res_stations_all_busy_memory.val_current = false;
+    cpu->res_stations_ready_alu.val_current = false;
+    cpu->res_stations_ready_branch.val_current = false;
+    cpu->res_stations_ready_memory.val_current = false;
 
-    cpu->pc_src.val_current = PC_SRC_PLUS_4;
-    cpu->branch_in_pipeline.val_current = BRANCH_NOT_IN_PIPELINE;
-    cpu->reg_inst.val_current = 0x0;
     cpu->mm = main_memory_init(file_name);
     cpu->inst_queue = inst_queue_init(
         &cpu->inst_queue_empty,
@@ -66,19 +70,22 @@ struct cpu *cpu_init(char *file_name)
         1, // 1 is used because 0 indicates operands are ready
         cpu->reg_file,
         cpu->cdb,
-        &cpu->res_stations_all_busy_alu);
+        &cpu->res_stations_all_busy_alu,
+        &cpu->res_stations_ready_alu);
     cpu->branch_res_stations = res_stations_init(
         NUM_BRANCH_RES_STATIONS,
         1 + NUM_ALU_RES_STATIONS,
         cpu->reg_file,
         cpu->cdb,
-        &cpu->res_stations_all_busy_branch);
+        &cpu->res_stations_all_busy_branch,
+        &cpu->res_stations_ready_branch);
     cpu->memory_res_stations = res_stations_init(
         NUM_MEMORY_RES_STATIONS,
         1 + NUM_ALU_RES_STATIONS + NUM_BRANCH_RES_STATIONS,
         cpu->reg_file,
         cpu->cdb,
-        &cpu->res_stations_all_busy_memory);
+        &cpu->res_stations_all_busy_memory,
+        &cpu->res_stations_ready_memory);
     cpu->issue_unit = issue_init(
         cpu->inst_queue,
         cpu->reg_file,
@@ -92,19 +99,22 @@ struct cpu *cpu_init(char *file_name)
     cpu->alu_unit = alu_init(
         cpu->alu_res_stations,
         cpu->reg_file,
-        cpu->cdb);
+        cpu->cdb,
+        &cpu->res_stations_ready_alu);
     cpu->branch_unit = branch_init(
         cpu->branch_res_stations,
         cpu->reg_file,
         &cpu->reg_pc_target,
         &cpu->pc_src,
         cpu->cdb,
-        &cpu->branch_in_pipeline);
+        &cpu->branch_in_pipeline,
+        &cpu->res_stations_ready_branch);
     cpu->memory_unit = memory_init(
         cpu->memory_res_stations,
         cpu->mm,
         cpu->reg_file,
-        cpu->cdb);
+        cpu->cdb,
+        &cpu->res_stations_ready_memory);
 
     printf("CPU successfully initialised\n");
 
@@ -181,6 +191,9 @@ void update_current(struct cpu *cpu)
     reg_update_current(&cpu->res_stations_all_busy_alu);
     reg_update_current(&cpu->res_stations_all_busy_branch);
     reg_update_current(&cpu->res_stations_all_busy_memory);
+    reg_update_current(&cpu->res_stations_ready_alu);
+    reg_update_current(&cpu->res_stations_ready_branch);
+    reg_update_current(&cpu->res_stations_ready_memory);
 
     inst_queue_update_current(cpu->inst_queue);
 

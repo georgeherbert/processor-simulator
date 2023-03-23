@@ -44,6 +44,9 @@ struct cpu
     struct reg res_stations_all_busy_alu;    // Indicates whether all ALU reservation stations are busy
     struct reg res_stations_all_busy_branch; // Indicates whether all branch reservation stations are busy
     struct reg res_stations_all_busy_memory; // Indicates whether all memory reservation stations are busy
+    struct reg res_stations_ready_alu;       // Indicates whether there is a ready ALU reservation station
+    struct reg res_stations_ready_branch;    // Indicates whether there is a ready branch reservation station
+    struct reg res_stations_ready_memory;    // Indicates whether there is a ready memory reservation station
 
     bool jump_to_zero; // Indicates whether we have had a jump to zero (i.e. final instruction)
 };
