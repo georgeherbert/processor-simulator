@@ -1,17 +1,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "memory.h"
-#include "res_stations.h"
 #include "reg_file.h"
 #include "main_memory.h"
 #include "reg.h"
+#include "memory_buffers.h"
 
 struct memory_unit *memory_init(
-    struct res_stations *memory_res_stations,
+    struct memory_buffers *memory_buffers,
     struct main_memory *mm,
     struct reg_file *reg_file,
     struct com_data_bus *cdb,
-    struct reg *res_stations_ready_memory)
+    struct reg *memory_buffers_ready)
 {
     struct memory_unit *memory_unit = malloc(sizeof(struct memory_unit));
 
@@ -21,20 +21,20 @@ struct memory_unit *memory_init(
         exit(EXIT_FAILURE);
     }
 
-    memory_unit->memory_res_stations = memory_res_stations;
+    memory_unit->memory_buffers = memory_buffers;
     memory_unit->mm = mm;
     memory_unit->reg_file = reg_file;
     memory_unit->cdb = cdb;
-    memory_unit->res_stations_ready_memory = res_stations_ready_memory;
+    memory_unit->memory_buffers_ready = memory_buffers_ready;
 
     return memory_unit;
 }
 
 void memory_step(struct memory_unit *memory_unit)
 {
-    if (reg_read(memory_unit->res_stations_ready_memory))
+    if (reg_read(memory_unit->memory_buffers_ready))
     {
-        struct res_station entry = res_stations_remove(memory_unit->memory_res_stations);
+        struct memory_buffer entry = memory_buffers_remove(memory_unit->memory_buffers);
 
         uint32_t address = entry.vj + entry.a;
 
@@ -69,7 +69,7 @@ void memory_step(struct memory_unit *memory_unit)
             exit(EXIT_FAILURE);
         }
 
-        res_stations_set_station_not_busy(memory_unit->memory_res_stations, entry.id);
+        memory_buffers_set_buffer_not_busy(memory_unit->memory_buffers, entry.id);
     }
 }
 

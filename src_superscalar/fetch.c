@@ -74,8 +74,8 @@ void fetch_step(struct fetch_unit *fetch_unit)
         {
             /*
                 If there is a branch in the pipeline, we stall the fetch unit until the branch is resolved.
-                However, this also means we need to set the instruction register to 0x0 to indicate the fetch 
-                unit is stalled. Without this, the decode unit would continue to decode the same instruction 
+                However, this also means we need to set the instruction register to 0x0 to indicate the fetch
+                unit is stalled. Without this, the decode unit would continue to decode the same instruction
                 over and over again.
             */
 

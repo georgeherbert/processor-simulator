@@ -7,6 +7,7 @@
 #include "reg_file.h"
 #include "decode.h"
 #include "decoded_inst.h"
+#include "memory_buffers.h"
 
 #define NA 0
 
@@ -15,11 +16,11 @@ struct issue_unit *issue_init(
     struct reg_file *reg_file,
     struct res_stations *alu_res_stations,
     struct res_stations *branch_res_stations,
-    struct res_stations *memory_res_stations,
+    struct memory_buffers *memory_buffers,
     struct reg *inst_queue_empty,
     struct reg *res_stations_all_busy_alu,
     struct reg *res_stations_all_busy_branch,
-    struct reg *res_stations_all_busy_memory)
+    struct reg *memory_buffers_all_busy)
 {
     struct issue_unit *issue_unit = malloc(sizeof(struct issue_unit));
 
@@ -33,11 +34,11 @@ struct issue_unit *issue_init(
     issue_unit->reg_file = reg_file;
     issue_unit->alu_res_stations = alu_res_stations;
     issue_unit->branch_res_stations = branch_res_stations;
-    issue_unit->memory_res_stations = memory_res_stations;
+    issue_unit->memory_buffers = memory_buffers;
     issue_unit->inst_queue_empty = inst_queue_empty;
     issue_unit->res_stations_all_busy_alu = res_stations_all_busy_alu;
     issue_unit->res_stations_all_busy_branch = res_stations_all_busy_branch;
-    issue_unit->res_stations_all_busy_memory = res_stations_all_busy_memory;
+    issue_unit->memory_buffers_all_busy = memory_buffers_all_busy;
 
     return issue_unit;
 }
@@ -170,7 +171,7 @@ void handle_branch_operation(struct decoded_inst inst, struct reg_file *reg_file
     }
 }
 
-void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, struct res_stations *memory_res_stations)
+void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, struct memory_buffers *memory_buffers)
 {
     switch (inst.op)
     {
@@ -179,8 +180,8 @@ void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, s
     case LHU:
     case LB:
     case LBU:
-        res_stations_add(
-            memory_res_stations,
+        memory_buffers_add(
+            memory_buffers,
             inst.op,
             reg_file_get_reg_qi(reg_file, inst.rs1_addr),
             NA, // Load operations don't use rs2
@@ -193,8 +194,8 @@ void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, s
     case SW:
     case SH:
     case SB:
-        res_stations_add(
-            memory_res_stations,
+        memory_buffers_add(
+            memory_buffers,
             inst.op,
             reg_file_get_reg_qi(reg_file, inst.rs1_addr),
             reg_file_get_reg_qi(reg_file, inst.rs2_addr),
@@ -233,10 +234,10 @@ void issue_step(struct issue_unit *issue_unit)
             }
             break;
         case MEMORY:
-            if (!reg_read(issue_unit->res_stations_all_busy_memory))
+            if (!reg_read(issue_unit->memory_buffers_all_busy))
             {
                 struct decoded_inst inst = inst_queue_dequeue(issue_unit->inst_queue);
-                handle_mem_operation(inst, issue_unit->reg_file, issue_unit->memory_res_stations);
+                handle_mem_operation(inst, issue_unit->reg_file, issue_unit->memory_buffers);
             }
             break;
         default:

@@ -16,6 +16,7 @@
 #include "reg.h"
 #include "com_data_bus.h"
 #include "reorder_buffer.h"
+#include "memory_buffers.h"
 
 struct cpu
 {
@@ -25,7 +26,7 @@ struct cpu
     struct inst_queue *inst_queue;            // Pointer to instruction queue
     struct res_stations *alu_res_stations;    // Pointer to ALU reservation station
     struct res_stations *branch_res_stations; // Pointer to branch reservation station
-    struct res_stations *memory_res_stations; // Pointer to memory reservation station
+    struct memory_buffers *memory_buffers;    // Pointer to memory reservation station
     struct issue_unit *issue_unit;            // Pointer to issue unit
     struct alu_unit *alu_unit;                // Pointer to ALU unit
     struct branch_unit *branch_unit;          // Pointer to branch unit
@@ -43,10 +44,10 @@ struct cpu
     struct reg inst_queue_full;              // Indicates whether the instruction queue is full
     struct reg res_stations_all_busy_alu;    // Indicates whether all ALU reservation stations are busy
     struct reg res_stations_all_busy_branch; // Indicates whether all branch reservation stations are busy
-    struct reg res_stations_all_busy_memory; // Indicates whether all memory reservation stations are busy
+    struct reg memory_buffers_all_busy;      // Indicates whether all memory reservation stations are busy
     struct reg res_stations_ready_alu;       // Indicates whether there is a ready ALU reservation station
     struct reg res_stations_ready_branch;    // Indicates whether there is a ready branch reservation station
-    struct reg res_stations_ready_memory;    // Indicates whether there is a ready memory reservation station
+    struct reg memory_buffers_ready;         // Indicates whether there is a ready memory reservation station
 
     bool jump_to_zero; // Indicates whether we have had a jump to zero (i.e. final instruction)
 };

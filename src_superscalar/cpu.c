@@ -16,12 +16,13 @@
 #include "memory.h"
 #include "control.h"
 #include "reg.h"
+#include "memory_buffers.h"
 
 #define NUM_WORDS_OUTPUT 2048
 
 #define NUM_ALU_RES_STATIONS 32
 #define NUM_BRANCH_RES_STATIONS 32
-#define NUM_MEMORY_RES_STATIONS 1
+#define NUM_MEMORY_BUFFERS 1
 
 struct cpu *cpu_init(char *file_name)
 {
@@ -42,10 +43,10 @@ struct cpu *cpu_init(char *file_name)
     cpu->inst_queue_full.val_current = false;
     cpu->res_stations_all_busy_alu.val_current = false;
     cpu->res_stations_all_busy_branch.val_current = false;
-    cpu->res_stations_all_busy_memory.val_current = false;
+    cpu->memory_buffers_all_busy.val_current = false;
     cpu->res_stations_ready_alu.val_current = false;
     cpu->res_stations_ready_branch.val_current = false;
-    cpu->res_stations_ready_memory.val_current = false;
+    cpu->memory_buffers_ready.val_current = false;
 
     cpu->mm = main_memory_init(file_name);
     cpu->inst_queue = inst_queue_init(
@@ -79,23 +80,23 @@ struct cpu *cpu_init(char *file_name)
         cpu->cdb,
         &cpu->res_stations_all_busy_branch,
         &cpu->res_stations_ready_branch);
-    cpu->memory_res_stations = res_stations_init(
-        NUM_MEMORY_RES_STATIONS,
+    cpu->memory_buffers = memory_buffers_init(
+        NUM_MEMORY_BUFFERS,
         1 + NUM_ALU_RES_STATIONS + NUM_BRANCH_RES_STATIONS,
         cpu->reg_file,
         cpu->cdb,
-        &cpu->res_stations_all_busy_memory,
-        &cpu->res_stations_ready_memory);
+        &cpu->memory_buffers_all_busy,
+        &cpu->memory_buffers_ready);
     cpu->issue_unit = issue_init(
         cpu->inst_queue,
         cpu->reg_file,
         cpu->alu_res_stations,
         cpu->branch_res_stations,
-        cpu->memory_res_stations,
+        cpu->memory_buffers,
         &cpu->inst_queue_empty,
         &cpu->res_stations_all_busy_alu,
         &cpu->res_stations_all_busy_branch,
-        &cpu->res_stations_all_busy_memory);
+        &cpu->memory_buffers_all_busy);
     cpu->alu_unit = alu_init(
         cpu->alu_res_stations,
         cpu->reg_file,
@@ -110,11 +111,11 @@ struct cpu *cpu_init(char *file_name)
         &cpu->branch_in_pipeline,
         &cpu->res_stations_ready_branch);
     cpu->memory_unit = memory_init(
-        cpu->memory_res_stations,
+        cpu->memory_buffers,
         cpu->mm,
         cpu->reg_file,
         cpu->cdb,
-        &cpu->res_stations_ready_memory);
+        &cpu->memory_buffers_ready);
 
     printf("CPU successfully initialised\n");
 
@@ -170,8 +171,8 @@ void cpu_destroy(struct cpu *cpu)
     inst_queue_destroy(cpu->inst_queue);
     issue_destroy(cpu->issue_unit);
     res_stations_destroy(cpu->alu_res_stations);
-    res_stations_destroy(cpu->memory_res_stations);
     res_stations_destroy(cpu->branch_res_stations);
+    memory_buffers_destroy(cpu->memory_buffers);
     alu_destroy(cpu->alu_unit);
     branch_destroy(cpu->branch_unit);
     memory_destroy(cpu->memory_unit);
@@ -190,16 +191,16 @@ void update_current(struct cpu *cpu)
     reg_update_current(&cpu->inst_queue_full);
     reg_update_current(&cpu->res_stations_all_busy_alu);
     reg_update_current(&cpu->res_stations_all_busy_branch);
-    reg_update_current(&cpu->res_stations_all_busy_memory);
+    reg_update_current(&cpu->memory_buffers_all_busy);
     reg_update_current(&cpu->res_stations_ready_alu);
     reg_update_current(&cpu->res_stations_ready_branch);
-    reg_update_current(&cpu->res_stations_ready_memory);
+    reg_update_current(&cpu->memory_buffers_ready);
 
     inst_queue_update_current(cpu->inst_queue);
 
     res_stations_update_current(cpu->alu_res_stations);
     res_stations_update_current(cpu->branch_res_stations);
-    res_stations_update_current(cpu->memory_res_stations);
+    memory_buffers_update_current(cpu->memory_buffers);
 }
 
 void step(struct cpu *cpu)
@@ -216,7 +217,7 @@ void step(struct cpu *cpu)
     memory_step(cpu->memory_unit);
     res_stations_step(cpu->alu_res_stations);
     res_stations_step(cpu->branch_res_stations);
-    res_stations_step(cpu->memory_res_stations);
+    memory_buffers_step(cpu->memory_buffers);
     reg_file_step(cpu->reg_file);
     com_data_bus_step(cpu->cdb);
 }
