@@ -188,8 +188,7 @@ void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, s
             reg_file_get_reg_val_or_na(reg_file, inst.rs1_addr),
             NA, // Load operations only have base and offset operands
             inst.imm,
-            inst.rd_addr,
-            NA); // Only used in branches and AUIPC
+            inst.rd_addr);
         break;
     case SW:
     case SH:
@@ -202,8 +201,7 @@ void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, s
             reg_file_get_reg_val_or_na(reg_file, inst.rs1_addr),
             reg_file_get_reg_val_or_na(reg_file, inst.rs2_addr),
             inst.imm,
-            NA, // Store operations don't write to a register
-            NA);
+            NA); // Store operations don't write to a register
         break;
     default:
         fprintf(stderr, "Error: Unknown memory op");

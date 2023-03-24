@@ -10,15 +10,14 @@
 
 struct memory_buffer
 {
-    uint32_t id;      // ID of memory buffer
-    bool busy;        // Whether memory buffer is busy
-    enum op op;       // Operation to perform
-    uint32_t qj;      // Memory buffer ID of first operand
-    uint32_t qk;      // Memory buffer ID of second operand
-    uint32_t vj;      // val of first operand
-    uint32_t vk;      // val of second operand
-    uint32_t a;       // Immediate val or address
-    uint32_t inst_pc; // Program counter of instruction
+    uint32_t id; // ID of memory buffer
+    bool busy;   // Whether memory buffer is busy
+    enum op op;  // Operation to perform
+    uint32_t qj; // Memory buffer ID of first operand
+    uint32_t qk; // Memory buffer ID of second operand
+    uint32_t vj; // val of first operand
+    uint32_t vk; // val of second operand
+    uint32_t a;  // Immediate val or address
 };
 
 struct memory_buffers
@@ -48,8 +47,7 @@ void memory_buffers_add(
     uint32_t vj,
     uint32_t vk,
     uint32_t a,
-    uint32_t dest,
-    uint32_t inst_pc);                                                           // Add instruction to memory buffers
+    uint32_t dest);                                                              // Add instruction to memory buffers
 struct memory_buffer memory_buffers_remove(struct memory_buffers *rs);           // Remove instruction from memory buffers
 void memory_buffers_set_buffer_not_busy(struct memory_buffers *rs, uint32_t id); // Set a memory buffer to not busy
 void memory_buffers_update_current(struct memory_buffers *rs);                   // Update current memory buffers

@@ -95,8 +95,7 @@ void memory_buffers_add(
     uint32_t vj,
     uint32_t vk,
     uint32_t a,
-    uint32_t dest,
-    uint32_t inst_pc)
+    uint32_t dest)
 {
     for (uint32_t i = 0; i < mb->num_buffers; i++)
     {
@@ -109,7 +108,6 @@ void memory_buffers_add(
             mb->buffers_next[i].vj = vj;
             mb->buffers_next[i].vk = vk;
             mb->buffers_next[i].a = a;
-            mb->buffers_next[i].inst_pc = inst_pc;
             reg_file_set_reg_qi(mb->reg_file, dest, mb->buffers_next[i].id);
             break;
         }
