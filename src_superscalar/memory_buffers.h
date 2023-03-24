@@ -10,25 +10,29 @@
 
 struct memory_buffer
 {
-    uint32_t id; // ID of memory buffer
-    bool busy;   // Whether memory buffer is busy
-    enum op op;  // Operation to perform
-    uint32_t qj; // Memory buffer ID of first operand
-    uint32_t qk; // Memory buffer ID of second operand
-    uint32_t vj; // val of first operand
-    uint32_t vk; // val of second operand
-    uint32_t a;  // Immediate val or address
+    uint32_t id;        // ID of memory buffer
+    bool busy;          // Whether memory buffer is busy
+    enum op op;         // Operation to perform
+    uint32_t qj;        // Memory buffer ID of first operand
+    uint32_t qk;        // Memory buffer ID of second operand
+    uint32_t vj;        // val of first operand
+    uint32_t vk;        // val of second operand
+    uint32_t a;         // Immediate val or address
+    uint32_t queue_pos; // Position in queue
 };
 
 struct memory_buffers
 {
-    struct memory_buffer *buffers_current; // Array of current memory buffers
-    struct memory_buffer *buffers_next;    // Array of next memory buffers
-    struct reg_file *reg_file;             // Pointer to register file
-    uint32_t num_buffers;                  // Number of memory buffers
-    struct com_data_bus *cdb;              // Pointer to common data bus
-    struct reg *memory_buffers_all_busy;   // Pointer to register that indicates if all memory buffers are busy
-    struct reg *memory_buffers_ready;      // Pointer to register that indicates if any memory buffers are ready
+    struct memory_buffer *buffers_current;    // Array of current memory buffers
+    struct memory_buffer *buffers_next;       // Array of next memory buffers
+    uint32_t num_buffers_in_queue_current;    // Number of memory buffers in the current queue
+    uint32_t num_buffers_in_queue_next;       // Number of memory buffers in the next queue
+    struct reg_file *reg_file;                // Pointer to register file
+    uint32_t num_buffers;                     // Number of memory buffers
+    struct com_data_bus *cdb;                 // Pointer to common data bus
+    struct reg *memory_buffers_all_busy;      // Pointer to register that indicates if all memory buffers are busy
+    struct reg *memory_buffers_ready_address; // Pointer to register that indicates if any memory buffers are ready for address unit
+    struct reg *memory_buffers_ready_memory;  // Pointer to register that indicates if any memory buffers are ready for memory unit
 };
 
 struct memory_buffers *memory_buffers_init(
@@ -37,7 +41,8 @@ struct memory_buffers *memory_buffers_init(
     struct reg_file *reg_file,
     struct com_data_bus *cdb,
     struct reg *memory_buffers_all_busy,
-    struct reg *memory_buffers_ready);               // Initialise memory buffers
+    struct reg *memory_buffers_ready_address,
+    struct reg *memory_buffers_ready_memory);        // Initialise memory buffers
 void memory_buffers_step(struct memory_buffers *rs); // Step memory buffers
 void memory_buffers_add(
     struct memory_buffers *rs,

@@ -12,7 +12,8 @@ struct memory_buffers *memory_buffers_init(
     struct reg_file *reg_file,
     struct com_data_bus *cdb,
     struct reg *memory_buffers_all_busy,
-    struct reg *reg_buffers_ready)
+    struct reg *memory_buffers_ready_address,
+    struct reg *memory_buffers_ready_memory)
 {
     struct memory_buffers *mb = malloc(sizeof(struct memory_buffers));
     if (mb == NULL)
@@ -39,7 +40,10 @@ struct memory_buffers *memory_buffers_init(
     mb->reg_file = reg_file;
     mb->cdb = cdb;
     mb->memory_buffers_all_busy = memory_buffers_all_busy;
-    mb->memory_buffers_ready = reg_buffers_ready;
+    mb->memory_buffers_ready_memory = memory_buffers_ready_memory;
+    mb->memory_buffers_ready_address = memory_buffers_ready_address;
+    mb->num_buffers_in_queue_current = 0;
+    mb->num_buffers_in_queue_next = 0;
 
     for (uint32_t i = 0; i < num_buffers; i++)
     {
@@ -47,6 +51,8 @@ struct memory_buffers *memory_buffers_init(
         mb->buffers_current[i].busy = false;
         mb->buffers_next[i].id = i + id_offset;
         mb->buffers_next[i].busy = false;
+        mb->buffers_current[i].queue_pos = 0;
+        mb->buffers_next[i].queue_pos = 0;
     }
 
     return mb;
@@ -84,7 +90,12 @@ void memory_buffers_step(struct memory_buffers *mb)
         ready |= mb->buffers_next[i].qj == 0 && mb->buffers_next[i].qk == 0 && mb->buffers_next[i].busy;
     }
     reg_write(mb->memory_buffers_all_busy, all_busy);
-    reg_write(mb->memory_buffers_ready, ready);
+    reg_write(mb->memory_buffers_ready_memory, ready);
+
+    // Need to introduce two new types of "ready"
+    // Ready for the "address unit"
+    // Ready for the "memory unit"
+    // Ready for the address unit means the first element in the queue has qj == 0
 }
 
 void memory_buffers_add(
@@ -108,6 +119,11 @@ void memory_buffers_add(
             mb->buffers_next[i].vj = vj;
             mb->buffers_next[i].vk = vk;
             mb->buffers_next[i].a = a;
+            /*
+                The +1 in the next line ensures that the queue position is never 0.
+                This is because 0 is used to indicate that the buffer is not in the queue.
+            */
+            mb->buffers_next[i].queue_pos = mb->num_buffers_in_queue_current + 1;
             reg_file_set_reg_qi(mb->reg_file, dest, mb->buffers_next[i].id);
             break;
         }

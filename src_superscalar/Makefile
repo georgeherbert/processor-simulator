@@ -18,6 +18,7 @@ SRCS = \
 	com_data_bus.c \
 	reorder_buffer.c \
 	memory_buffers.c \
+	address.c \
 
 # Object files
 OBJS = $(SRCS:.c=.o)

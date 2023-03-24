@@ -17,6 +17,7 @@
 #include "control.h"
 #include "reg.h"
 #include "memory_buffers.h"
+#include "address.h"
 
 #define NUM_WORDS_OUTPUT 2048
 
@@ -46,7 +47,8 @@ struct cpu *cpu_init(char *file_name)
     cpu->memory_buffers_all_busy.val_current = false;
     cpu->res_stations_ready_alu.val_current = false;
     cpu->res_stations_ready_branch.val_current = false;
-    cpu->memory_buffers_ready.val_current = false;
+    cpu->memory_buffers_ready_address.val_current = false;
+    cpu->memory_buffers_ready_memory.val_current = false;
 
     cpu->mm = main_memory_init(file_name);
     cpu->inst_queue = inst_queue_init(
@@ -86,7 +88,8 @@ struct cpu *cpu_init(char *file_name)
         cpu->reg_file,
         cpu->cdb,
         &cpu->memory_buffers_all_busy,
-        &cpu->memory_buffers_ready);
+        &cpu->memory_buffers_ready_address,
+        &cpu->memory_buffers_ready_memory);
     cpu->issue_unit = issue_init(
         cpu->inst_queue,
         cpu->reg_file,
@@ -97,6 +100,9 @@ struct cpu *cpu_init(char *file_name)
         &cpu->res_stations_all_busy_alu,
         &cpu->res_stations_all_busy_branch,
         &cpu->memory_buffers_all_busy);
+    cpu->address_unit = address_init(
+        &cpu->memory_buffers_ready_address
+    );
     cpu->alu_unit = alu_init(
         cpu->alu_res_stations,
         cpu->reg_file,
@@ -115,7 +121,7 @@ struct cpu *cpu_init(char *file_name)
         cpu->mm,
         cpu->reg_file,
         cpu->cdb,
-        &cpu->memory_buffers_ready);
+        &cpu->memory_buffers_ready_memory);
 
     printf("CPU successfully initialised\n");
 
@@ -176,6 +182,7 @@ void cpu_destroy(struct cpu *cpu)
     alu_destroy(cpu->alu_unit);
     branch_destroy(cpu->branch_unit);
     memory_destroy(cpu->memory_unit);
+    address_destroy(cpu->address_unit);
 
     free(cpu);
 }
@@ -194,7 +201,8 @@ void update_current(struct cpu *cpu)
     reg_update_current(&cpu->memory_buffers_all_busy);
     reg_update_current(&cpu->res_stations_ready_alu);
     reg_update_current(&cpu->res_stations_ready_branch);
-    reg_update_current(&cpu->memory_buffers_ready);
+    reg_update_current(&cpu->memory_buffers_ready_memory);
+    reg_update_current(&cpu->memory_buffers_ready_address);
 
     inst_queue_update_current(cpu->inst_queue);
 
