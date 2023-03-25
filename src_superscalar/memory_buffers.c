@@ -5,6 +5,7 @@
 #include "memory_buffers.h"
 #include "reg_file.h"
 #include "reg.h"
+#include "decoded_inst.h"
 
 struct memory_buffers *memory_buffers_init(
     uint32_t num_buffers,
@@ -82,23 +83,26 @@ void memory_buffers_step(struct memory_buffers *mb)
             }
         }
     }
+
     bool all_busy = true;
-    uint32_t ready = false;
+    uint32_t ready_address = false;
+    uint32_t ready_memory = false;
     for (uint32_t i = 0; i < mb->num_buffers; i++)
     {
         all_busy &= mb->buffers_next[i].busy;
-        ready |= mb->buffers_next[i].qj == 0 && mb->buffers_next[i].qk == 0 && mb->buffers_next[i].busy;
+        ready_address |= mb->buffers_next[i].busy && mb->buffers_next[i].qj == 0 && mb->buffers_next[i].queue_pos == 1;
+        ready_memory |= mb->buffers_next[i].busy && mb->buffers_next[i].qk == 0 && mb->buffers_next[i].queue_pos == 0;
+        /*
+            The queue_pos of zero above indicates the entry has already had its address computed via the address unit.
+            As such, it is ready for the memory unit (assuming the other conditions are also true).
+        */
     }
     reg_write(mb->memory_buffers_all_busy, all_busy);
-    reg_write(mb->memory_buffers_ready_memory, ready);
-
-    // Need to introduce two new types of "ready"
-    // Ready for the "address unit"
-    // Ready for the "memory unit"
-    // Ready for the address unit means the first element in the queue has qj == 0
+    reg_write(mb->memory_buffers_ready_memory, ready_memory);
+    reg_write(mb->memory_buffers_ready_address, ready_address);
 }
 
-void memory_buffers_add(
+void memory_buffers_enqueue(
     struct memory_buffers *mb,
     enum op op,
     uint32_t qj,
@@ -125,6 +129,7 @@ void memory_buffers_add(
             */
             mb->buffers_next[i].queue_pos = mb->num_buffers_in_queue_current + 1;
             reg_file_set_reg_qi(mb->reg_file, dest, mb->buffers_next[i].id);
+            mb->num_buffers_in_queue_next++;
             break;
         }
     }
@@ -134,7 +139,7 @@ struct memory_buffer memory_buffers_remove(struct memory_buffers *mb)
 {
     for (uint32_t i = 0; i < mb->num_buffers; i++)
     {
-        if (mb->buffers_current[i].qj == 0 && mb->buffers_current[i].qk == 0 && mb->buffers_current[i].busy)
+        if (mb->buffers_current[i].busy && mb->buffers_current[i].qk == 0 && mb->buffers_current[i].queue_pos == 0)
         {
             return mb->buffers_current[i];
         }
@@ -155,9 +160,67 @@ void memory_buffers_set_buffer_not_busy(struct memory_buffers *mb, uint32_t id)
     }
 }
 
+struct memory_buffer memory_buffers_dequeue(struct memory_buffers *mb)
+{
+    for (uint32_t i = 0; i < mb->num_buffers; i++)
+    {
+        if (mb->buffers_current[i].busy && mb->buffers_current[i].qj == 0 && mb->buffers_current[i].queue_pos == 1)
+        {
+            return mb->buffers_current[i];
+        }
+    }
+    fprintf(stderr, "Error: Cannot find a ready memory buffer despite checking if there is one\n");
+    exit(EXIT_FAILURE);
+}
+
+void memory_buffers_add_address(struct memory_buffers *mb, uint32_t id, uint32_t address)
+{
+    uint32_t id_index = 0;
+    for (uint32_t i = 0; i < mb->num_buffers; i++)
+    {
+        if (mb->buffers_next[i].id == id)
+        {
+            id_index = i;
+            break;
+        }
+    }
+    enum op op = mb->buffers_next[id_index].op;
+    bool is_load = op == LW || op == LH || op == LHU || op == LB || op == LBU;
+    bool is_store = op == SW || op == SH || op == SB;
+    /*
+        We define an "address conflict" as follows. For a load instruction, we cannot add the effective address
+        to the memory buffer if there is a corresponding store in the memory buffer with the same effective address.
+        For a store instruction, we cannot add the effective address to the memory buffer if there is a corresponding
+        load OR store in the memory buffer with the same effective address.
+    */
+    bool address_conflict = false;
+    for (uint32_t i = 0; i < mb->num_buffers; i++)
+    {
+        if (mb->buffers_next[i].busy && mb->buffers_next[i].queue_pos == 0 && mb->buffers_next[i].a == address)
+        {
+            address_conflict = is_store;
+            address_conflict |= is_load && (mb->buffers_next[i].op == SW || mb->buffers_next[i].op == SH || mb->buffers_next[i].op == SB);
+        }
+    }
+    if (!address_conflict)
+    {
+        mb->buffers_next[id_index].a = address;
+        mb->buffers_next[id_index].queue_pos = 0;
+        mb->num_buffers_in_queue_next--;
+        for (uint32_t i = 0; i < mb->num_buffers; i++)
+        {
+            if (mb->buffers_next[i].busy && mb->buffers_next[i].queue_pos > 0)
+            {
+                mb->buffers_next[i].queue_pos--;
+            }
+        }
+    }
+}
+
 void memory_buffers_update_current(struct memory_buffers *mb)
 {
     memcpy(mb->buffers_current, mb->buffers_next, sizeof(struct memory_buffer) * mb->num_buffers);
+    mb->num_buffers_in_queue_current = mb->num_buffers_in_queue_next;
 }
 
 void memory_buffers_destroy(struct memory_buffers *mb)

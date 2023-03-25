@@ -180,7 +180,7 @@ void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, s
     case LHU:
     case LB:
     case LBU:
-        memory_buffers_add(
+        memory_buffers_enqueue(
             memory_buffers,
             inst.op,
             reg_file_get_reg_qi(reg_file, inst.rs1_addr),
@@ -193,7 +193,7 @@ void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, s
     case SW:
     case SH:
     case SB:
-        memory_buffers_add(
+        memory_buffers_enqueue(
             memory_buffers,
             inst.op,
             reg_file_get_reg_qi(reg_file, inst.rs1_addr),

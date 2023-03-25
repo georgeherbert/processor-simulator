@@ -1,12 +1,18 @@
 #ifndef ADDRESS_H
 #define ADDRESS_H
 
+#include "reg.h"
+#include "memory_buffers.h"
+
 struct address_unit
 {
-    int placeholder;
+    struct memory_buffers *memory_buffers;    // Pointer to memory buffers
+    struct reg *memory_buffers_ready_address; // Pointer to a register that indicates if a buffer is ready for the address unit
 };
 
-struct address_unit *address_init();                     // Initialise address unit
+struct address_unit *address_init(
+    struct memory_buffers *memory_buffers,               // Initialise address unit
+    struct reg *memory_buffers_ready_address);           // Initialise address unit
 void address_step(struct address_unit *address_unit);    // Step address unit
 void address_destroy(struct address_unit *address_unit); // Free address unit
 

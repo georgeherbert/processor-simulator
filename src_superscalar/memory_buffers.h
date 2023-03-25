@@ -44,7 +44,7 @@ struct memory_buffers *memory_buffers_init(
     struct reg *memory_buffers_ready_address,
     struct reg *memory_buffers_ready_memory);        // Initialise memory buffers
 void memory_buffers_step(struct memory_buffers *rs); // Step memory buffers
-void memory_buffers_add(
+void memory_buffers_enqueue(
     struct memory_buffers *rs,
     enum op op,
     uint32_t qj,
@@ -52,10 +52,12 @@ void memory_buffers_add(
     uint32_t vj,
     uint32_t vk,
     uint32_t a,
-    uint32_t dest);                                                              // Add instruction to memory buffers
-struct memory_buffer memory_buffers_remove(struct memory_buffers *rs);           // Remove instruction from memory buffers
-void memory_buffers_set_buffer_not_busy(struct memory_buffers *rs, uint32_t id); // Set a memory buffer to not busy
-void memory_buffers_update_current(struct memory_buffers *rs);                   // Update current memory buffers
-void memory_buffers_destroy(struct memory_buffers *rs);                          // Free memory buffers
+    uint32_t dest);                                                                        // Add instruction to memory buffers
+struct memory_buffer memory_buffers_remove(struct memory_buffers *rs);                     // Remove instruction from memory buffers
+void memory_buffers_set_buffer_not_busy(struct memory_buffers *rs, uint32_t id);           // Set a memory buffer to not busy
+struct memory_buffer memory_buffers_dequeue(struct memory_buffers *mb);                    // Dequeue memory buffer
+void memory_buffers_add_address(struct memory_buffers *mb, uint32_t id, uint32_t address); // Add address to memory buffer
+void memory_buffers_update_current(struct memory_buffers *rs);                             // Update current memory buffers
+void memory_buffers_destroy(struct memory_buffers *rs);                                    // Free memory buffers
 
 #endif // MEMORY_BUFFERS_H

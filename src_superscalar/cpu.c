@@ -23,7 +23,7 @@
 
 #define NUM_ALU_RES_STATIONS 32
 #define NUM_BRANCH_RES_STATIONS 32
-#define NUM_MEMORY_BUFFERS 1
+#define NUM_MEMORY_BUFFERS 32
 
 struct cpu *cpu_init(char *file_name)
 {
@@ -101,6 +101,7 @@ struct cpu *cpu_init(char *file_name)
         &cpu->res_stations_all_busy_branch,
         &cpu->memory_buffers_all_busy);
     cpu->address_unit = address_init(
+        cpu->memory_buffers,
         &cpu->memory_buffers_ready_address
     );
     cpu->alu_unit = alu_init(
@@ -223,6 +224,7 @@ void step(struct cpu *cpu)
     alu_step(cpu->alu_unit);
     branch_step(cpu->branch_unit);
     memory_step(cpu->memory_unit);
+    address_step(cpu->address_unit);
     res_stations_step(cpu->alu_res_stations);
     res_stations_step(cpu->branch_res_stations);
     memory_buffers_step(cpu->memory_buffers);
