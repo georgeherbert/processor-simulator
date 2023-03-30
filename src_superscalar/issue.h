@@ -19,6 +19,7 @@ struct issue_unit
     struct reg *res_stations_all_busy_alu;    // Pointer to number of available ALU reservation stations
     struct reg *res_stations_all_busy_branch; // Pointer to number of available branch reservation stations
     struct reg *memory_buffers_all_busy;      // Pointer to number of available memory reservation stations
+    struct reg *rob_full;                     // Pointer to register indicating whether the reorder buffer is full
 };
 
 struct issue_unit *issue_init(
@@ -30,7 +31,8 @@ struct issue_unit *issue_init(
     struct reg *inst_queue_empty,
     struct reg *res_stations_all_busy_alu,
     struct reg *res_stations_all_busy_branch,
-    struct reg *memory_buffers_all_busy);          // Initialise issue unit
+    struct reg *memory_buffers_all_busy,
+    struct reg *rob_full);                         // Initialise issue unit
 void issue_step(struct issue_unit *issue_unit);    // Step issue unit
 void issue_destroy(struct issue_unit *issue_unit); // Free issue unit
 

@@ -6,8 +6,10 @@
 enum op_type
 {
     AL,     // Arithmetic or logical operation
-    BRANCH, // Branch or jump operation
-    MEMORY  // Load or store operation
+    BRANCH, // Branch operation,
+    JUMP,   // Jump operation
+    LOAD,   // Load operation
+    STORE   // Store operation
 };
 
 enum op

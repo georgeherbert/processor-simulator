@@ -375,7 +375,7 @@ void handle_jal(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
 
     create_decoded_inst(
         inst_queue,
-        BRANCH,
+        JUMP,
         JAL,
         rd_addr,
         NA, // JAL doesn't use rs1
@@ -394,7 +394,7 @@ void handle_jalr(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
 
     create_decoded_inst(
         inst_queue,
-        BRANCH,
+        JUMP,
         JALR,
         rd_addr,
         rs1_addr,
@@ -492,7 +492,7 @@ void handle_load(struct inst_queue *inst_queue, uint32_t inst)
 
     create_decoded_inst(
         inst_queue,
-        MEMORY,
+        LOAD,
         op,
         rd_addr,
         rs1_addr,
@@ -530,7 +530,7 @@ void handle_store(struct inst_queue *inst_queue, uint32_t inst)
 
     create_decoded_inst(
         inst_queue,
-        MEMORY,
+        STORE,
         op,
         NA, // Store instructions don't use rd
         rs1_addr,

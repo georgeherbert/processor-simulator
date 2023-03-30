@@ -51,6 +51,7 @@ struct cpu
     struct reg res_stations_ready_branch;    // Indicates whether there is a ready branch reservation station
     struct reg memory_buffers_ready_address; // Indicates whether the first entry in the memory buffer is ready for the address unit
     struct reg memory_buffers_ready_memory;  // Indicates whether an entry in the memory buffer is ready for the memory unit
+    struct reg rob_full;                     // Indicates whether the reorder buffer is full
 
     bool jump_to_zero; // Indicates whether we have had a jump to zero (i.e. final instruction)
 };

@@ -18,6 +18,7 @@
 #include "reg.h"
 #include "memory_buffers.h"
 #include "address.h"
+#include "reorder_buffer.h"
 
 #define NUM_WORDS_OUTPUT 2048
 
@@ -49,6 +50,7 @@ struct cpu *cpu_init(char *file_name)
     cpu->res_stations_ready_branch.val_current = false;
     cpu->memory_buffers_ready_address.val_current = false;
     cpu->memory_buffers_ready_memory.val_current = false;
+    cpu->rob_full.val_current = false;
 
     cpu->mm = main_memory_init(file_name);
     cpu->inst_queue = inst_queue_init(
@@ -99,11 +101,11 @@ struct cpu *cpu_init(char *file_name)
         &cpu->inst_queue_empty,
         &cpu->res_stations_all_busy_alu,
         &cpu->res_stations_all_busy_branch,
-        &cpu->memory_buffers_all_busy);
+        &cpu->memory_buffers_all_busy,
+        &cpu->rob_full);
     cpu->address_unit = address_init(
         cpu->memory_buffers,
-        &cpu->memory_buffers_ready_address
-    );
+        &cpu->memory_buffers_ready_address);
     cpu->alu_unit = alu_init(
         cpu->alu_res_stations,
         cpu->reg_file,
@@ -123,6 +125,8 @@ struct cpu *cpu_init(char *file_name)
         cpu->reg_file,
         cpu->cdb,
         &cpu->memory_buffers_ready_memory);
+    cpu->rob = reorder_buffer_init(
+        &cpu->rob_full);
 
     printf("CPU successfully initialised\n");
 

@@ -20,7 +20,8 @@ struct issue_unit *issue_init(
     struct reg *inst_queue_empty,
     struct reg *res_stations_all_busy_alu,
     struct reg *res_stations_all_busy_branch,
-    struct reg *memory_buffers_all_busy)
+    struct reg *memory_buffers_all_busy,
+    struct reg *rob_full)
 {
     struct issue_unit *issue_unit = malloc(sizeof(struct issue_unit));
 
@@ -39,6 +40,7 @@ struct issue_unit *issue_init(
     issue_unit->res_stations_all_busy_alu = res_stations_all_busy_alu;
     issue_unit->res_stations_all_busy_branch = res_stations_all_busy_branch;
     issue_unit->memory_buffers_all_busy = memory_buffers_all_busy;
+    issue_unit->rob_full = rob_full;
 
     return issue_unit;
 }
@@ -212,7 +214,7 @@ void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, s
 
 void issue_step(struct issue_unit *issue_unit)
 {
-    if (!reg_read(issue_unit->inst_queue_empty))
+    if (!reg_read(issue_unit->inst_queue_empty) && !reg_read(issue_unit->rob_full))
     {
         enum op_type op_type = inst_queue_peek_op_type(issue_unit->inst_queue);
         switch (op_type)
@@ -225,13 +227,15 @@ void issue_step(struct issue_unit *issue_unit)
             }
             break;
         case BRANCH:
+        case JUMP:
             if (!reg_read(issue_unit->res_stations_all_busy_branch))
             {
                 struct decoded_inst inst = inst_queue_dequeue(issue_unit->inst_queue);
                 handle_branch_operation(inst, issue_unit->reg_file, issue_unit->branch_res_stations);
             }
             break;
-        case MEMORY:
+        case LOAD:
+        case STORE:
             if (!reg_read(issue_unit->memory_buffers_all_busy))
             {
                 struct decoded_inst inst = inst_queue_dequeue(issue_unit->inst_queue);
