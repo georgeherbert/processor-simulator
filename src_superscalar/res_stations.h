@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include "decode.h"
 #include "reg_file.h"
-#include "com_data_bus.h"
+#include "cdb.h"
 #include "reg.h"
 
 struct res_station
@@ -28,7 +28,7 @@ struct res_stations
     struct res_station *stations_next;    // Array of next reservation stations
     struct reg_file *reg_file;            // Pointer to register file
     uint32_t num_stations;                // Number of reservation stations
-    struct com_data_bus *cdb;             // Pointer to common data bus
+    struct cdb *cdb;             // Pointer to common data bus
     struct reg *res_stations_all_busy;    // Pointer to register that indicates if all reservation stations are busy
     struct reg *res_stations_ready;       // Pointer to register that indicates if any reservation stations are ready
 };
@@ -37,7 +37,7 @@ struct res_stations *res_stations_init(
     uint32_t num_stations,
     uint32_t id_offset,
     struct reg_file *reg_file,
-    struct com_data_bus *cdb,
+    struct cdb *cdb,
     struct reg *res_stations_all_busy,
     struct reg *res_stations_ready);             // Initialise reservation stations
 void res_stations_step(struct res_stations *rs); // Step reservation stations

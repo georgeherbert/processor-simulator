@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "com_data_bus.h"
+#include "cdb.h"
 
 #define NUM_REGS 32
 
@@ -17,10 +17,10 @@ struct reg_file_entry
 struct reg_file
 {
     struct reg_file_entry regs[NUM_REGS];
-    struct com_data_bus *cdb; // Pointer to common data bus
+    struct cdb *cdb; // Pointer to common data bus
 };
 
-struct reg_file *reg_file_init(struct com_data_bus *cdb);                                              // Initialise register file
+struct reg_file *reg_file_init(struct cdb *cdb);                                              // Initialise register file
 bool reg_file_get_reg_busy(struct reg_file *reg_file, uint32_t reg_addr);                              // Get busy bit of register
 uint32_t reg_file_get_rob_id(struct reg_file *reg_file, uint32_t reg_addr);                            // Get ROB ID of register
 uint32_t reg_file_get_reg_val(struct reg_file *reg_file, uint32_t reg_addr);                           // Get val of register

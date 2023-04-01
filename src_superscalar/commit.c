@@ -1,11 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "commit.h"
-#include "reorder_buffer.h"
+#include "rob.h"
 #include "decoded_inst.h"
 #include "reg_file.h"
 
-struct commit_unit *commit_init(struct reorder_buffer *rob, struct reg *rob_ready, struct main_memory *mm, struct reg_file *reg_file)
+struct commit_unit *commit_init(struct rob *rob, struct reg *rob_ready, struct main_memory *mm, struct reg_file *reg_file)
 {
     struct commit_unit *commit_unit = malloc(sizeof(struct commit_unit));
     if (commit_unit == NULL)
@@ -26,7 +26,7 @@ bool commit_step(struct commit_unit *commit_unit)
 {
     if (reg_read(commit_unit->rob_ready))
     {
-        struct reorder_buffer_entry entry = reorder_buffer_dequeue(commit_unit->rob);
+        struct rob_entry entry = rob_dequeue(commit_unit->rob);
         switch (entry.op_type)
         {
         case JUMP:
@@ -37,12 +37,9 @@ bool commit_step(struct commit_unit *commit_unit)
             // printf("\tCommit: Branch\n");
             break; // TODO: Fix this
         case LOAD:
+        case AL:
             // printf("\tCommit: Load %d %d\n", entry.dest, entry.value);
             reg_file_reg_commit(commit_unit->reg_file, entry.dest, entry.value, entry.rob_id);
-            break;
-        case AL:
-            // printf("\tCommit: AL %d %d\n", entry.dest, entry.value);
-            reg_file_reg_commit(commit_unit->reg_file, entry.dest, entry.value, entry.rob_id); // TODO: Same as load
             break;
         case STORE_WORD:
             // printf("\tCommit: SW %d %d\n", entry.dest, entry.value);
@@ -63,13 +60,9 @@ bool commit_step(struct commit_unit *commit_unit)
             fprintf(stderr, "Error: Invalid op type in commit step\n");
             exit(EXIT_FAILURE);
         }
-
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 void commit_destroy(struct commit_unit *commit_unit)

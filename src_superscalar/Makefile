@@ -15,8 +15,8 @@ SRCS = \
 	alu.c \
 	branch.c \
 	memory.c \
-	com_data_bus.c \
-	reorder_buffer.c \
+	cdb.c \
+	rob.c \
 	memory_buffers.c \
 	address.c \
 	commit.c \

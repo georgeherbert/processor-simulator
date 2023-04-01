@@ -8,7 +8,7 @@
 #include "decode.h"
 #include "decoded_inst.h"
 #include "memory_buffers.h"
-#include "reorder_buffer.h"
+#include "rob.h"
 
 #define NA 0
 
@@ -18,7 +18,7 @@ struct issue_unit *issue_init(
     struct res_stations *alu_res_stations,
     struct res_stations *branch_res_stations,
     struct memory_buffers *memory_buffers,
-    struct reorder_buffer *rob,
+    struct rob *rob,
     struct reg *inst_queue_empty,
     struct reg *res_stations_all_busy_alu,
     struct reg *res_stations_all_busy_branch,
@@ -48,15 +48,15 @@ struct issue_unit *issue_init(
     return issue_unit;
 }
 
-void set_q_v(struct reg_file *reg_file, struct reorder_buffer *rob, uint32_t rs_addr, uint32_t *q, uint32_t *v)
+void set_q_v(struct reg_file *reg_file, struct rob *rob, uint32_t rs_addr, uint32_t *q, uint32_t *v)
 {
     if (reg_file_get_reg_busy(reg_file, rs_addr))
     {
         uint32_t rob_id = reg_file_get_rob_id(reg_file, rs_addr);
-        if (reorder_buffer_is_entry_ready(rob, rob_id))
+        if (rob_is_entry_ready(rob, rob_id))
         {
             *q = NA;
-            *v = reorder_buffer_get_entry_value(rob, rob_id);
+            *v = rob_get_entry_value(rob, rob_id);
         }
         else
         {
@@ -73,11 +73,11 @@ void set_q_v(struct reg_file *reg_file, struct reorder_buffer *rob, uint32_t rs_
 
 void handle_al_operation(
     struct decoded_inst inst,
-    struct reorder_buffer *rob,
+    struct rob *rob,
     struct reg_file *reg_file,
     struct res_stations *alu_res_stations)
 {
-    uint32_t dest_rob_id = reorder_buffer_enqueue(rob, inst.op_type, inst.rd_addr, NA, NA);
+    uint32_t dest_rob_id = rob_enqueue(rob, inst.op_type, inst.rd_addr, NA, NA);
 
     uint32_t qj = NA;
     uint32_t qk = NA;
@@ -141,7 +141,7 @@ void handle_al_operation(
 
 void handle_branch_operation(
     struct decoded_inst inst,
-    struct reorder_buffer *rob,
+    struct rob *rob,
     struct reg_file *reg_file,
     struct res_stations *branch_res_stations)
 {
@@ -149,7 +149,7 @@ void handle_branch_operation(
         Branch instructions have no rd_addr.
         But rd_addr should be NA from the decode unit for branch instructions.
     */
-    uint32_t dest_rob_id = reorder_buffer_enqueue(rob, inst.op_type, inst.rd_addr, NA, NA);
+    uint32_t dest_rob_id = rob_enqueue(rob, inst.op_type, inst.rd_addr, NA, NA);
 
     uint32_t qj = NA;
     uint32_t qk = NA;
@@ -195,7 +195,7 @@ void handle_branch_operation(
 
 void handle_mem_operation(
     struct decoded_inst inst,
-    struct reorder_buffer *rob,
+    struct rob *rob,
     struct reg_file *reg_file,
     struct memory_buffers *memory_buffers)
 {
@@ -219,7 +219,7 @@ void handle_mem_operation(
     case LB:
     case LBU:
         set_q_v(reg_file, rob, inst.rs1_addr, &qj, &vj);
-        dest_rob_id = reorder_buffer_enqueue(rob, inst.op_type, inst.rd_addr, NA, NA);
+        dest_rob_id = rob_enqueue(rob, inst.op_type, inst.rd_addr, NA, NA);
         reg_file_set_rob_id(reg_file, inst.rd_addr, dest_rob_id);
         break;
     case SW:
@@ -227,7 +227,7 @@ void handle_mem_operation(
     case SB:
         set_q_v(reg_file, rob, inst.rs1_addr, &qj, &vj);
         set_q_v(reg_file, rob, inst.rs2_addr, &qk, &vk);
-        dest_rob_id = reorder_buffer_enqueue(rob, inst.op_type, NA, vk, qk);
+        dest_rob_id = rob_enqueue(rob, inst.op_type, NA, vk, qk);
         break;
     default:
         fprintf(stderr, "Error: Unknown memory op");

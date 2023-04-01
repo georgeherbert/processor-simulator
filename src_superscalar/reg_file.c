@@ -4,11 +4,11 @@
 #include <stdbool.h>
 #include "reg_file.h"
 #include "cpu.h"
-#include "reorder_buffer.h"
+#include "rob.h"
 
 #define NA 0
 
-struct reg_file *reg_file_init(struct com_data_bus *cdb)
+struct reg_file *reg_file_init(struct cdb *cdb)
 {
     struct reg_file *reg_file = malloc(sizeof(struct reg_file));
     if (reg_file == NULL)

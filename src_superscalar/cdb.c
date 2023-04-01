@@ -2,18 +2,18 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "com_data_bus.h"
+#include "cdb.h"
 
-struct com_data_bus *com_data_bus_init(uint32_t num_entries)
+struct cdb *cdb_init(uint32_t num_entries)
 {
-    struct com_data_bus *cdb = malloc(sizeof(struct com_data_bus));
+    struct cdb *cdb = malloc(sizeof(struct cdb));
     if (cdb == NULL)
     {
         fprintf(stderr, "Error: Could not allocate memory for common data bus");
         exit(EXIT_FAILURE);
     }
 
-    cdb->entries = malloc(sizeof(struct com_data_bus_entry) * num_entries);
+    cdb->entries = malloc(sizeof(struct cdb_entry) * num_entries);
     if (cdb->entries == NULL)
     {
         fprintf(stderr, "Error: Could not allocate memory for common data bus entries");
@@ -31,7 +31,7 @@ struct com_data_bus *com_data_bus_init(uint32_t num_entries)
     return cdb;
 }
 
-void com_data_bus_add_entry(struct com_data_bus *cdb, uint32_t rob_id, uint32_t val)
+void cdb_write(struct cdb *cdb, uint32_t rob_id, uint32_t val)
 {
     for (uint32_t i = 0; i < cdb->num_entries; i++)
     {
@@ -45,7 +45,7 @@ void com_data_bus_add_entry(struct com_data_bus *cdb, uint32_t rob_id, uint32_t 
     }
 }
 
-bool com_data_bus_is_val_ready(struct com_data_bus *cdb, uint32_t rob_id)
+bool cdb_is_val_ready(struct cdb *cdb, uint32_t rob_id)
 {
     for (uint32_t i = 0; i < cdb->num_entries; i++)
     {
@@ -58,7 +58,7 @@ bool com_data_bus_is_val_ready(struct com_data_bus *cdb, uint32_t rob_id)
     return false;
 }
 
-uint32_t com_data_bus_get_val(struct com_data_bus *cdb, uint32_t rob_id)
+uint32_t cdb_get_val(struct cdb *cdb, uint32_t rob_id)
 {
     for (uint32_t i = 0; i < cdb->num_entries; i++)
     {
@@ -71,7 +71,7 @@ uint32_t com_data_bus_get_val(struct com_data_bus *cdb, uint32_t rob_id)
     exit(EXIT_FAILURE);
 }
 
-void com_data_bus_step(struct com_data_bus *cdb)
+void cdb_clear(struct cdb *cdb)
 {
     for (uint32_t i = 0; i < cdb->num_entries; i++)
     {
@@ -79,7 +79,7 @@ void com_data_bus_step(struct com_data_bus *cdb)
     }
 }
 
-void com_data_bus_destroy(struct com_data_bus *cdb)
+void cdb_destroy(struct cdb *cdb)
 {
     free(cdb->entries);
     free(cdb);

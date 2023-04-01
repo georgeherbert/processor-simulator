@@ -10,7 +10,7 @@ struct res_stations *res_stations_init(
     uint32_t num_stations,
     uint32_t id_offset,
     struct reg_file *reg_file,
-    struct com_data_bus *cdb,
+    struct cdb *cdb,
     struct reg *res_stations_all_busy,
     struct reg *reg_stations_ready)
 {
@@ -60,17 +60,17 @@ void res_stations_step(struct res_stations *rs)
         {
             if (rs->stations_next[i].qj != 0)
             {
-                if (com_data_bus_is_val_ready(rs->cdb, rs->stations_next[i].qj))
+                if (cdb_is_val_ready(rs->cdb, rs->stations_next[i].qj))
                 {
-                    rs->stations_next[i].vj = com_data_bus_get_val(rs->cdb, rs->stations_next[i].qj);
+                    rs->stations_next[i].vj = cdb_get_val(rs->cdb, rs->stations_next[i].qj);
                     rs->stations_next[i].qj = 0;
                 }
             }
             if (rs->stations_next[i].qk != 0)
             {
-                if (com_data_bus_is_val_ready(rs->cdb, rs->stations_next[i].qk))
+                if (cdb_is_val_ready(rs->cdb, rs->stations_next[i].qk))
                 {
-                    rs->stations_next[i].vk = com_data_bus_get_val(rs->cdb, rs->stations_next[i].qk);
+                    rs->stations_next[i].vk = cdb_get_val(rs->cdb, rs->stations_next[i].qk);
                     rs->stations_next[i].qk = 0;
                 }
             }

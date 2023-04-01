@@ -18,7 +18,7 @@
 #include "reg.h"
 #include "memory_buffers.h"
 #include "address.h"
-#include "reorder_buffer.h"
+#include "rob.h"
 #include "commit.h"
 
 #define NUM_WORDS_OUTPUT 2048
@@ -36,7 +36,7 @@ struct cpu *cpu_init(char *file_name)
         exit(EXIT_FAILURE);
     }
 
-    cpu->cdb = com_data_bus_init(3); // One entry for each functional unit
+    cpu->cdb = cdb_init(3); // One entry for each functional unit
     cpu->reg_file = reg_file_init(cpu->cdb);
 
     cpu->pc_src.val_current = PC_SRC_PLUS_4;
@@ -58,7 +58,7 @@ struct cpu *cpu_init(char *file_name)
     cpu->inst_queue = inst_queue_init(
         &cpu->inst_queue_empty,
         &cpu->inst_queue_full);
-    cpu->rob = reorder_buffer_init(
+    cpu->rob = rob_init(
         &cpu->rob_full,
         cpu->cdb,
         &cpu->rob_ready);
@@ -73,7 +73,7 @@ struct cpu *cpu_init(char *file_name)
         &cpu->inst_queue_full);
     cpu->decode_unit = decode_init(
         &cpu->reg_inst,
-        &cpu->reg_inst_pc, // TODO: Remove this
+        &cpu->reg_inst_pc,
         cpu->inst_queue,
         &cpu->inst_queue_full);
     cpu->alu_res_stations = res_stations_init(
@@ -186,7 +186,7 @@ void print_reg_file(struct reg_file *reg_file)
 
 void cpu_destroy(struct cpu *cpu)
 {
-    com_data_bus_destroy(cpu->cdb);
+    cdb_destroy(cpu->cdb);
     reg_file_destroy(cpu->reg_file);
     main_memory_destroy(cpu->mm);
     fetch_destroy(cpu->fetch_unit);
@@ -200,7 +200,7 @@ void cpu_destroy(struct cpu *cpu)
     branch_destroy(cpu->branch_unit);
     memory_destroy(cpu->memory_unit);
     address_destroy(cpu->address_unit);
-    reorder_buffer_destroy(cpu->rob);
+    rob_destroy(cpu->rob);
     commit_destroy(cpu->commit_unit);
 
     free(cpu);
@@ -213,6 +213,8 @@ void update_current(struct cpu *cpu)
     reg_update_current(&cpu->reg_pc_target);
     reg_update_current(&cpu->reg_inst);
     reg_update_current(&cpu->reg_inst_pc);
+
+    // TODO: Remove all the below registers and incorporate their functionality into functions
     reg_update_current(&cpu->inst_queue_empty);
     reg_update_current(&cpu->inst_queue_full);
     reg_update_current(&cpu->res_stations_all_busy_alu);
@@ -226,7 +228,7 @@ void update_current(struct cpu *cpu)
     reg_update_current(&cpu->rob_ready);
 
     inst_queue_update_current(cpu->inst_queue);
-    reorder_buffer_update_current(cpu->rob);
+    rob_update_current(cpu->rob);
 
     res_stations_update_current(cpu->alu_res_stations);
     res_stations_update_current(cpu->branch_res_stations);
@@ -243,28 +245,17 @@ bool step(struct cpu *cpu)
         // printf("Decode\n");
     }
     issue_step(cpu->issue_unit);
-    // printf("Issue\n");
     inst_queue_step(cpu->inst_queue);
-    // printf("Inst Queue\n");
     alu_step(cpu->alu_unit);
-    // printf("Address\n");
     branch_step(cpu->branch_unit);
-    // printf("Branch\n");
     memory_step(cpu->memory_unit);
-    // printf("Memory\n");
     address_step(cpu->address_unit);
-    // printf("Address\n");
     res_stations_step(cpu->alu_res_stations);
     res_stations_step(cpu->branch_res_stations);
-    // printf("Res Stations\n");
     memory_buffers_step(cpu->memory_buffers);
-    // printf("Memory Buffers\n");
     bool inst_committed = commit_step(cpu->commit_unit);
-    // printf("Commit\n");
-    reorder_buffer_step(cpu->rob);
-    // printf("Reorder Buffer\n");
-    com_data_bus_step(cpu->cdb);
-    // printf("Com Data Bus\n");
+    rob_step(cpu->rob);
+    cdb_clear(cpu->cdb);
 
     return inst_committed;
 }

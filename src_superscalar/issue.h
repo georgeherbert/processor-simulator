@@ -7,7 +7,7 @@
 #include "memory_buffers.h"
 #include "reg_file.h"
 #include "reg.h"
-#include "reorder_buffer.h"
+#include "rob.h"
 
 struct issue_unit
 {
@@ -16,7 +16,7 @@ struct issue_unit
     struct res_stations *alu_res_stations;    // Pointer to ALU reservation station
     struct res_stations *branch_res_stations; // Pointer to branch reservation station
     struct memory_buffers *memory_buffers;    // Pointer to memory reservation station
-    struct reorder_buffer *rob;               // Pointer to reorder buffer
+    struct rob *rob;               // Pointer to reorder buffer
     struct reg *inst_queue_empty;             // Pointer to register indicating whether the instruction queue is empty
     struct reg *res_stations_all_busy_alu;    // Pointer to number of available ALU reservation stations
     struct reg *res_stations_all_busy_branch; // Pointer to number of available branch reservation stations
@@ -30,7 +30,7 @@ struct issue_unit *issue_init(
     struct res_stations *alu_res_stations,
     struct res_stations *branch_res_stations,
     struct memory_buffers *memory_buffers,
-    struct reorder_buffer *rob,
+    struct rob *rob,
     struct reg *inst_queue_empty,
     struct reg *res_stations_all_busy_alu,
     struct reg *res_stations_all_busy_branch,

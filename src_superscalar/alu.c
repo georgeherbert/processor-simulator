@@ -3,13 +3,13 @@
 #include "alu.h"
 #include "res_stations.h"
 #include "decoded_inst.h"
-#include "com_data_bus.h"
+#include "cdb.h"
 #include "reg.h"
 
 struct alu_unit *alu_init(
     struct res_stations *alu_res_stations,
     struct reg_file *reg_file,
-    struct com_data_bus *cdb,
+    struct cdb *cdb,
     struct reg *res_stations_ready_alu)
 {
     struct alu_unit *alu_unit = malloc(sizeof(struct alu_unit));
@@ -96,11 +96,6 @@ void alu_step(struct alu_unit *alu_unit)
         alu_unit->entry_id = entry.id;
         alu_unit->entry_rob_id = entry.rob_id;
         alu_unit->out = out;
-
-        // TODO: This should be two steps really...
-        // com_data_bus_add_entry(alu_unit->cdb, entry.id, out);
-
-        // res_stations_set_station_not_busy(alu_unit->alu_res_stations, entry.id);
     }
     else if (alu_unit->relative_cycle > 0 && alu_unit->relative_cycle < alu_unit->num_cycles)
     {
@@ -108,7 +103,7 @@ void alu_step(struct alu_unit *alu_unit)
     }
     else if (alu_unit->relative_cycle == alu_unit->num_cycles)
     {
-        com_data_bus_add_entry(alu_unit->cdb, alu_unit->entry_rob_id, alu_unit->out);
+        cdb_write(alu_unit->cdb, alu_unit->entry_rob_id, alu_unit->out);
         res_stations_set_station_not_busy(alu_unit->alu_res_stations, alu_unit->entry_id);
         alu_unit->relative_cycle = 0;
     }

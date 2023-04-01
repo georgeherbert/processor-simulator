@@ -2,14 +2,14 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
-#include "reorder_buffer.h"
+#include "rob.h"
 #include "reg.h"
 #include "decoded_inst.h"
-#include "com_data_bus.h"
+#include "cdb.h"
 
-struct reorder_buffer *reorder_buffer_init(struct reg *rob_full, struct com_data_bus *cdb, struct reg *rob_ready)
+struct rob *rob_init(struct reg *rob_full, struct cdb *cdb, struct reg *rob_ready)
 {
-    struct reorder_buffer *rob = malloc(sizeof(struct reorder_buffer));
+    struct rob *rob = malloc(sizeof(struct rob));
     if (rob == NULL)
     {
         fprintf(stderr, "Error: Could not allocate memory for reorder buffer");
@@ -36,24 +36,24 @@ struct reorder_buffer *reorder_buffer_init(struct reg *rob_full, struct com_data
     return rob;
 }
 
-void reorder_buffer_step(struct reorder_buffer *rob)
+void rob_step(struct rob *rob)
 {
     for (uint32_t i = 0; i < REORDER_BUFFER_SIZE; i++)
     {
         if (rob->queue_current[i].busy && !rob->queue_current[i].ready)
         {
-            if (com_data_bus_is_val_ready(rob->cdb, i + 1))
+            if (cdb_is_val_ready(rob->cdb, i + 1))
             {
-                rob->queue_next[i].value = com_data_bus_get_val(rob->cdb, i + 1);
+                rob->queue_next[i].value = cdb_get_val(rob->cdb, i + 1);
                 rob->queue_next[i].ready = true;
             }
 
             enum op_type op_type = rob->queue_current[i].op_type;
             if ((op_type == STORE_WORD || op_type == STORE_HALF || op_type == STORE_BYTE) && rob->queue_current[i].q != 0)
             {
-                if (com_data_bus_is_val_ready(rob->cdb, rob->queue_current[i].q))
+                if (cdb_is_val_ready(rob->cdb, rob->queue_current[i].q))
                 {
-                    rob->queue_next[i].value = com_data_bus_get_val(rob->cdb, rob->queue_current[i].q);
+                    rob->queue_next[i].value = cdb_get_val(rob->cdb, rob->queue_current[i].q);
                     rob->queue_next[i].q = 0;
                     if (rob->queue_next[i].dest != 0) // TODO: Can we never store to zero then?
                     {
@@ -68,7 +68,7 @@ void reorder_buffer_step(struct reorder_buffer *rob)
     reg_write(rob->rob_ready, rob->front_next != -1 && rob->queue_next[rob->front_next].ready);
 }
 
-uint32_t reorder_buffer_enqueue(struct reorder_buffer *rob, enum op_type op_type, uint32_t dest, uint32_t value, uint32_t q)
+uint32_t rob_enqueue(struct rob *rob, enum op_type op_type, uint32_t dest, uint32_t value, uint32_t q)
 {
     if (rob->front_next == -1)
     {
@@ -86,9 +86,9 @@ uint32_t reorder_buffer_enqueue(struct reorder_buffer *rob, enum op_type op_type
     return rob->rear_next + 1;
 }
 
-struct reorder_buffer_entry reorder_buffer_dequeue(struct reorder_buffer *rob)
+struct rob_entry rob_dequeue(struct rob *rob)
 {
-    struct reorder_buffer_entry entry = rob->queue_current[rob->front_current];
+    struct rob_entry entry = rob->queue_current[rob->front_current];
     rob->queue_next[rob->front_current].busy = false;
     if (rob->front_next == rob->rear_next)
     {
@@ -102,17 +102,17 @@ struct reorder_buffer_entry reorder_buffer_dequeue(struct reorder_buffer *rob)
     return entry;
 }
 
-bool reorder_buffer_is_entry_ready(struct reorder_buffer *rob, uint32_t id)
+bool rob_is_entry_ready(struct rob *rob, uint32_t id)
 {
     return rob->queue_current[id - 1].ready;
 }
 
-uint32_t reorder_buffer_get_entry_value(struct reorder_buffer *rob, uint32_t id)
+uint32_t rob_get_entry_value(struct rob *rob, uint32_t id)
 {
     return rob->queue_current[id - 1].value;
 }
 
-bool reorder_buffer_earlier_stores(struct reorder_buffer *rob, uint32_t rob_id, uint32_t addr)
+bool rob_earlier_stores(struct rob *rob, uint32_t rob_id, uint32_t addr)
 {
     int32_t current_index = rob_id - 1;
     bool earlier_store = false;
@@ -125,7 +125,7 @@ bool reorder_buffer_earlier_stores(struct reorder_buffer *rob, uint32_t rob_id, 
     return earlier_store;
 }
 
-void reorder_buffer_add_address(struct reorder_buffer *rob, uint32_t rob_id, uint32_t addr)
+void rob_add_address(struct rob *rob, uint32_t rob_id, uint32_t addr)
 {
     rob->queue_next[rob_id - 1].dest = addr;
     if (rob->queue_next[rob_id - 1].q == 0)
@@ -134,13 +134,13 @@ void reorder_buffer_add_address(struct reorder_buffer *rob, uint32_t rob_id, uin
     }
 }
 
-void reorder_buffer_update_current(struct reorder_buffer *rob)
+void rob_update_current(struct rob *rob)
 {
-    memcpy(rob->queue_current, rob->queue_next, sizeof(struct reorder_buffer_entry) * REORDER_BUFFER_SIZE);
+    memcpy(rob->queue_current, rob->queue_next, sizeof(struct rob_entry) * REORDER_BUFFER_SIZE);
     rob->front_current = rob->front_next;
 }
 
-void reorder_buffer_destroy(struct reorder_buffer *rob)
+void rob_destroy(struct rob *rob)
 {
     free(rob);
 }

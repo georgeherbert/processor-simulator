@@ -11,11 +11,11 @@ struct memory_buffers *memory_buffers_init(
     uint32_t num_buffers,
     uint32_t id_offset,
     struct reg_file *reg_file,
-    struct com_data_bus *cdb,
+    struct cdb *cdb,
     struct reg *memory_buffers_all_busy,
     struct reg *memory_buffers_ready_address,
     struct reg *memory_buffers_ready_memory,
-    struct reorder_buffer *rob)
+    struct rob *rob)
 {
     struct memory_buffers *mb = malloc(sizeof(struct memory_buffers));
     if (mb == NULL)
@@ -69,17 +69,17 @@ void memory_buffers_step(struct memory_buffers *mb)
         {
             if (mb->buffers_next[i].qj != 0)
             {
-                if (com_data_bus_is_val_ready(mb->cdb, mb->buffers_next[i].qj))
+                if (cdb_is_val_ready(mb->cdb, mb->buffers_next[i].qj))
                 {
-                    mb->buffers_next[i].vj = com_data_bus_get_val(mb->cdb, mb->buffers_next[i].qj);
+                    mb->buffers_next[i].vj = cdb_get_val(mb->cdb, mb->buffers_next[i].qj);
                     mb->buffers_next[i].qj = 0;
                 }
             }
             if (mb->buffers_next[i].qk != 0)
             {
-                if (com_data_bus_is_val_ready(mb->cdb, mb->buffers_next[i].qk))
+                if (cdb_is_val_ready(mb->cdb, mb->buffers_next[i].qk))
                 {
-                    mb->buffers_next[i].vk = com_data_bus_get_val(mb->cdb, mb->buffers_next[i].qk);
+                    mb->buffers_next[i].vk = cdb_get_val(mb->cdb, mb->buffers_next[i].qk);
                     mb->buffers_next[i].qk = 0;
                 }
             }
@@ -149,7 +149,7 @@ void memory_buffers_step(struct memory_buffers *mb)
         if (entry->busy && entry->queue_pos == 0 && (entry->op == LW || entry->op == LH || entry->op == LHU || entry->op == LB || entry->op == LBU))
         {
             uint32_t rob_id = entry->rob_id;
-            bool earlier_stores = reorder_buffer_earlier_stores(mb->rob, rob_id, entry->a);
+            bool earlier_stores = rob_earlier_stores(mb->rob, rob_id, entry->a);
             if (!earlier_stores)
             {
                 ready_memory = true;

@@ -14,8 +14,8 @@
 #include "memory.h"
 #include "control.h"
 #include "reg.h"
-#include "com_data_bus.h"
-#include "reorder_buffer.h"
+#include "cdb.h"
+#include "rob.h"
 #include "memory_buffers.h"
 #include "address.h"
 #include "commit.h"
@@ -34,8 +34,8 @@ struct cpu
     struct alu_unit *alu_unit;                // Pointer to ALU unit
     struct branch_unit *branch_unit;          // Pointer to branch unit
     struct memory_unit *memory_unit;          // Pointer to memory unit
-    struct com_data_bus *cdb;                 // Pointer to common data bus
-    struct reorder_buffer *rob;               // Pointer to reorder buffer
+    struct cdb *cdb;                 // Pointer to common data bus
+    struct rob *rob;               // Pointer to reorder buffer
     struct commit_unit *commit_unit;          // Pointer to commit unit
 
     struct reg_file *reg_file;               // Pointer to register file
