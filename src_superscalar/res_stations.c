@@ -95,7 +95,7 @@ void res_stations_add(
     uint32_t vj,
     uint32_t vk,
     uint32_t a,
-    uint32_t dest,
+    uint32_t rob_id,
     uint32_t inst_pc)
 {
     for (uint32_t i = 0; i < rs->num_stations; i++)
@@ -109,8 +109,8 @@ void res_stations_add(
             rs->stations_next[i].vj = vj;
             rs->stations_next[i].vk = vk;
             rs->stations_next[i].a = a;
+            rs->stations_next[i].rob_id = rob_id;
             rs->stations_next[i].inst_pc = inst_pc;
-            reg_file_set_reg_qi(rs->reg_file, dest, rs->stations_next[i].id);
             break;
         }
     }

@@ -5,6 +5,7 @@
 #include "reg_file.h"
 #include "com_data_bus.h"
 #include "reg.h"
+#include "reorder_buffer.h"
 
 struct alu_unit
 {
@@ -17,6 +18,7 @@ struct alu_unit
     uint32_t relative_cycle;
 
     uint32_t entry_id;
+    uint32_t entry_rob_id;
     uint32_t out;
 };
 

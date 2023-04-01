@@ -19,6 +19,7 @@ SRCS = \
 	reorder_buffer.c \
 	memory_buffers.c \
 	address.c \
+	commit.c \
 
 # Object files
 OBJS = $(SRCS:.c=.o)

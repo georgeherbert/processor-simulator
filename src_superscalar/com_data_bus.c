@@ -22,7 +22,7 @@ struct com_data_bus *com_data_bus_init(uint32_t num_entries)
 
     for (uint32_t i = 0; i < num_entries; i++)
     {
-        cdb->entries[i].qi = 0;
+        cdb->entries[i].rob_id = 0;
         cdb->entries[i].val = 0;
     }
 
@@ -31,24 +31,25 @@ struct com_data_bus *com_data_bus_init(uint32_t num_entries)
     return cdb;
 }
 
-void com_data_bus_add_entry(struct com_data_bus *cdb, uint32_t qi, uint32_t val)
+void com_data_bus_add_entry(struct com_data_bus *cdb, uint32_t rob_id, uint32_t val)
 {
     for (uint32_t i = 0; i < cdb->num_entries; i++)
     {
-        if (cdb->entries[i].qi == 0)
+        if (cdb->entries[i].rob_id == 0)
         {
-            cdb->entries[i].qi = qi;
+            // printf("CDB #%d: %d\n", rob_id, val);
+            cdb->entries[i].rob_id = rob_id;
             cdb->entries[i].val = val;
             return;
         }
     }
 }
 
-bool com_data_bus_is_val_ready(struct com_data_bus *cdb, uint32_t qi)
+bool com_data_bus_is_val_ready(struct com_data_bus *cdb, uint32_t rob_id)
 {
     for (uint32_t i = 0; i < cdb->num_entries; i++)
     {
-        if (cdb->entries[i].qi == qi)
+        if (cdb->entries[i].rob_id == rob_id)
         {
             return true;
         }
@@ -57,17 +58,16 @@ bool com_data_bus_is_val_ready(struct com_data_bus *cdb, uint32_t qi)
     return false;
 }
 
-uint32_t com_data_bus_get_val(struct com_data_bus *cdb, uint32_t qi)
+uint32_t com_data_bus_get_val(struct com_data_bus *cdb, uint32_t rob_id)
 {
     for (uint32_t i = 0; i < cdb->num_entries; i++)
     {
-        if (cdb->entries[i].qi == qi)
+        if (cdb->entries[i].rob_id == rob_id)
         {
             return cdb->entries[i].val;
         }
     }
-
-    fprintf(stderr, "Error: Could not find val for qi %d", qi);
+    fprintf(stderr, "Error: Could not find value for rob_id %d in common data bus", rob_id);
     exit(EXIT_FAILURE);
 }
 
@@ -75,8 +75,7 @@ void com_data_bus_step(struct com_data_bus *cdb)
 {
     for (uint32_t i = 0; i < cdb->num_entries; i++)
     {
-        // printf("qi: %d, val: %d\n", cdb->entries[i].qi, cdb->entries[i].val);
-        cdb->entries[i].qi = 0;
+        cdb->entries[i].rob_id = 0;
     }
 }
 

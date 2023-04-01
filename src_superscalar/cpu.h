@@ -18,6 +18,7 @@
 #include "reorder_buffer.h"
 #include "memory_buffers.h"
 #include "address.h"
+#include "commit.h"
 
 struct cpu
 {
@@ -35,6 +36,7 @@ struct cpu
     struct memory_unit *memory_unit;          // Pointer to memory unit
     struct com_data_bus *cdb;                 // Pointer to common data bus
     struct reorder_buffer *rob;               // Pointer to reorder buffer
+    struct commit_unit *commit_unit;          // Pointer to commit unit
 
     struct reg_file *reg_file;               // Pointer to register file
     struct reg pc_src;                       // Control signal for PC source
@@ -52,6 +54,7 @@ struct cpu
     struct reg memory_buffers_ready_address; // Indicates whether the first entry in the memory buffer is ready for the address unit
     struct reg memory_buffers_ready_memory;  // Indicates whether an entry in the memory buffer is ready for the memory unit
     struct reg rob_full;                     // Indicates whether the reorder buffer is full
+    struct reg rob_ready;                    // Indicates whether the reorder buffer has a ready entry for commit
 
     bool jump_to_zero; // Indicates whether we have had a jump to zero (i.e. final instruction)
 };

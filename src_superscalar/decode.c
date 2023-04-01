@@ -507,19 +507,24 @@ void handle_store(struct inst_queue *inst_queue, uint32_t inst)
     uint8_t rs2_addr = get_rs2_addr(inst);
     uint32_t imm = get_imm_s(inst);
 
+    // TODO: Tidy this up
+    enum op_type op_type;
     enum op op;
 
     switch (get_funct3(inst))
     {
     case FUNCT3_SB:
+        op_type = STORE_BYTE;
         op = SB;
         printf("sb x%d, %d(x%d)\n", rs2_addr, imm, rs1_addr);
         break;
     case FUNCT3_SH:
+        op_type = STORE_HALF;
         op = SH;
         printf("sh x%d, %d(x%d)\n", rs2_addr, imm, rs1_addr);
         break;
     case FUNCT3_SW:
+        op_type = STORE_WORD;
         op = SW;
         printf("sw x%d, %d(x%d)\n", rs2_addr, imm, rs1_addr);
         break;
@@ -530,7 +535,7 @@ void handle_store(struct inst_queue *inst_queue, uint32_t inst)
 
     create_decoded_inst(
         inst_queue,
-        STORE,
+        op_type,
         op,
         NA, // Store instructions don't use rd
         rs1_addr,

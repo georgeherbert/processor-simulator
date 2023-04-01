@@ -8,6 +8,7 @@
 #include "decode.h"
 #include "decoded_inst.h"
 #include "memory_buffers.h"
+#include "reorder_buffer.h"
 
 #define NA 0
 
@@ -17,6 +18,7 @@ struct issue_unit *issue_init(
     struct res_stations *alu_res_stations,
     struct res_stations *branch_res_stations,
     struct memory_buffers *memory_buffers,
+    struct reorder_buffer *rob,
     struct reg *inst_queue_empty,
     struct reg *res_stations_all_busy_alu,
     struct reg *res_stations_all_busy_branch,
@@ -36,6 +38,7 @@ struct issue_unit *issue_init(
     issue_unit->alu_res_stations = alu_res_stations;
     issue_unit->branch_res_stations = branch_res_stations;
     issue_unit->memory_buffers = memory_buffers;
+    issue_unit->rob = rob;
     issue_unit->inst_queue_empty = inst_queue_empty;
     issue_unit->res_stations_all_busy_alu = res_stations_all_busy_alu;
     issue_unit->res_stations_all_busy_branch = res_stations_all_busy_branch;
@@ -45,8 +48,43 @@ struct issue_unit *issue_init(
     return issue_unit;
 }
 
-void handle_al_operation(struct decoded_inst inst, struct reg_file *reg_file, struct res_stations *alu_res_stations)
+void set_q_v(struct reg_file *reg_file, struct reorder_buffer *rob, uint32_t rs_addr, uint32_t *q, uint32_t *v)
 {
+    if (reg_file_get_reg_busy(reg_file, rs_addr))
+    {
+        uint32_t rob_id = reg_file_get_rob_id(reg_file, rs_addr);
+        if (reorder_buffer_is_entry_ready(rob, rob_id))
+        {
+            *q = NA;
+            *v = reorder_buffer_get_entry_value(rob, rob_id);
+        }
+        else
+        {
+            *q = rob_id;
+            *v = NA;
+        }
+    }
+    else
+    {
+        *q = NA;
+        *v = reg_file_get_reg_val(reg_file, rs_addr);
+    }
+}
+
+void handle_al_operation(
+    struct decoded_inst inst,
+    struct reorder_buffer *rob,
+    struct reg_file *reg_file,
+    struct res_stations *alu_res_stations)
+{
+    uint32_t dest_rob_id = reorder_buffer_enqueue(rob, inst.op_type, inst.rd_addr, NA, NA);
+
+    uint32_t qj = NA;
+    uint32_t qk = NA;
+    uint32_t vj = NA;
+    uint32_t vk = NA;
+    uint32_t inst_pc = NA;
+
     switch (inst.op)
     {
     case ADDI:
@@ -58,40 +96,15 @@ void handle_al_operation(struct decoded_inst inst, struct reg_file *reg_file, st
     case SLLI:
     case SRLI:
     case SRAI:
-        res_stations_add(
-            alu_res_stations,
-            inst.op,
-            reg_file_get_reg_qi(reg_file, inst.rs1_addr),
-            NA, // Integer register-immediate operations don't use rs2
-            reg_file_get_reg_val_or_na(reg_file, inst.rs1_addr),
-            inst.imm,
-            NA, // Only used in branch and memory instructions
-            inst.rd_addr,
-            NA); // Only used in branches and AUIPC
+        set_q_v(reg_file, rob, inst.rs1_addr, &qj, &vj);
+        vk = inst.imm;
         break;
     case LUI:
-        res_stations_add(
-            alu_res_stations,
-            inst.op,
-            NA, // LUI doesn't use rs1
-            NA, // LUI doesn't use rs2
-            inst.imm,
-            NA, // LUI only has one operand
-            NA, // Only used in branch and memory instructions
-            inst.rd_addr,
-            NA); // Only used in branches and AUIPC
+        vj = inst.imm;
         break;
     case AUIPC:
-        res_stations_add(
-            alu_res_stations,
-            inst.op,
-            NA, // AUIPC doesn't use rs1
-            NA, // AUIPC doesn't use rs2
-            inst.imm,
-            NA, // AUIPC only has one operand
-            NA, // Only used in branch and memory instructions
-            inst.rd_addr,
-            inst.inst_pc);
+        vj = inst.imm;
+        inst_pc = inst.inst_pc;
         break;
     case ADD:
     case SLT:
@@ -103,51 +116,54 @@ void handle_al_operation(struct decoded_inst inst, struct reg_file *reg_file, st
     case SRL:
     case SUB:
     case SRA:
-        res_stations_add(
-            alu_res_stations,
-            inst.op,
-            reg_file_get_reg_qi(reg_file, inst.rs1_addr),
-            reg_file_get_reg_qi(reg_file, inst.rs2_addr),
-            reg_file_get_reg_val_or_na(reg_file, inst.rs1_addr),
-            reg_file_get_reg_val_or_na(reg_file, inst.rs2_addr),
-            NA, // Only used in branch and memory instructions
-            inst.rd_addr,
-            NA); // Only used in branches and AUIPC
+        set_q_v(reg_file, rob, inst.rs1_addr, &qj, &vj);
+        set_q_v(reg_file, rob, inst.rs2_addr, &qk, &vk);
         break;
     default:
         fprintf(stderr, "Error: Unknown arithmetic or logical op %d", inst.op);
         exit(EXIT_FAILURE);
         break;
     }
+
+    res_stations_add(
+        alu_res_stations,
+        inst.op,
+        qj,
+        qk,
+        vj,
+        vk,
+        NA,
+        dest_rob_id,
+        inst_pc);
+
+    reg_file_set_rob_id(reg_file, inst.rd_addr, dest_rob_id);
 }
 
-void handle_branch_operation(struct decoded_inst inst, struct reg_file *reg_file, struct res_stations *branch_res_stations)
+void handle_branch_operation(
+    struct decoded_inst inst,
+    struct reorder_buffer *rob,
+    struct reg_file *reg_file,
+    struct res_stations *branch_res_stations)
 {
+    /*
+        Branch instructions have no rd_addr.
+        But rd_addr should be NA from the decode unit for branch instructions.
+    */
+    uint32_t dest_rob_id = reorder_buffer_enqueue(rob, inst.op_type, inst.rd_addr, NA, NA);
+
+    uint32_t qj = NA;
+    uint32_t qk = NA;
+    uint32_t vj = NA;
+    uint32_t vk = NA;
+
     switch (inst.op)
     {
     case JAL:
-        res_stations_add(
-            branch_res_stations,
-            inst.op,
-            NA, // JAL doesn't use rs1
-            NA, // JAL doesn't use rs2
-            NA, // JAL only has an offset operand
-            NA, // JAL only has an offset operand
-            inst.imm,
-            inst.rd_addr,
-            inst.inst_pc);
+        reg_file_set_rob_id(reg_file, inst.rd_addr, dest_rob_id);
         break;
     case JALR:
-        res_stations_add(
-            branch_res_stations,
-            inst.op,
-            reg_file_get_reg_qi(reg_file, inst.rs1_addr),
-            NA, // JALR doesn't use rs2
-            reg_file_get_reg_val_or_na(reg_file, inst.rs1_addr),
-            NA, // JALR only has base and offset operands
-            inst.imm,
-            inst.rd_addr,
-            inst.inst_pc);
+        set_q_v(reg_file, rob, inst.rs1_addr, &qj, &vj);
+        reg_file_set_rob_id(reg_file, inst.rd_addr, dest_rob_id);
         break;
     case BEQ:
     case BNE:
@@ -155,26 +171,46 @@ void handle_branch_operation(struct decoded_inst inst, struct reg_file *reg_file
     case BLTU:
     case BGE:
     case BGEU:
-        res_stations_add(
-            branch_res_stations,
-            inst.op,
-            reg_file_get_reg_qi(reg_file, inst.rs1_addr),
-            reg_file_get_reg_qi(reg_file, inst.rs2_addr),
-            reg_file_get_reg_val_or_na(reg_file, inst.rs1_addr),
-            reg_file_get_reg_val_or_na(reg_file, inst.rs2_addr),
-            inst.imm,
-            NA, // Branch operations don't write to a register
-            inst.inst_pc);
+        set_q_v(reg_file, rob, inst.rs1_addr, &qj, &vj);
+        set_q_v(reg_file, rob, inst.rs2_addr, &qk, &vk);
+        // printf("vj: %d, qj: %d, vk: %d, qk: %d\n", vj, qj, vk, qk);
         break;
     default:
         fprintf(stderr, "Error: Unknown branch op");
         exit(EXIT_FAILURE);
         break;
     }
+
+    res_stations_add(
+        branch_res_stations,
+        inst.op,
+        qj,
+        qk,
+        vj,
+        vk,
+        inst.imm,
+        dest_rob_id,
+        inst.inst_pc);
 }
 
-void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, struct memory_buffers *memory_buffers)
+void handle_mem_operation(
+    struct decoded_inst inst,
+    struct reorder_buffer *rob,
+    struct reg_file *reg_file,
+    struct memory_buffers *memory_buffers)
 {
+    /*
+        Store instructions have no rd_addr.
+        But rd_addr should be NA from the decode unit for store instructions.
+    */
+
+    uint32_t dest_rob_id;
+
+    uint32_t qj = NA;
+    uint32_t qk = NA;
+    uint32_t vj = NA;
+    uint32_t vk = NA;
+
     switch (inst.op)
     {
     case LW:
@@ -182,34 +218,32 @@ void handle_mem_operation(struct decoded_inst inst, struct reg_file *reg_file, s
     case LHU:
     case LB:
     case LBU:
-        memory_buffers_enqueue(
-            memory_buffers,
-            inst.op,
-            reg_file_get_reg_qi(reg_file, inst.rs1_addr),
-            NA, // Load operations don't use rs2
-            reg_file_get_reg_val_or_na(reg_file, inst.rs1_addr),
-            NA, // Load operations only have base and offset operands
-            inst.imm,
-            inst.rd_addr);
+        set_q_v(reg_file, rob, inst.rs1_addr, &qj, &vj);
+        dest_rob_id = reorder_buffer_enqueue(rob, inst.op_type, inst.rd_addr, NA, NA);
+        reg_file_set_rob_id(reg_file, inst.rd_addr, dest_rob_id);
         break;
     case SW:
     case SH:
     case SB:
-        memory_buffers_enqueue(
-            memory_buffers,
-            inst.op,
-            reg_file_get_reg_qi(reg_file, inst.rs1_addr),
-            reg_file_get_reg_qi(reg_file, inst.rs2_addr),
-            reg_file_get_reg_val_or_na(reg_file, inst.rs1_addr),
-            reg_file_get_reg_val_or_na(reg_file, inst.rs2_addr),
-            inst.imm,
-            NA); // Store operations don't write to a register
+        set_q_v(reg_file, rob, inst.rs1_addr, &qj, &vj);
+        set_q_v(reg_file, rob, inst.rs2_addr, &qk, &vk);
+        dest_rob_id = reorder_buffer_enqueue(rob, inst.op_type, NA, vk, qk);
         break;
     default:
         fprintf(stderr, "Error: Unknown memory op");
         exit(EXIT_FAILURE);
         break;
     }
+
+    memory_buffers_enqueue(
+        memory_buffers,
+        inst.op,
+        qj,
+        qk,
+        vj,
+        vk,
+        inst.imm,
+        dest_rob_id);
 }
 
 void issue_step(struct issue_unit *issue_unit)
@@ -222,24 +256,29 @@ void issue_step(struct issue_unit *issue_unit)
         case AL:
             if (!reg_read(issue_unit->res_stations_all_busy_alu))
             {
+                // printf("\tIssue: AL\n");
                 struct decoded_inst inst = inst_queue_dequeue(issue_unit->inst_queue);
-                handle_al_operation(inst, issue_unit->reg_file, issue_unit->alu_res_stations);
+                handle_al_operation(inst, issue_unit->rob, issue_unit->reg_file, issue_unit->alu_res_stations);
             }
             break;
-        case BRANCH:
         case JUMP:
+        case BRANCH:
             if (!reg_read(issue_unit->res_stations_all_busy_branch))
             {
+                // printf("\tIssue: JUMP/BRANCH\n");
                 struct decoded_inst inst = inst_queue_dequeue(issue_unit->inst_queue);
-                handle_branch_operation(inst, issue_unit->reg_file, issue_unit->branch_res_stations);
+                handle_branch_operation(inst, issue_unit->rob, issue_unit->reg_file, issue_unit->branch_res_stations);
             }
             break;
         case LOAD:
-        case STORE:
+        case STORE_WORD:
+        case STORE_HALF:
+        case STORE_BYTE:
             if (!reg_read(issue_unit->memory_buffers_all_busy))
             {
+                // printf("\tIssue: LOAD/STORE\n");
                 struct decoded_inst inst = inst_queue_dequeue(issue_unit->inst_queue);
-                handle_mem_operation(inst, issue_unit->reg_file, issue_unit->memory_buffers);
+                handle_mem_operation(inst, issue_unit->rob, issue_unit->reg_file, issue_unit->memory_buffers);
             }
             break;
         default:

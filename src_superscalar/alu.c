@@ -94,6 +94,7 @@ void alu_step(struct alu_unit *alu_unit)
         }
 
         alu_unit->entry_id = entry.id;
+        alu_unit->entry_rob_id = entry.rob_id;
         alu_unit->out = out;
 
         // TODO: This should be two steps really...
@@ -107,7 +108,7 @@ void alu_step(struct alu_unit *alu_unit)
     }
     else if (alu_unit->relative_cycle == alu_unit->num_cycles)
     {
-        com_data_bus_add_entry(alu_unit->cdb, alu_unit->entry_id, alu_unit->out);
+        com_data_bus_add_entry(alu_unit->cdb, alu_unit->entry_rob_id, alu_unit->out);
         res_stations_set_station_not_busy(alu_unit->alu_res_stations, alu_unit->entry_id);
         alu_unit->relative_cycle = 0;
     }

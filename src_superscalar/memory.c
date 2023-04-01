@@ -34,33 +34,24 @@ void memory_step(struct memory_unit *memory_unit)
 {
     if (reg_read(memory_unit->memory_buffers_ready))
     {
-        struct memory_buffer entry = memory_buffers_remove(memory_unit->memory_buffers);
+        struct memory_buffer entry = *memory_buffers_remove(memory_unit->memory_buffers);
 
         switch (entry.op)
         {
         case LW:
-            com_data_bus_add_entry(memory_unit->cdb, entry.id, main_memory_load_word(memory_unit->mm, entry.a));
+            com_data_bus_add_entry(memory_unit->cdb, entry.rob_id, main_memory_load_word(memory_unit->mm, entry.a));
             break;
         case LH:
-            com_data_bus_add_entry(memory_unit->cdb, entry.id, (int32_t)(int16_t)main_memory_load_half(memory_unit->mm, entry.a));
+            com_data_bus_add_entry(memory_unit->cdb, entry.rob_id, (int32_t)(int16_t)main_memory_load_half(memory_unit->mm, entry.a));
             break;
         case LHU:
-            com_data_bus_add_entry(memory_unit->cdb, entry.id, main_memory_load_half(memory_unit->mm, entry.a));
+            com_data_bus_add_entry(memory_unit->cdb, entry.rob_id, main_memory_load_half(memory_unit->mm, entry.a));
             break;
         case LB:
-            com_data_bus_add_entry(memory_unit->cdb, entry.id, (int32_t)(int8_t)main_memory_load_byte(memory_unit->mm, entry.a));
+            com_data_bus_add_entry(memory_unit->cdb, entry.rob_id, (int32_t)(int8_t)main_memory_load_byte(memory_unit->mm, entry.a));
             break;
         case LBU:
-            com_data_bus_add_entry(memory_unit->cdb, entry.id, main_memory_load_byte(memory_unit->mm, entry.a));
-            break;
-        case SW:
-            main_memory_store_word(memory_unit->mm, entry.a, entry.vk);
-            break;
-        case SH:
-            main_memory_store_half(memory_unit->mm, entry.a, entry.vk);
-            break;
-        case SB:
-            main_memory_store_byte(memory_unit->mm, entry.a, entry.vk);
+            com_data_bus_add_entry(memory_unit->cdb, entry.rob_id, main_memory_load_byte(memory_unit->mm, entry.a));
             break;
         default:
             fprintf(stderr, "Error: Unknown memory operation");

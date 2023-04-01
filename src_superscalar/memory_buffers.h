@@ -7,6 +7,7 @@
 #include "reg_file.h"
 #include "com_data_bus.h"
 #include "reg.h"
+#include "reorder_buffer.h"
 
 struct memory_buffer
 {
@@ -19,20 +20,25 @@ struct memory_buffer
     uint32_t vk;        // val of second operand
     uint32_t a;         // Immediate val or address
     uint32_t queue_pos; // Position in queue
+    uint32_t rob_id;    // Destination ROB ID
 };
 
 struct memory_buffers
 {
-    struct memory_buffer *buffers_current;    // Array of current memory buffers
-    struct memory_buffer *buffers_next;       // Array of next memory buffers
-    uint32_t num_buffers_in_queue_current;    // Number of memory buffers in the current queue
-    uint32_t num_buffers_in_queue_next;       // Number of memory buffers in the next queue
+    struct memory_buffer *buffers_current; // Array of current memory buffers
+    struct memory_buffer *buffers_next;    // Array of next memory buffers
+    uint32_t num_buffers_in_queue_current; // Number of memory buffers in the current queue
+    uint32_t num_buffers_in_queue_next;    // Number of memory buffers in the next queue
+    uint32_t num_buffers;                  // Number of memory buffers
+    struct memory_buffer *ready_address;   // Pointer to memory buffer that is ready for address unit
+    struct memory_buffer *ready_memory;    // Pointer to memory buffer that is ready for memory unit
+
     struct reg_file *reg_file;                // Pointer to register file
-    uint32_t num_buffers;                     // Number of memory buffers
     struct com_data_bus *cdb;                 // Pointer to common data bus
     struct reg *memory_buffers_all_busy;      // Pointer to register that indicates if all memory buffers are busy
     struct reg *memory_buffers_ready_address; // Pointer to register that indicates if any memory buffers are ready for address unit
     struct reg *memory_buffers_ready_memory;  // Pointer to register that indicates if any memory buffers are ready for memory unit
+    struct reorder_buffer *rob;               // Pointer to reorder buffer
 };
 
 struct memory_buffers *memory_buffers_init(
@@ -42,18 +48,19 @@ struct memory_buffers *memory_buffers_init(
     struct com_data_bus *cdb,
     struct reg *memory_buffers_all_busy,
     struct reg *memory_buffers_ready_address,
-    struct reg *memory_buffers_ready_memory);        // Initialise memory buffers
+    struct reg *memory_buffers_ready_memory,
+    struct reorder_buffer *rob);                     // Initialise memory buffers
 void memory_buffers_step(struct memory_buffers *rs); // Step memory buffers
 void memory_buffers_enqueue(
-    struct memory_buffers *rs,
+    struct memory_buffers *mb,
     enum op op,
     uint32_t qj,
     uint32_t qk,
     uint32_t vj,
     uint32_t vk,
     uint32_t a,
-    uint32_t dest);                                                                        // Add instruction to memory buffers
-struct memory_buffer memory_buffers_remove(struct memory_buffers *rs);                     // Remove instruction from memory buffers
+    uint32_t rob_id);                                                                      // Add instruction to memory buffers
+struct memory_buffer *memory_buffers_remove(struct memory_buffers *rs);                     // Remove instruction from memory buffers
 void memory_buffers_set_buffer_not_busy(struct memory_buffers *rs, uint32_t id);           // Set a memory buffer to not busy
 struct memory_buffer memory_buffers_dequeue(struct memory_buffers *mb);                    // Dequeue memory buffer
 void memory_buffers_add_address(struct memory_buffers *mb, uint32_t id, uint32_t address); // Add address to memory buffer

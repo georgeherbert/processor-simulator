@@ -37,18 +37,21 @@ void writeback_step(struct writeback_unit *wb)
     case CTRL_WB_ALU_OUT:
         if (*wb->reg_rd_addr != 0)
         {
+            // printf("\t%d %d\n", *wb->reg_rd_addr, *wb->reg_alu_out);
             wb->regs[*wb->reg_rd_addr] = *wb->reg_alu_out;
         }
         break;
     case CTRL_WB_MDR:
         if (*wb->reg_rd_addr != 0)
         {
+            // printf("\t%d %d\n", *wb->reg_rd_addr, *wb->reg_mdr);
             wb->regs[*wb->reg_rd_addr] = *wb->reg_mdr;
         }
         break;
     case CTRL_WB_NPC:
         if (*wb->reg_rd_addr != 0)
         {
+            // printf("\t%d %d\n", *wb->reg_rd_addr, *wb->reg_npc);
             wb->regs[*wb->reg_rd_addr] = *wb->reg_npc;
         }
         break;

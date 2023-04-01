@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "reg_file.h"
 #include "cpu.h"
+#include "reorder_buffer.h"
 
 #define NA 0
 
@@ -18,8 +19,8 @@ struct reg_file *reg_file_init(struct com_data_bus *cdb)
 
     for (uint32_t i = 0; i < NUM_REGS; i++)
     {
-        reg_file->regs[i].val = 0; // All vals are initially zero
-        reg_file->regs[i].qi = 0;  // All vals are not initially in a reservation station
+        reg_file->regs[i].val = 0;      // All vals are initially zero
+        reg_file->regs[i].busy = false; // All vals are not initially in the reorder buffer
     }
 
     reg_file->regs[8].val = MEMORY_SIZE;
@@ -30,41 +31,41 @@ struct reg_file *reg_file_init(struct com_data_bus *cdb)
     return reg_file;
 }
 
-uint32_t reg_file_get_reg_val_or_na(struct reg_file *reg_file, uint32_t reg_addr)
+bool reg_file_get_reg_busy(struct reg_file *reg_file, uint32_t reg_addr)
 {
-    /*
-        If the register is awaiting a val from a reservation station we return NA (i.e. zero).
-        But, we could in theory return any arbitrary val since it won't be used regardless.
-    */
-    return reg_file->regs[reg_addr].qi == 0 ? reg_file->regs[reg_addr].val : NA;
+    return reg_file->regs[reg_addr].busy;
 }
 
-uint32_t reg_file_get_reg_qi(struct reg_file *reg_file, uint32_t reg_addr)
+uint32_t reg_file_get_rob_id(struct reg_file *reg_file, uint32_t reg_addr)
 {
-    return reg_file->regs[reg_addr].qi;
+    return reg_file->regs[reg_addr].rob_id;
 }
 
-void reg_file_step(struct reg_file *reg_file)
+uint32_t reg_file_get_reg_val(struct reg_file *reg_file, uint32_t reg_addr)
 {
-    for (uint32_t i = 0; i < NUM_REGS; i++)
+    return reg_file->regs[reg_addr].val;
+}
+
+void reg_file_reg_commit(struct reg_file *reg_file, uint32_t reg_addr, uint32_t val, uint32_t rob_id)
+{
+    if (reg_addr != 0)
     {
-        if (reg_file->regs[i].qi != 0)
+        // printf("\t%d %d\n", reg_addr, val);
+        if (reg_file->regs[reg_addr].rob_id == rob_id)
         {
-            if (com_data_bus_is_val_ready(reg_file->cdb, reg_file->regs[i].qi))
-            {
-                reg_file->regs[i].val = com_data_bus_get_val(reg_file->cdb, reg_file->regs[i].qi);
-                reg_file->regs[i].qi = 0;
-            }
+            reg_file->regs[reg_addr].busy = false;
         }
+        reg_file->regs[reg_addr].val = val;
     }
 }
 
-void reg_file_set_reg_qi(struct reg_file *reg_file, uint32_t reg_addr, uint32_t qi)
+void reg_file_set_rob_id(struct reg_file *reg_file, uint32_t reg_addr, uint32_t rob_id)
 {
     // Register zero is always zero and cannot be written to
     if (reg_addr != 0)
     {
-        reg_file->regs[reg_addr].qi = qi;
+        reg_file->regs[reg_addr].busy = true;
+        reg_file->regs[reg_addr].rob_id = rob_id;
     }
 }
 

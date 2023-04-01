@@ -18,6 +18,7 @@ struct res_station
     uint32_t vj;      // val of first operand
     uint32_t vk;      // val of second operand
     uint32_t a;       // Immediate val or address
+    uint32_t rob_id;  // Destination ROB ID
     uint32_t inst_pc; // Program counter of instruction
 };
 

@@ -19,6 +19,7 @@
 #include "memory_buffers.h"
 #include "address.h"
 #include "reorder_buffer.h"
+#include "commit.h"
 
 #define NUM_WORDS_OUTPUT 2048
 
@@ -51,11 +52,16 @@ struct cpu *cpu_init(char *file_name)
     cpu->memory_buffers_ready_address.val_current = false;
     cpu->memory_buffers_ready_memory.val_current = false;
     cpu->rob_full.val_current = false;
+    cpu->rob_ready.val_current = false;
 
     cpu->mm = main_memory_init(file_name);
     cpu->inst_queue = inst_queue_init(
         &cpu->inst_queue_empty,
         &cpu->inst_queue_full);
+    cpu->rob = reorder_buffer_init(
+        &cpu->rob_full,
+        cpu->cdb,
+        &cpu->rob_ready);
     cpu->fetch_unit = fetch_init(
         cpu->mm,
         &cpu->pc_src,
@@ -91,13 +97,15 @@ struct cpu *cpu_init(char *file_name)
         cpu->cdb,
         &cpu->memory_buffers_all_busy,
         &cpu->memory_buffers_ready_address,
-        &cpu->memory_buffers_ready_memory);
+        &cpu->memory_buffers_ready_memory,
+        cpu->rob);
     cpu->issue_unit = issue_init(
         cpu->inst_queue,
         cpu->reg_file,
         cpu->alu_res_stations,
         cpu->branch_res_stations,
         cpu->memory_buffers,
+        cpu->rob,
         &cpu->inst_queue_empty,
         &cpu->res_stations_all_busy_alu,
         &cpu->res_stations_all_busy_branch,
@@ -105,7 +113,8 @@ struct cpu *cpu_init(char *file_name)
         &cpu->rob_full);
     cpu->address_unit = address_init(
         cpu->memory_buffers,
-        &cpu->memory_buffers_ready_address);
+        &cpu->memory_buffers_ready_address,
+        cpu->rob);
     cpu->alu_unit = alu_init(
         cpu->alu_res_stations,
         cpu->reg_file,
@@ -125,8 +134,11 @@ struct cpu *cpu_init(char *file_name)
         cpu->reg_file,
         cpu->cdb,
         &cpu->memory_buffers_ready_memory);
-    cpu->rob = reorder_buffer_init(
-        &cpu->rob_full);
+    cpu->commit_unit = commit_init(
+        cpu->rob,
+        &cpu->rob_ready,
+        cpu->mm,
+        cpu->reg_file);
 
     printf("CPU successfully initialised\n");
 
@@ -155,13 +167,13 @@ void print_reg_file(struct reg_file *reg_file)
     for (int i = 0; i < NUM_REGS; i++)
     {
         printf("x%02d: ", i);
-        if (reg_file->regs[i].qi == 0)
+        if (reg_file->regs[i].busy)
         {
-            printf("%-11d ", reg_file->regs[i].val);
+            printf("#%-10d ", reg_file->regs[i].rob_id);
         }
         else
         {
-            printf("#%-10d ", reg_file->regs[i].qi);
+            printf("%-11d ", reg_file->regs[i].val);
         }
 
         if ((i + 1) % 4 == 0)
@@ -188,6 +200,8 @@ void cpu_destroy(struct cpu *cpu)
     branch_destroy(cpu->branch_unit);
     memory_destroy(cpu->memory_unit);
     address_destroy(cpu->address_unit);
+    reorder_buffer_destroy(cpu->rob);
+    commit_destroy(cpu->commit_unit);
 
     free(cpu);
 }
@@ -208,32 +222,51 @@ void update_current(struct cpu *cpu)
     reg_update_current(&cpu->res_stations_ready_branch);
     reg_update_current(&cpu->memory_buffers_ready_memory);
     reg_update_current(&cpu->memory_buffers_ready_address);
+    reg_update_current(&cpu->rob_full);
+    reg_update_current(&cpu->rob_ready);
 
     inst_queue_update_current(cpu->inst_queue);
+    reorder_buffer_update_current(cpu->rob);
 
     res_stations_update_current(cpu->alu_res_stations);
     res_stations_update_current(cpu->branch_res_stations);
     memory_buffers_update_current(cpu->memory_buffers);
 }
 
-void step(struct cpu *cpu)
+bool step(struct cpu *cpu)
 {
     if (!cpu->jump_to_zero)
     {
         fetch_step(cpu->fetch_unit);
+        // printf("Fetch\n");
         decode_step(cpu->decode_unit);
+        // printf("Decode\n");
     }
     issue_step(cpu->issue_unit);
+    // printf("Issue\n");
     inst_queue_step(cpu->inst_queue);
+    // printf("Inst Queue\n");
     alu_step(cpu->alu_unit);
+    // printf("Address\n");
     branch_step(cpu->branch_unit);
+    // printf("Branch\n");
     memory_step(cpu->memory_unit);
+    // printf("Memory\n");
     address_step(cpu->address_unit);
+    // printf("Address\n");
     res_stations_step(cpu->alu_res_stations);
     res_stations_step(cpu->branch_res_stations);
+    // printf("Res Stations\n");
     memory_buffers_step(cpu->memory_buffers);
-    reg_file_step(cpu->reg_file);
+    // printf("Memory Buffers\n");
+    bool inst_committed = commit_step(cpu->commit_unit);
+    // printf("Commit\n");
+    reorder_buffer_step(cpu->rob);
+    // printf("Reorder Buffer\n");
     com_data_bus_step(cpu->cdb);
+    // printf("Com Data Bus\n");
+
+    return inst_committed;
 }
 
 bool ready_to_exit(struct cpu *cpu)
@@ -245,7 +278,7 @@ bool ready_to_exit(struct cpu *cpu)
     bool all_regs_written = true;
     for (int i = 0; i < NUM_REGS; i++)
     {
-        all_regs_written &= cpu->reg_file->regs[i].qi == 0;
+        all_regs_written &= cpu->reg_file->regs[i].busy == false;
     }
 
     // If we have had a jump to zero and all registers have been written, the program we exit
@@ -272,13 +305,12 @@ int main(int argc, char *argv[])
     {
         // printf("\nCycle: %" PRIu64 "\n", cycles);
 
-        step(cpu);
+        instructions += step(cpu);
         update_current(cpu);
 
         // print_main_memory(cpu->mm);
         // print_reg_file(cpu->reg_file);
 
-        instructions++;
         cycles++;
     }
 
@@ -287,6 +319,7 @@ int main(int argc, char *argv[])
 
     printf("\nInstructions: %" PRIu64 "\n", instructions);
     printf("Cycles: %" PRIu64 "\n", cycles);
+    printf("IPC: %f\n", (double)instructions / cycles);
 
     cpu_destroy(cpu);
     return 0;

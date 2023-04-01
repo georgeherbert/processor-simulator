@@ -14,7 +14,8 @@ struct memory_buffers *memory_buffers_init(
     struct com_data_bus *cdb,
     struct reg *memory_buffers_all_busy,
     struct reg *memory_buffers_ready_address,
-    struct reg *memory_buffers_ready_memory)
+    struct reg *memory_buffers_ready_memory,
+    struct reorder_buffer *rob)
 {
     struct memory_buffers *mb = malloc(sizeof(struct memory_buffers));
     if (mb == NULL)
@@ -45,6 +46,7 @@ struct memory_buffers *memory_buffers_init(
     mb->memory_buffers_ready_address = memory_buffers_ready_address;
     mb->num_buffers_in_queue_current = 0;
     mb->num_buffers_in_queue_next = 0;
+    mb->rob = rob;
 
     for (uint32_t i = 0; i < num_buffers; i++)
     {
@@ -85,18 +87,78 @@ void memory_buffers_step(struct memory_buffers *mb)
     }
 
     bool all_busy = true;
-    uint32_t ready_address = false;
-    uint32_t ready_memory = false;
+    bool ready_address = false;
+    bool ready_memory = false;
+
     for (uint32_t i = 0; i < mb->num_buffers; i++)
     {
         all_busy &= mb->buffers_next[i].busy;
-        ready_address |= mb->buffers_next[i].busy && mb->buffers_next[i].qj == 0 && mb->buffers_next[i].queue_pos == 1;
-        ready_memory |= mb->buffers_next[i].busy && mb->buffers_next[i].qk == 0 && mb->buffers_next[i].queue_pos == 0;
-        /*
-            The queue_pos of zero above indicates the entry has already had its address computed via the address unit.
-            As such, it is ready for the memory unit (assuming the other conditions are also true).
-        */
     }
+
+    if (mb->num_buffers_in_queue_next > 0)
+    {
+        uint32_t queue_pos_indices[mb->num_buffers_in_queue_next];
+        for (uint32_t i = 0; i < mb->num_buffers; i++)
+        {
+            if (mb->buffers_next[i].busy && mb->buffers_next[i].queue_pos != 0)
+            {
+                queue_pos_indices[mb->buffers_next[i].queue_pos - 1] = i;
+            }
+        }
+
+        /*
+            A store is ready for effective address execution if:
+                - qj == 0 (i.e. the "base" value is in Vj)
+                - Store is at the front of the queue
+        */
+        struct memory_buffer *first_entry = &mb->buffers_next[queue_pos_indices[0]];
+        bool store_seen = (first_entry->op == SW || first_entry->op == SH || first_entry->op == SB);
+        if (store_seen && first_entry->qj == 0)
+        {
+            ready_address = true;
+            mb->ready_address = first_entry;
+        }
+
+        /*
+            A load is ready for effective address execution if:
+                - qj == 0 (i.e. the "base" value is in Vj)
+                - There are no prior stores in the queue for effective address calculation
+        */
+        uint32_t i = 0;
+        while (!ready_address && !store_seen && i < mb->num_buffers_in_queue_next)
+        {
+            struct memory_buffer *entry = &mb->buffers_next[queue_pos_indices[i]];
+            store_seen |= (entry->op == SW || entry->op == SH || entry->op == SB);
+            if (!store_seen && entry->qj == 0)
+            {
+                ready_address = true;
+                mb->ready_address = entry;
+            }
+            i++;
+        }
+    }
+    /*
+        A load is ready for memory execution if:
+            - queue_pos == 0 (i.e. the effective address has been computed)
+            - All stores earlier in the ROB have a different address
+    */
+    uint32_t i = 0;
+    while (!ready_memory && i < mb->num_buffers)
+    {
+        struct memory_buffer *entry = &mb->buffers_next[i];
+        if (entry->busy && entry->queue_pos == 0 && (entry->op == LW || entry->op == LH || entry->op == LHU || entry->op == LB || entry->op == LBU))
+        {
+            uint32_t rob_id = entry->rob_id;
+            bool earlier_stores = reorder_buffer_earlier_stores(mb->rob, rob_id, entry->a);
+            if (!earlier_stores)
+            {
+                ready_memory = true;
+                mb->ready_memory = entry;
+            }
+        }
+        i++;
+    }
+
     reg_write(mb->memory_buffers_all_busy, all_busy);
     reg_write(mb->memory_buffers_ready_memory, ready_memory);
     reg_write(mb->memory_buffers_ready_address, ready_address);
@@ -110,7 +172,7 @@ void memory_buffers_enqueue(
     uint32_t vj,
     uint32_t vk,
     uint32_t a,
-    uint32_t dest)
+    uint32_t rob_id)
 {
     for (uint32_t i = 0; i < mb->num_buffers; i++)
     {
@@ -123,29 +185,23 @@ void memory_buffers_enqueue(
             mb->buffers_next[i].vj = vj;
             mb->buffers_next[i].vk = vk;
             mb->buffers_next[i].a = a;
+            mb->buffers_next[i].rob_id = rob_id;
             /*
                 The +1 in the next line ensures that the queue position is never 0.
                 This is because 0 is used to indicate that the buffer is not in the queue.
             */
             mb->buffers_next[i].queue_pos = mb->num_buffers_in_queue_current + 1;
-            reg_file_set_reg_qi(mb->reg_file, dest, mb->buffers_next[i].id);
             mb->num_buffers_in_queue_next++;
             break;
         }
     }
 }
 
-struct memory_buffer memory_buffers_remove(struct memory_buffers *mb)
+// TODO: Change the name of this function
+struct memory_buffer *memory_buffers_remove(struct memory_buffers *mb)
 {
-    for (uint32_t i = 0; i < mb->num_buffers; i++)
-    {
-        if (mb->buffers_current[i].busy && mb->buffers_current[i].qk == 0 && mb->buffers_current[i].queue_pos == 0)
-        {
-            return mb->buffers_current[i];
-        }
-    }
-    fprintf(stderr, "Error: Cannot find a ready memory buffer despite checking if there is one\n");
-    exit(EXIT_FAILURE);
+    // TODO: This is a pointer to the next queue, which is why I don't like it
+    return mb->ready_memory;
 }
 
 void memory_buffers_set_buffer_not_busy(struct memory_buffers *mb, uint32_t id)
@@ -160,17 +216,23 @@ void memory_buffers_set_buffer_not_busy(struct memory_buffers *mb, uint32_t id)
     }
 }
 
+// TODO: Change the name of this function
 struct memory_buffer memory_buffers_dequeue(struct memory_buffers *mb)
 {
+    uint32_t pos = mb->ready_address->queue_pos;
+
+    mb->num_buffers_in_queue_next--;
+
     for (uint32_t i = 0; i < mb->num_buffers; i++)
     {
-        if (mb->buffers_current[i].busy && mb->buffers_current[i].qj == 0 && mb->buffers_current[i].queue_pos == 1)
+        if (mb->buffers_next[i].busy && mb->buffers_next[i].queue_pos > pos)
         {
-            return mb->buffers_current[i];
+            mb->buffers_next[i].queue_pos--;
         }
     }
-    fprintf(stderr, "Error: Cannot find a ready memory buffer despite checking if there is one\n");
-    exit(EXIT_FAILURE);
+
+    // TODO: This is a pointer to the next queue, which is why I don't like it
+    return *mb->ready_address;
 }
 
 void memory_buffers_add_address(struct memory_buffers *mb, uint32_t id, uint32_t address)
@@ -184,37 +246,8 @@ void memory_buffers_add_address(struct memory_buffers *mb, uint32_t id, uint32_t
             break;
         }
     }
-    enum op op = mb->buffers_next[id_index].op;
-    bool is_load = op == LW || op == LH || op == LHU || op == LB || op == LBU;
-    bool is_store = op == SW || op == SH || op == SB;
-    /*
-        We define an "address conflict" as follows. For a load instruction, we cannot add the effective address
-        to the memory buffer if there is a corresponding store in the memory buffer with the same effective address.
-        For a store instruction, we cannot add the effective address to the memory buffer if there is a corresponding
-        load OR store in the memory buffer with the same effective address.
-    */
-    bool address_conflict = false;
-    for (uint32_t i = 0; i < mb->num_buffers; i++)
-    {
-        if (mb->buffers_next[i].busy && mb->buffers_next[i].queue_pos == 0 && mb->buffers_next[i].a == address)
-        {
-            address_conflict = is_store;
-            address_conflict |= is_load && (mb->buffers_next[i].op == SW || mb->buffers_next[i].op == SH || mb->buffers_next[i].op == SB);
-        }
-    }
-    if (!address_conflict)
-    {
-        mb->buffers_next[id_index].a = address;
-        mb->buffers_next[id_index].queue_pos = 0;
-        mb->num_buffers_in_queue_next--;
-        for (uint32_t i = 0; i < mb->num_buffers; i++)
-        {
-            if (mb->buffers_next[i].busy && mb->buffers_next[i].queue_pos > 0)
-            {
-                mb->buffers_next[i].queue_pos--;
-            }
-        }
-    }
+    mb->buffers_next[id_index].a = address;
+    mb->buffers_next[id_index].queue_pos = 0;
 }
 
 void memory_buffers_update_current(struct memory_buffers *mb)

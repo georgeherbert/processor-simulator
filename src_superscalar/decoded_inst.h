@@ -9,7 +9,9 @@ enum op_type
     BRANCH, // Branch operation,
     JUMP,   // Jump operation
     LOAD,   // Load operation
-    STORE   // Store operation
+    STORE_WORD,
+    STORE_HALF,
+    STORE_BYTE,
 };
 
 enum op
