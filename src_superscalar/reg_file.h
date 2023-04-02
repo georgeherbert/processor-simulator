@@ -20,7 +20,7 @@ struct reg_file
     struct cdb *cdb; // Pointer to common data bus
 };
 
-struct reg_file *reg_file_init(struct cdb *cdb);                                              // Initialise register file
+struct reg_file *reg_file_init(struct cdb *cdb);                                                       // Initialise register file
 bool reg_file_get_reg_busy(struct reg_file *reg_file, uint32_t reg_addr);                              // Get busy bit of register
 uint32_t reg_file_get_rob_id(struct reg_file *reg_file, uint32_t reg_addr);                            // Get ROB ID of register
 uint32_t reg_file_get_reg_val(struct reg_file *reg_file, uint32_t reg_addr);                           // Get val of register

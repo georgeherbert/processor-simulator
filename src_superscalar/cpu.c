@@ -175,6 +175,8 @@ void cpu_destroy(struct cpu *cpu)
 
 void update_current(struct cpu *cpu)
 {
+    cdb_clear(cpu->cdb);
+
     reg_update_current(&cpu->pc_src);
     reg_update_current(&cpu->branch_in_pipeline);
     reg_update_current(&cpu->reg_pc_target);
@@ -208,7 +210,6 @@ bool step(struct cpu *cpu)
     memory_buffers_step(cpu->memory_buffers);
     bool inst_committed = commit_step(cpu->commit_unit);
     rob_step(cpu->rob);
-    cdb_clear(cpu->cdb);
 
     return inst_committed;
 }

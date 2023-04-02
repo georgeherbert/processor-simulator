@@ -38,7 +38,7 @@ struct fetch_unit *fetch_init(
 
 void fetch_step(struct fetch_unit *fetch_unit)
 {
-    if(!inst_queue_full(fetch_unit->inst_queue))
+    if (!inst_queue_full(fetch_unit->inst_queue))
     {
         if (reg_read(fetch_unit->branch_in_pipeline) == BRANCH_NOT_IN_PIPELINE)
         {

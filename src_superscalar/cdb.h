@@ -13,14 +13,14 @@ struct cdb_entry
 struct cdb
 {
     struct cdb_entry *entries; // Array of entries
-    uint32_t num_entries;               // Number of entries (should be equal to the number of functional units)
+    uint32_t num_entries;      // Number of entries (should be equal to the number of functional units)
 };
 
-struct cdb *cdb_init(uint32_t num_entries);                         // Initialise common data bus
+struct cdb *cdb_init(uint32_t num_entries);                     // Initialise common data bus
 void cdb_write(struct cdb *cdb, uint32_t rob_id, uint32_t val); // Put val going to ROB ID on common data bus
-bool cdb_is_val_ready(struct cdb *cdb, uint32_t rob_id);            // Check if val going to ROB ID is on common data bus
-uint32_t cdb_get_val(struct cdb *cdb, uint32_t rob_id);             // Get val going to ROB ID from common data bus
-void cdb_clear(struct cdb *cdb);                                     // Step common data bus
-void cdb_destroy(struct cdb *cdb);                                  // Free common data bus
+bool cdb_is_val_ready(struct cdb *cdb, uint32_t rob_id);        // Check if val going to ROB ID is on common data bus
+uint32_t cdb_get_val(struct cdb *cdb, uint32_t rob_id);         // Get val going to ROB ID from common data bus
+void cdb_clear(struct cdb *cdb);                                // Step common data bus
+void cdb_destroy(struct cdb *cdb);                              // Free common data bus
 
 #endif // COM_DATA_BUS_H

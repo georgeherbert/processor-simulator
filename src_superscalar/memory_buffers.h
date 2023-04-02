@@ -51,8 +51,8 @@ void memory_buffers_enqueue(
     uint32_t vj,
     uint32_t vk,
     uint32_t a,
-    uint32_t rob_id);                                                                      // Add instruction to memory buffers
-bool memory_buffers_all_busy(struct memory_buffers *mb);                                   // Check if all memory buffers are busy
+    uint32_t rob_id);                                    // Add instruction to memory buffers
+bool memory_buffers_all_busy(struct memory_buffers *mb); // Check if all memory buffers are busy
 struct memory_buffer *memory_buffers_dequeue_memory(struct memory_buffers *mb);
 struct memory_buffer *memory_buffers_dequeue_address(struct memory_buffers *mb);
 void memory_buffers_add_address(struct memory_buffers *mb, uint32_t id, uint32_t address); // Add address to memory buffer
