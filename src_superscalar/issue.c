@@ -18,8 +18,7 @@ struct issue_unit *issue_init(
     struct res_stations *alu_res_stations,
     struct res_stations *branch_res_stations,
     struct memory_buffers *memory_buffers,
-    struct rob *rob,
-    struct reg *rob_full)
+    struct rob *rob)
 {
     struct issue_unit *issue_unit = malloc(sizeof(struct issue_unit));
 
@@ -35,7 +34,6 @@ struct issue_unit *issue_init(
     issue_unit->branch_res_stations = branch_res_stations;
     issue_unit->memory_buffers = memory_buffers;
     issue_unit->rob = rob;
-    issue_unit->rob_full = rob_full;
 
     return issue_unit;
 }
@@ -240,7 +238,7 @@ void handle_mem_operation(
 
 void issue_step(struct issue_unit *issue_unit)
 {
-    if (!inst_queue_empty(issue_unit->inst_queue) && !reg_read(issue_unit->rob_full))
+    if (!inst_queue_empty(issue_unit->inst_queue) && !rob_full(issue_unit->rob))
     {
         enum op_type op_type = inst_queue_peek_op_type(issue_unit->inst_queue);
         switch (op_type)

@@ -17,7 +17,6 @@ struct issue_unit
     struct res_stations *branch_res_stations; // Pointer to branch reservation station
     struct memory_buffers *memory_buffers;    // Pointer to memory reservation station
     struct rob *rob;                          // Pointer to reorder buffer
-    struct reg *rob_full;                     // Pointer to register indicating whether the reorder buffer is full
 };
 
 struct issue_unit *issue_init(
@@ -26,8 +25,7 @@ struct issue_unit *issue_init(
     struct res_stations *alu_res_stations,
     struct res_stations *branch_res_stations,
     struct memory_buffers *memory_buffers,
-    struct rob *rob,
-    struct reg *rob_full);                         // Initialise issue unit
+    struct rob *rob);                              // Initialise issue unit
 void issue_step(struct issue_unit *issue_unit);    // Step issue unit
 void issue_destroy(struct issue_unit *issue_unit); // Free issue unit
 

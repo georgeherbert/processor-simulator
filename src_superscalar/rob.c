@@ -7,7 +7,7 @@
 #include "decoded_inst.h"
 #include "cdb.h"
 
-struct rob *rob_init(struct reg *rob_full, struct cdb *cdb, struct reg *rob_ready)
+struct rob *rob_init(struct cdb *cdb)
 {
     struct rob *rob = malloc(sizeof(struct rob));
     if (rob == NULL)
@@ -28,10 +28,10 @@ struct rob *rob_init(struct reg *rob_full, struct cdb *cdb, struct reg *rob_read
 
     rob->front_current = -1;
     rob->front_next = -1;
+    rob->rear_current = -1;
     rob->rear_next = -1;
-    rob->rob_full = rob_full;
+
     rob->cdb = cdb;
-    rob->rob_ready = rob_ready;
 
     return rob;
 }
@@ -63,9 +63,16 @@ void rob_step(struct rob *rob)
             }
         }
     }
+}
 
-    reg_write(rob->rob_full, (rob->rear_next + 1) % REORDER_BUFFER_SIZE == rob->front_next);
-    reg_write(rob->rob_ready, rob->front_next != -1 && rob->queue_next[rob->front_next].ready);
+bool rob_full(struct rob *rob)
+{
+    return (rob->rear_current + 1) % REORDER_BUFFER_SIZE == rob->front_current;
+}
+
+bool rob_ready(struct rob *rob)
+{
+    return rob->front_current != -1 && rob->queue_current[rob->front_current].ready;
 }
 
 uint32_t rob_enqueue(struct rob *rob, enum op_type op_type, uint32_t dest, uint32_t value, uint32_t q)
@@ -145,6 +152,7 @@ void rob_update_current(struct rob *rob)
 {
     memcpy(rob->queue_current, rob->queue_next, sizeof(struct rob_entry) * REORDER_BUFFER_SIZE);
     rob->front_current = rob->front_next;
+    rob->rear_current = rob->rear_next;
 }
 
 void rob_destroy(struct rob *rob)

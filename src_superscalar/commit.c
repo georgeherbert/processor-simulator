@@ -5,7 +5,7 @@
 #include "decoded_inst.h"
 #include "reg_file.h"
 
-struct commit_unit *commit_init(struct rob *rob, struct reg *rob_ready, struct main_memory *mm, struct reg_file *reg_file)
+struct commit_unit *commit_init(struct rob *rob, struct main_memory *mm, struct reg_file *reg_file)
 {
     struct commit_unit *commit_unit = malloc(sizeof(struct commit_unit));
     if (commit_unit == NULL)
@@ -15,7 +15,6 @@ struct commit_unit *commit_init(struct rob *rob, struct reg *rob_ready, struct m
     }
 
     commit_unit->rob = rob;
-    commit_unit->rob_ready = rob_ready;
     commit_unit->mm = mm;
     commit_unit->reg_file = reg_file;
 
@@ -24,7 +23,7 @@ struct commit_unit *commit_init(struct rob *rob, struct reg *rob_ready, struct m
 
 bool commit_step(struct commit_unit *commit_unit)
 {
-    if (reg_read(commit_unit->rob_ready))
+    if (rob_ready(commit_unit->rob))
     {
         struct rob_entry entry = rob_dequeue(commit_unit->rob);
         switch (entry.op_type)

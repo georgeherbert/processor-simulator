@@ -44,8 +44,6 @@ struct cpu
     struct reg reg_pc_target;      // PC target from branch unit
     struct reg reg_inst;           // Instruction register
     struct reg reg_inst_pc;        // Program counter of instruction in instruction register
-    struct reg rob_full;           // Indicates whether the reorder buffer is full
-    struct reg rob_ready;          // Indicates whether the reorder buffer has a ready entry for commit
 
     bool jump_to_zero; // Indicates whether we have had a jump to zero (i.e. final instruction)
 };

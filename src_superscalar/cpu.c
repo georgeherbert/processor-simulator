@@ -42,15 +42,12 @@ struct cpu *cpu_init(char *file_name)
     cpu->pc_src.val_current = PC_SRC_PLUS_4;
     cpu->branch_in_pipeline.val_current = BRANCH_NOT_IN_PIPELINE;
     cpu->reg_inst.val_current = 0x0;
-    cpu->rob_full.val_current = false;
-    cpu->rob_ready.val_current = false;
 
-    cpu->mm = main_memory_init(file_name);
+    cpu->mm = main_memory_init(
+        file_name);
     cpu->inst_queue = inst_queue_init();
     cpu->rob = rob_init(
-        &cpu->rob_full,
-        cpu->cdb,
-        &cpu->rob_ready);
+        cpu->cdb);
     cpu->fetch_unit = fetch_init(
         cpu->mm,
         &cpu->pc_src,
@@ -85,8 +82,7 @@ struct cpu *cpu_init(char *file_name)
         cpu->alu_res_stations,
         cpu->branch_res_stations,
         cpu->memory_buffers,
-        cpu->rob,
-        &cpu->rob_full);
+        cpu->rob);
     cpu->address_unit = address_init(
         cpu->memory_buffers,
         cpu->rob);
@@ -108,7 +104,6 @@ struct cpu *cpu_init(char *file_name)
         cpu->cdb);
     cpu->commit_unit = commit_init(
         cpu->rob,
-        &cpu->rob_ready,
         cpu->mm,
         cpu->reg_file);
 
@@ -185,10 +180,6 @@ void update_current(struct cpu *cpu)
     reg_update_current(&cpu->reg_pc_target);
     reg_update_current(&cpu->reg_inst);
     reg_update_current(&cpu->reg_inst_pc);
-
-    // TODO: Remove all the below registers and incorporate their functionality into functions
-    reg_update_current(&cpu->rob_full);
-    reg_update_current(&cpu->rob_ready);
 
     inst_queue_update_current(cpu->inst_queue);
     rob_update_current(cpu->rob);
