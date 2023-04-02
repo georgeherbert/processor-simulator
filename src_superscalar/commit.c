@@ -22,6 +22,7 @@ struct commit_unit *commit_init(
     struct reg *inst_reg,
     struct reg *pc_src,
     struct reg *reg_pc_target,
+    struct btb *btb,
     bool *jump_zero)
 {
     struct commit_unit *commit_unit = malloc(sizeof(struct commit_unit));
@@ -42,6 +43,7 @@ struct commit_unit *commit_init(
     commit_unit->inst_reg = inst_reg;
     commit_unit->pc_src = pc_src;
     commit_unit->reg_pc_target = reg_pc_target;
+    commit_unit->btb = btb;
     commit_unit->jump_zero = jump_zero;
 
     return commit_unit;
@@ -77,42 +79,54 @@ bool commit_step(struct commit_unit *commit_unit)
         switch (entry.op_type)
         {
         case JUMP:
-            // printf("\tCommit: Jump\n");
+            printf("\tCommit: Jump (%d)\n", entry.inst_pc);
             reg_file_reg_commit(commit_unit->reg_file, entry.dest, entry.value, entry.rob_id);
             if (entry.npc_actual != entry.npc_pred)
             {
+                // printf("J: %d %d\n", entry.npc_actual, entry.npc_pred);
+                btb_set(commit_unit->btb, entry.inst_pc, entry.npc_actual);
                 commit_clear(commit_unit);
                 reg_write(commit_unit->reg_pc_target, entry.npc_actual);
                 reg_write(commit_unit->pc_src, PC_SRC_MISPREDICT);
+            }
+            else
+            {
+                // printf("Correct prediction\n");
             }
             *commit_unit->jump_zero = (entry.npc_actual == 0x0); // End of program
             break;
         case BRANCH:
-            // printf("\tCommit: Branch\n");
+            printf("\tCommit: Branch (%d) %d %d\n", entry.inst_pc, entry.npc_actual, entry.npc_pred);
             if (entry.npc_actual != entry.npc_pred)
             {
+                // printf("B: %d %d\n", entry.npc_actual, entry.npc_pred);
+                btb_set(commit_unit->btb, entry.inst_pc, entry.npc_actual);
                 commit_clear(commit_unit);
                 reg_write(commit_unit->reg_pc_target, entry.npc_actual);
                 reg_write(commit_unit->pc_src, PC_SRC_MISPREDICT);
             }
+            else
+            {
+                // printf("Correct prediction\n");
+            }
             break;
         case LOAD:
         case AL:
-            // printf("\tCommit: AL/Load %d %d\n", entry.dest, entry.value);
+            printf("\tCommit: AL/Load %d %d\n", entry.dest, entry.value);
             reg_file_reg_commit(commit_unit->reg_file, entry.dest, entry.value, entry.rob_id);
             break;
         case STORE_WORD:
-            // printf("\tCommit: SW %d %d\n", entry.dest, entry.value);
+            printf("\tCommit: SW %d %d\n", entry.dest, entry.value);
             // printf("\t%d %d\n", entry.dest, entry.value);
             main_memory_store_word(commit_unit->mm, entry.dest, entry.value);
             break;
         case STORE_HALF:
-            // printf("\tCommit: SH %d %d\n", entry.dest, entry.value);
+            printf("\tCommit: SH %d %d\n", entry.dest, entry.value);
             // printf("\t%d %d\n", entry.dest, entry.value);
             main_memory_store_half(commit_unit->mm, entry.dest, entry.value);
             break;
         case STORE_BYTE:
-            // printf("\tCommit: SB %d %d\n", entry.dest, entry.value);
+            printf("\tCommit: SB %d %d\n", entry.dest, entry.value);
             // printf("\t%d %d\n", entry.dest, entry.value);
             main_memory_store_byte(commit_unit->mm, entry.dest, entry.value);
             break;

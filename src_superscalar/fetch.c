@@ -13,7 +13,9 @@ struct fetch_unit *fetch_init(
     struct inst_queue *inst_queue,
     struct reg *reg_pc_target,
     struct reg *reg_inst,
-    struct reg *reg_inst_pc)
+    struct reg *reg_inst_pc,
+    struct reg *reg_npc_pred,
+    struct btb *btb)
 {
     struct fetch_unit *fetch_unit = malloc(sizeof(struct fetch_unit));
     if (fetch_unit == NULL)
@@ -28,6 +30,8 @@ struct fetch_unit *fetch_init(
     fetch_unit->reg_pc_target = reg_pc_target;
     fetch_unit->reg_inst = reg_inst;
     fetch_unit->reg_inst_pc = reg_inst_pc;
+    fetch_unit->reg_npc_pred = reg_npc_pred;
+    fetch_unit->btb = btb;
     fetch_unit->reg_pc = 0;
     fetch_unit->reg_npc = 0;
 
@@ -54,15 +58,17 @@ void fetch_step(struct fetch_unit *fetch_unit)
         }
         uint32_t inst = main_memory_load_word(fetch_unit->mm, fetch_unit->reg_pc);
 
+        uint32_t npc = fetch_unit->reg_pc + 4;
         // TODO: Remove this. Eventually use speculative execution.
         if ((inst & 0x7F) == 0x6f || (inst & 0x7F) == 0x67 || (inst & 0x7F) == 0x63)
         {
-            // reg_write(fetch_unit->branch_in_pipeline, BRANCH_IN_PIPELINE);
+            npc = btb_lookup(fetch_unit->btb, fetch_unit->reg_pc);
+            reg_write(fetch_unit->reg_npc_pred, npc);
         }
 
         reg_write(fetch_unit->reg_inst, inst);
         reg_write(fetch_unit->reg_inst_pc, fetch_unit->reg_pc);
-        fetch_unit->reg_npc = fetch_unit->reg_pc + 4;
+        fetch_unit->reg_npc = npc;
     }
 }
 

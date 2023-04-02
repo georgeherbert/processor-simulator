@@ -1,5 +1,5 @@
-#ifndef COM_DATA_BUS_H
-#define COM_DATA_BUS_H
+#ifndef CDB_H
+#define CDB_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -23,4 +23,4 @@ uint32_t cdb_get_val(struct cdb *cdb, uint32_t rob_id);         // Get val going
 void cdb_clear(struct cdb *cdb);                                // Step common data bus
 void cdb_destroy(struct cdb *cdb);                              // Free common data bus
 
-#endif // COM_DATA_BUS_H
+#endif // CDB_H

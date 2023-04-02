@@ -20,6 +20,7 @@
 #include "address.h"
 #include "rob.h"
 #include "commit.h"
+#include "btb.h"
 
 #define NUM_WORDS_OUTPUT 2048
 
@@ -48,17 +49,21 @@ struct cpu *cpu_init(char *file_name)
     cpu->inst_queue = inst_queue_init();
     cpu->rob = rob_init(
         cpu->cdb);
+    cpu->btb = btb_init();
     cpu->fetch_unit = fetch_init(
         cpu->mm,
         &cpu->pc_src,
         cpu->inst_queue,
         &cpu->reg_pc_target,
         &cpu->reg_inst,
-        &cpu->reg_inst_pc);
+        &cpu->reg_inst_pc,
+        &cpu->reg_npc_pred,
+        cpu->btb);
     cpu->decode_unit = decode_init(
         &cpu->reg_inst,
         &cpu->reg_inst_pc,
-        cpu->inst_queue);
+        cpu->inst_queue,
+        &cpu->reg_npc_pred);
     cpu->alu_res_stations = res_stations_init(
         NUM_ALU_RES_STATIONS,
         1, // 1 is used because 0 indicates operands are ready
@@ -111,6 +116,7 @@ struct cpu *cpu_init(char *file_name)
         &cpu->reg_inst,
         &cpu->pc_src,
         &cpu->reg_pc_target,
+        cpu->btb,
         &cpu->jump_zero);
 
     printf("CPU successfully initialised\n");
@@ -187,6 +193,7 @@ void update_current(struct cpu *cpu)
     reg_update_current(&cpu->reg_pc_target);
     reg_update_current(&cpu->reg_inst);
     reg_update_current(&cpu->reg_inst_pc);
+    reg_update_current(&cpu->reg_npc_pred);
 
     inst_queue_update_current(cpu->inst_queue);
     rob_update_current(cpu->rob);
@@ -214,24 +221,6 @@ bool step(struct cpu *cpu)
     return inst_committed;
 }
 
-// bool ready_to_exit(struct cpu *cpu)
-// {
-//     // Is the last instruction a jump to zero?
-//     bool jump_to_zero = cpu->pc_src.val_current == PC_SRC_MISPREDICT && cpu->reg_pc_target.val_current == 0;
-//     cpu->jump_to_zero = cpu->jump_to_zero || jump_to_zero;
-
-//     bool all_regs_written = true;
-//     for (int i = 0; i < NUM_REGS; i++)
-//     {
-//         all_regs_written &= cpu->reg_file->regs[i].busy == false;
-//     }
-
-//     // If we have had a jump to zero and all registers have been written, the program we exit
-//     bool ready_to_exit = cpu->jump_to_zero && all_regs_written;
-
-//     return ready_to_exit;
-// }
-
 int main(int argc, char *argv[])
 {
     if (argc != 2)
@@ -249,8 +238,7 @@ int main(int argc, char *argv[])
     while (!cpu->jump_zero)
     {
         // printf("\nCycle: %" PRIu64 "\n", cycles);
-        
-        
+
         instructions += step(cpu);
         update_current(cpu);
 

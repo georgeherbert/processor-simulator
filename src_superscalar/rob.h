@@ -1,5 +1,5 @@
-#ifndef REORDER_BUFFER_H
-#define REORDER_BUFFER_H
+#ifndef ROB_H
+#define ROB_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -20,6 +20,7 @@ struct rob_entry
     uint32_t q;           // ROB ID of instruction that value is dependent on (stores only)
     uint32_t npc_pred;    // Predicted next program counter (branch/jumps only)
     uint32_t npc_actual;  // Actual next program counter (branch/jumps only)
+    uint32_t inst_pc;     // Program counter of instruction
 };
 
 struct rob
@@ -44,7 +45,8 @@ uint32_t rob_enqueue(
     uint32_t dest,
     uint32_t value,
     uint32_t q,
-    uint32_t npc_pred);                                                         // Enqueue instruction into reorder buffer
+    uint32_t npc_pred,
+    uint32_t inst_pc);                                                          // Enqueue instruction into reorder buffer
 struct rob_entry rob_dequeue(struct rob *rob);                                  // Dequeue instruction from reorder buffer
 void rob_add_address(struct rob *rob, uint32_t rob_id, uint32_t addr);          // Add address to reorder buffer entry
 void rob_add_npc_actual(struct rob *rob, uint32_t rob_id, uint32_t npc_actual); // Add actual next program counter to reorder buffer entry
@@ -55,4 +57,4 @@ void rob_clear(struct rob *rob);                                                
 void rob_update_current(struct rob *rob);                                       // Set current reorder buffer to next reorder buffer
 void rob_destroy(struct rob *rob);                                              // Destroy reorder buffer
 
-#endif // REORDER_BUFFER_H
+#endif // ROB_H

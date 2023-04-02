@@ -13,7 +13,8 @@
 struct decode_unit *decode_init(
     struct reg *reg_inst,
     struct reg *reg_inst_pc,
-    struct inst_queue *inst_queue)
+    struct inst_queue *inst_queue,
+    struct reg *reg_npc_pred)
 {
     struct decode_unit *decode_unit = malloc(sizeof(struct decode_unit));
     if (decode_unit == NULL)
@@ -25,6 +26,7 @@ struct decode_unit *decode_init(
     decode_unit->reg_inst = reg_inst;
     decode_unit->reg_inst_pc = reg_inst_pc;
     decode_unit->inst_queue = inst_queue;
+    decode_unit->reg_npc_pred = reg_npc_pred;
 
     return decode_unit;
 }
@@ -161,7 +163,8 @@ void create_decoded_inst(
     uint8_t rs1_addr,
     uint8_t rs2_addr,
     uint32_t imm,
-    uint32_t inst_pc)
+    uint32_t inst_pc,
+    uint32_t npc_pred)
 {
     struct decoded_inst decoded_inst = {
         .op_type = op_type,
@@ -171,6 +174,7 @@ void create_decoded_inst(
         .rs2_addr = rs2_addr,
         .imm = imm,
         .inst_pc = inst_pc,
+        .npc_pred = npc_pred
     };
 
     inst_queue_enqueue(inst_queue, decoded_inst);
@@ -243,9 +247,10 @@ void handle_op_imm(struct inst_queue *inst_queue, uint32_t inst)
         op,
         rd_addr,
         rs1_addr,
-        NA, // Integer register-immediate instructions don't use rs2
+        NA,
         imm,
-        NA); // Only used in branch and AUIPC
+        NA,
+        NA);
 }
 
 void handle_lui(struct inst_queue *inst_queue, uint32_t inst)
@@ -258,9 +263,10 @@ void handle_lui(struct inst_queue *inst_queue, uint32_t inst)
         AL,
         LUI,
         rd_addr,
-        NA, // LUI doesn't use rs1
-        NA, // LUI doesn't use rs2
+        NA, 
+        NA,
         imm,
+        NA,
         NA);
 
     // printf("lui x%d, %d\n", rd_addr, imm);
@@ -276,10 +282,11 @@ void handle_auipc(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc
         AL,
         AUIPC,
         rd_addr,
-        NA, // AUIPC doesn't use rs1
-        NA, // AUIPC doesn't use rs2
+        NA,
+        NA,
         imm,
-        inst_pc);
+        inst_pc,
+        NA);
 
     // printf("auipc x%d, %d", rd_addr, imm);
 }
@@ -362,11 +369,12 @@ void handle_op(struct inst_queue *inst_queue, uint32_t inst)
         rd_addr,
         rs1_addr,
         rs2_addr,
-        NA,  // Integer register-register instructions don't use immediate
-        NA); // Only used in branch and AUIPC
+        NA,  
+        NA,
+        NA);
 }
 
-void handle_jal(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
+void handle_jal(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc, uint32_t npc_pred)
 {
     uint8_t rd_addr = get_rd_addr(inst);
     uint32_t imm = get_imm_j(inst);
@@ -376,15 +384,16 @@ void handle_jal(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
         JUMP,
         JAL,
         rd_addr,
-        NA, // JAL doesn't use rs1
-        NA, // JAL doesn't use rs2
+        NA,
+        NA,
         imm,
-        inst_pc);
+        inst_pc,
+        npc_pred);
 
     // printf("jal x%d, %d\n", rd_addr, imm);
 }
 
-void handle_jalr(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
+void handle_jalr(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc, uint32_t npc_pred)
 {
     uint8_t rd_addr = get_rd_addr(inst);
     uint8_t rs1_addr = get_rs1_addr(inst);
@@ -396,14 +405,15 @@ void handle_jalr(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
         JALR,
         rd_addr,
         rs1_addr,
-        NA, // JALR doesn't use rs2
+        NA,
         imm,
-        inst_pc);
+        inst_pc,
+        npc_pred);
 
     // printf("jalr x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
 }
 
-void handle_branch(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
+void handle_branch(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc, uint32_t npc_pred)
 {
     uint8_t rs1_addr = get_rs1_addr(inst);
     uint8_t rs2_addr = get_rs2_addr(inst);
@@ -450,7 +460,8 @@ void handle_branch(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_p
         rs1_addr,
         rs2_addr,
         imm,
-        inst_pc);
+        inst_pc,
+        npc_pred);
 }
 
 void handle_load(struct inst_queue *inst_queue, uint32_t inst)
@@ -494,9 +505,10 @@ void handle_load(struct inst_queue *inst_queue, uint32_t inst)
         op,
         rd_addr,
         rs1_addr,
-        NA, // Load instructions don't use rs2
+        NA,
         imm,
-        NA); // Only used in branch and AUIPC
+        NA,
+        NA);
 }
 
 void handle_store(struct inst_queue *inst_queue, uint32_t inst)
@@ -535,11 +547,12 @@ void handle_store(struct inst_queue *inst_queue, uint32_t inst)
         inst_queue,
         op_type,
         op,
-        NA, // Store instructions don't use rd
+        NA,
         rs1_addr,
         rs2_addr,
         imm,
-        NA); // Only used in branch and AUIPC
+        NA,
+        NA);
 }
 
 void decode_step(struct decode_unit *decode_unit)
@@ -549,6 +562,7 @@ void decode_step(struct decode_unit *decode_unit)
         uint32_t inst_pc = reg_read(decode_unit->reg_inst_pc);
         uint32_t inst = reg_read(decode_unit->reg_inst);
         uint32_t opcode = get_opcode(inst);
+        uint32_t npc_pred = reg_read(decode_unit->reg_npc_pred);
 
         if (inst != 0x0) // Instruction 0x0 indicates fetch unit is stalled
         {
@@ -567,13 +581,13 @@ void decode_step(struct decode_unit *decode_unit)
                 handle_op(decode_unit->inst_queue, inst);
                 break;
             case OPCODE_JAL:
-                handle_jal(decode_unit->inst_queue, inst, inst_pc);
+                handle_jal(decode_unit->inst_queue, inst, inst_pc, npc_pred);
                 break;
             case OPCODE_JALR:
-                handle_jalr(decode_unit->inst_queue, inst, inst_pc);
+                handle_jalr(decode_unit->inst_queue, inst, inst_pc, npc_pred);
                 break;
             case OPCODE_BRANCH:
-                handle_branch(decode_unit->inst_queue, inst, inst_pc);
+                handle_branch(decode_unit->inst_queue, inst, inst_pc, npc_pred);
                 break;
             case OPCODE_LOAD:
                 handle_load(decode_unit->inst_queue, inst);

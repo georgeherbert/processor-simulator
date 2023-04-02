@@ -20,6 +20,7 @@ SRCS = \
 	memory_buffers.c \
 	address.c \
 	commit.c \
+	btb.c \
 
 # Object files
 OBJS = $(SRCS:.c=.o)

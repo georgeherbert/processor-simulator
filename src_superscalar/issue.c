@@ -67,7 +67,7 @@ void handle_al_operation(
     struct reg_file *reg_file,
     struct res_stations *alu_res_stations)
 {
-    uint32_t dest_rob_id = rob_enqueue(rob, inst.op_type, inst.rd_addr, NA, NA, NA);
+    uint32_t dest_rob_id = rob_enqueue(rob, inst.op_type, inst.rd_addr, NA, NA, NA, NA);
 
     uint32_t qj = NA;
     uint32_t qk = NA;
@@ -139,7 +139,7 @@ void handle_branch_operation(
         Branch instructions have no rd_addr.
         But rd_addr should be NA from the decode unit for branch instructions.
     */
-    uint32_t dest_rob_id = rob_enqueue(rob, inst.op_type, inst.rd_addr, NA, NA, inst.inst_pc + 4);
+    uint32_t dest_rob_id = rob_enqueue(rob, inst.op_type, inst.rd_addr, NA, NA, inst.npc_pred, inst.inst_pc);
 
     uint32_t qj = NA;
     uint32_t qk = NA;
@@ -209,7 +209,7 @@ void handle_mem_operation(
     case LB:
     case LBU:
         set_q_v(reg_file, rob, inst.rs1_addr, &qj, &vj);
-        dest_rob_id = rob_enqueue(rob, inst.op_type, inst.rd_addr, NA, NA, NA);
+        dest_rob_id = rob_enqueue(rob, inst.op_type, inst.rd_addr, NA, NA, NA, NA);
         reg_file_set_rob_id(reg_file, inst.rd_addr, dest_rob_id);
         break;
     case SW:
@@ -217,7 +217,7 @@ void handle_mem_operation(
     case SB:
         set_q_v(reg_file, rob, inst.rs1_addr, &qj, &vj);
         set_q_v(reg_file, rob, inst.rs2_addr, &qk, &vk);
-        dest_rob_id = rob_enqueue(rob, inst.op_type, NA, vk, qk, NA);
+        dest_rob_id = rob_enqueue(rob, inst.op_type, NA, vk, qk, NA, NA);
         break;
     default:
         fprintf(stderr, "Error: Unknown memory op");

@@ -19,6 +19,7 @@
 #include "memory_buffers.h"
 #include "address.h"
 #include "commit.h"
+#include "btb.h"
 
 struct cpu
 {
@@ -37,12 +38,14 @@ struct cpu
     struct cdb *cdb;                          // Pointer to common data bus
     struct rob *rob;                          // Pointer to reorder buffer
     struct commit_unit *commit_unit;          // Pointer to commit unit
+    struct btb *btb;                          // Pointer to branch target buffer
 
     struct reg_file *reg_file; // Pointer to register file
     struct reg pc_src;         // Control signal for PC source
     struct reg reg_pc_target;  // PC target from branch unit
     struct reg reg_inst;       // Instruction register
     struct reg reg_inst_pc;    // Program counter of instruction in instruction register
+    struct reg reg_npc_pred;   // Predicted next program counter (for speculative execution)
 
     bool jump_zero; // Indicates whether we have had a jump to zero (i.e. final instruction)
 };

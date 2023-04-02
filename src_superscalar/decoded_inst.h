@@ -64,6 +64,7 @@ struct decoded_inst
     uint8_t rs2_addr;
     uint32_t imm;
     uint32_t inst_pc;
+    uint32_t npc_pred;
 };
 
 #endif // DECODED_INST_H

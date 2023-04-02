@@ -23,7 +23,7 @@ struct alu_unit *alu_init(
     alu_unit->reg_file = reg_file;
     alu_unit->cdb = cdb;
 
-    alu_unit->num_cycles = 2;
+    alu_unit->num_cycles = 10;
     alu_unit->relative_cycle = 0;
 
     return alu_unit;

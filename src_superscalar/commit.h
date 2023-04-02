@@ -9,6 +9,7 @@
 #include "memory_buffers.h"
 #include "alu.h"
 #include "inst_queue.h"
+#include "btb.h"
 
 struct commit_unit
 {
@@ -23,6 +24,7 @@ struct commit_unit
     struct reg *inst_reg;
     struct reg *pc_src;        // Pointer to control signal for PC source
     struct reg *reg_pc_target; // Pointer to PC target register
+    struct btb *btb;           // Pointer to branch target buffer
     bool *jump_zero;
 };
 
@@ -38,6 +40,7 @@ struct commit_unit *commit_init(
     struct reg *inst_reg,
     struct reg *pc_src,
     struct reg *reg_pc_target,
+    struct btb *btb,
     bool *jump_zero);
 bool commit_step(struct commit_unit *commit_unit);
 void commit_destroy(struct commit_unit *commit_unit);

@@ -81,7 +81,8 @@ uint32_t rob_enqueue(
     uint32_t dest,
     uint32_t value,
     uint32_t q,
-    uint32_t npc_pred)
+    uint32_t npc_pred,
+    uint32_t inst_pc)
 {
     if (rob->front_next == -1)
     {
@@ -95,6 +96,7 @@ uint32_t rob_enqueue(
     rob->queue_next[rob->rear_next].value = value;
     rob->queue_next[rob->rear_next].q = q;
     rob->queue_next[rob->rear_next].npc_pred = npc_pred;
+    rob->queue_next[rob->rear_next].inst_pc = inst_pc;
 
     // We add 1 to the ID since 0 is reserved to indicate the value is ready
     return rob->rear_next + 1;
