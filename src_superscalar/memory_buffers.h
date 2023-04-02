@@ -30,15 +30,10 @@ struct memory_buffers
     uint32_t num_buffers_in_queue_current; // Number of memory buffers in the current queue
     uint32_t num_buffers_in_queue_next;    // Number of memory buffers in the next queue
     uint32_t num_buffers;                  // Number of memory buffers
-    struct memory_buffer *ready_address;   // Pointer to memory buffer that is ready for address unit
-    struct memory_buffer *ready_memory;    // Pointer to memory buffer that is ready for memory unit
 
-    struct reg_file *reg_file;                // Pointer to register file
-    struct cdb *cdb;                 // Pointer to common data bus
-    struct reg *memory_buffers_all_busy;      // Pointer to register that indicates if all memory buffers are busy
-    struct reg *memory_buffers_ready_address; // Pointer to register that indicates if any memory buffers are ready for address unit
-    struct reg *memory_buffers_ready_memory;  // Pointer to register that indicates if any memory buffers are ready for memory unit
-    struct rob *rob;               // Pointer to reorder buffer
+    struct reg_file *reg_file; // Pointer to register file
+    struct cdb *cdb;           // Pointer to common data bus
+    struct rob *rob;           // Pointer to reorder buffer
 };
 
 struct memory_buffers *memory_buffers_init(
@@ -46,10 +41,7 @@ struct memory_buffers *memory_buffers_init(
     uint32_t id_offset,
     struct reg_file *reg_file,
     struct cdb *cdb,
-    struct reg *memory_buffers_all_busy,
-    struct reg *memory_buffers_ready_address,
-    struct reg *memory_buffers_ready_memory,
-    struct rob *rob);                     // Initialise memory buffers
+    struct rob *rob);                                // Initialise memory buffers
 void memory_buffers_step(struct memory_buffers *rs); // Step memory buffers
 void memory_buffers_enqueue(
     struct memory_buffers *mb,
@@ -60,9 +52,9 @@ void memory_buffers_enqueue(
     uint32_t vk,
     uint32_t a,
     uint32_t rob_id);                                                                      // Add instruction to memory buffers
-struct memory_buffer *memory_buffers_remove(struct memory_buffers *rs);                    // Remove instruction from memory buffers
-void memory_buffers_set_buffer_not_busy(struct memory_buffers *rs, uint32_t id);           // Set a memory buffer to not busy
-struct memory_buffer memory_buffers_dequeue(struct memory_buffers *mb);                    // Dequeue memory buffer
+bool memory_buffers_all_busy(struct memory_buffers *mb);                                   // Check if all memory buffers are busy
+struct memory_buffer *memory_buffers_dequeue_memory(struct memory_buffers *mb);
+struct memory_buffer *memory_buffers_dequeue_address(struct memory_buffers *mb);
 void memory_buffers_add_address(struct memory_buffers *mb, uint32_t id, uint32_t address); // Add address to memory buffer
 void memory_buffers_update_current(struct memory_buffers *rs);                             // Update current memory buffers
 void memory_buffers_destroy(struct memory_buffers *rs);                                    // Free memory buffers

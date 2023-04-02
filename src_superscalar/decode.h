@@ -17,8 +17,7 @@ struct decode_unit
 struct decode_unit *decode_init(
     struct reg *reg_inst,
     struct reg *reg_inst_pc,
-    struct inst_queue *inst_queue,
-    struct reg *inst_queue_full);                     // Initialise decode unit
+    struct inst_queue *inst_queue);                   // Initialise decode unit
 void decode_step(struct decode_unit *decode_unit);    // Step decode unit
 void decode_destroy(struct decode_unit *decode_unit); // Free decode unit
 

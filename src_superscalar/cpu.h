@@ -34,27 +34,18 @@ struct cpu
     struct alu_unit *alu_unit;                // Pointer to ALU unit
     struct branch_unit *branch_unit;          // Pointer to branch unit
     struct memory_unit *memory_unit;          // Pointer to memory unit
-    struct cdb *cdb;                 // Pointer to common data bus
-    struct rob *rob;               // Pointer to reorder buffer
+    struct cdb *cdb;                          // Pointer to common data bus
+    struct rob *rob;                          // Pointer to reorder buffer
     struct commit_unit *commit_unit;          // Pointer to commit unit
 
-    struct reg_file *reg_file;               // Pointer to register file
-    struct reg pc_src;                       // Control signal for PC source
-    struct reg branch_in_pipeline;           // Control signal for presence of branch in pipeline
-    struct reg reg_pc_target;                // PC target from branch unit
-    struct reg reg_inst;                     // Instruction register
-    struct reg reg_inst_pc;                  // Program counter of instruction in instruction register
-    struct reg inst_queue_empty;             // Indicates whether the instruction queue is empty
-    struct reg inst_queue_full;              // Indicates whether the instruction queue is full
-    struct reg res_stations_all_busy_alu;    // Indicates whether all ALU reservation stations are busy
-    struct reg res_stations_all_busy_branch; // Indicates whether all branch reservation stations are busy
-    struct reg memory_buffers_all_busy;      // Indicates whether all memory reservation stations are busy
-    struct reg res_stations_ready_alu;       // Indicates whether there is a ready ALU reservation station
-    struct reg res_stations_ready_branch;    // Indicates whether there is a ready branch reservation station
-    struct reg memory_buffers_ready_address; // Indicates whether the first entry in the memory buffer is ready for the address unit
-    struct reg memory_buffers_ready_memory;  // Indicates whether an entry in the memory buffer is ready for the memory unit
-    struct reg rob_full;                     // Indicates whether the reorder buffer is full
-    struct reg rob_ready;                    // Indicates whether the reorder buffer has a ready entry for commit
+    struct reg_file *reg_file;     // Pointer to register file
+    struct reg pc_src;             // Control signal for PC source
+    struct reg branch_in_pipeline; // Control signal for presence of branch in pipeline
+    struct reg reg_pc_target;      // PC target from branch unit
+    struct reg reg_inst;           // Instruction register
+    struct reg reg_inst_pc;        // Program counter of instruction in instruction register
+    struct reg rob_full;           // Indicates whether the reorder buffer is full
+    struct reg rob_ready;          // Indicates whether the reorder buffer has a ready entry for commit
 
     bool jump_to_zero; // Indicates whether we have had a jump to zero (i.e. final instruction)
 };

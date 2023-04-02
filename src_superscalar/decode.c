@@ -13,8 +13,7 @@
 struct decode_unit *decode_init(
     struct reg *reg_inst,
     struct reg *reg_inst_pc,
-    struct inst_queue *inst_queue,
-    struct reg *inst_queue_full)
+    struct inst_queue *inst_queue)
 {
     struct decode_unit *decode_unit = malloc(sizeof(struct decode_unit));
     if (decode_unit == NULL)
@@ -26,7 +25,6 @@ struct decode_unit *decode_init(
     decode_unit->reg_inst = reg_inst;
     decode_unit->reg_inst_pc = reg_inst_pc;
     decode_unit->inst_queue = inst_queue;
-    decode_unit->inst_queue_full = inst_queue_full;
 
     return decode_unit;
 }
@@ -546,7 +544,7 @@ void handle_store(struct inst_queue *inst_queue, uint32_t inst)
 
 void decode_step(struct decode_unit *decode_unit)
 {
-    if (!reg_read(decode_unit->inst_queue_full))
+    if (!inst_queue_full(decode_unit->inst_queue))
     {
         uint32_t inst_pc = reg_read(decode_unit->reg_inst_pc);
         uint32_t inst = reg_read(decode_unit->reg_inst);

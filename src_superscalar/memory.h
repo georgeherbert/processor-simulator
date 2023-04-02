@@ -12,16 +12,14 @@ struct memory_unit
     struct memory_buffers *memory_buffers; // Pointer to memory buffers
     struct main_memory *mm;                // Pointer to main memory
     struct reg_file *reg_file;             // Pointer to register file
-    struct cdb *cdb;              // Pointer to common data bus
-    struct reg *memory_buffers_ready;      // Pointer to indicate if a memory buffer is ready
+    struct cdb *cdb;                       // Pointer to common data bus
 };
 
 struct memory_unit *memory_init(
     struct memory_buffers *memory_buffers,
     struct main_memory *mm,
     struct reg_file *reg_file,
-    struct cdb *cdb,
-    struct reg *memory_buffers_ready);                // Initialise memory unit
+    struct cdb *cdb);                                 // Initialise memory unit
 void memory_step(struct memory_unit *memory_unit);    // Step memory unit
 void memory_destroy(struct memory_unit *memory_unit); // Free memory unit
 

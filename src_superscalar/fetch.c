@@ -14,8 +14,7 @@ struct fetch_unit *fetch_init(
     struct inst_queue *inst_queue,
     struct reg *reg_pc_target,
     struct reg *reg_inst,
-    struct reg *reg_inst_pc,
-    struct reg *inst_queue_full)
+    struct reg *reg_inst_pc)
 {
     struct fetch_unit *fetch_unit = malloc(sizeof(struct fetch_unit));
     if (fetch_unit == NULL)
@@ -33,14 +32,13 @@ struct fetch_unit *fetch_init(
     fetch_unit->reg_inst_pc = reg_inst_pc;
     fetch_unit->reg_pc = 0;
     fetch_unit->reg_npc = 0;
-    fetch_unit->inst_queue_full = inst_queue_full;
 
     return fetch_unit;
 }
 
 void fetch_step(struct fetch_unit *fetch_unit)
 {
-    if (!reg_read(fetch_unit->inst_queue_full))
+    if(!inst_queue_full(fetch_unit->inst_queue))
     {
         if (reg_read(fetch_unit->branch_in_pipeline) == BRANCH_NOT_IN_PIPELINE)
         {

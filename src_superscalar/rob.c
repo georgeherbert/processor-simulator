@@ -114,14 +114,21 @@ uint32_t rob_get_entry_value(struct rob *rob, uint32_t id)
 
 bool rob_earlier_stores(struct rob *rob, uint32_t rob_id, uint32_t addr)
 {
-    int32_t current_index = rob_id - 1;
+    int32_t current_index = rob_id - 2;
     bool earlier_store = false;
-    do
+    while (!earlier_store)
     {
         enum op_type op_type = rob->queue_current[current_index].op_type;
-        earlier_store |= (op_type == STORE_WORD || op_type == STORE_HALF || op_type == STORE_BYTE) && (rob->queue_current[current_index].dest == addr) && rob->queue_current[current_index].busy;
+        bool is_store = op_type == STORE_WORD || op_type == STORE_HALF || op_type == STORE_BYTE;
+        bool same_dest = rob->queue_current[current_index].dest == addr;
+        bool busy = rob->queue_current[current_index].busy;
+        earlier_store |= is_store && same_dest && busy;
+        if (current_index == rob->front_current)
+        {
+            break;
+        }
         current_index = (current_index - 1 + REORDER_BUFFER_SIZE) % REORDER_BUFFER_SIZE;
-    } while (current_index != rob->front_current && !earlier_store);
+    }
     return earlier_store;
 }
 

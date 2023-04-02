@@ -10,8 +10,7 @@ struct memory_unit *memory_init(
     struct memory_buffers *memory_buffers,
     struct main_memory *mm,
     struct reg_file *reg_file,
-    struct cdb *cdb,
-    struct reg *memory_buffers_ready)
+    struct cdb *cdb)
 {
     struct memory_unit *memory_unit = malloc(sizeof(struct memory_unit));
 
@@ -25,40 +24,37 @@ struct memory_unit *memory_init(
     memory_unit->mm = mm;
     memory_unit->reg_file = reg_file;
     memory_unit->cdb = cdb;
-    memory_unit->memory_buffers_ready = memory_buffers_ready;
 
     return memory_unit;
 }
 
 void memory_step(struct memory_unit *memory_unit)
 {
-    if (reg_read(memory_unit->memory_buffers_ready))
-    {
-        struct memory_buffer entry = *memory_buffers_remove(memory_unit->memory_buffers);
+    struct memory_buffer *mb_entry = memory_buffers_dequeue_memory(memory_unit->memory_buffers);
 
-        switch (entry.op)
+    if (mb_entry)
+    {
+        switch (mb_entry->op)
         {
         case LW:
-            cdb_write(memory_unit->cdb, entry.rob_id, main_memory_load_word(memory_unit->mm, entry.a));
+            cdb_write(memory_unit->cdb, mb_entry->rob_id, main_memory_load_word(memory_unit->mm, mb_entry->a));
             break;
         case LH:
-            cdb_write(memory_unit->cdb, entry.rob_id, (int32_t)(int16_t)main_memory_load_half(memory_unit->mm, entry.a));
+            cdb_write(memory_unit->cdb, mb_entry->rob_id, (int32_t)(int16_t)main_memory_load_half(memory_unit->mm, mb_entry->a));
             break;
         case LHU:
-            cdb_write(memory_unit->cdb, entry.rob_id, main_memory_load_half(memory_unit->mm, entry.a));
+            cdb_write(memory_unit->cdb, mb_entry->rob_id, main_memory_load_half(memory_unit->mm, mb_entry->a));
             break;
         case LB:
-            cdb_write(memory_unit->cdb, entry.rob_id, (int32_t)(int8_t)main_memory_load_byte(memory_unit->mm, entry.a));
+            cdb_write(memory_unit->cdb, mb_entry->rob_id, (int32_t)(int8_t)main_memory_load_byte(memory_unit->mm, mb_entry->a));
             break;
         case LBU:
-            cdb_write(memory_unit->cdb, entry.rob_id, main_memory_load_byte(memory_unit->mm, entry.a));
+            cdb_write(memory_unit->cdb, mb_entry->rob_id, main_memory_load_byte(memory_unit->mm, mb_entry->a));
             break;
         default:
             fprintf(stderr, "Error: Unknown memory operation");
             exit(EXIT_FAILURE);
         }
-
-        memory_buffers_set_buffer_not_busy(memory_unit->memory_buffers, entry.id);
     }
 }
 

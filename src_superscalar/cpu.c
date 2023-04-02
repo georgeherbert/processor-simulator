@@ -42,22 +42,11 @@ struct cpu *cpu_init(char *file_name)
     cpu->pc_src.val_current = PC_SRC_PLUS_4;
     cpu->branch_in_pipeline.val_current = BRANCH_NOT_IN_PIPELINE;
     cpu->reg_inst.val_current = 0x0;
-    cpu->inst_queue_empty.val_current = true;
-    cpu->inst_queue_full.val_current = false;
-    cpu->res_stations_all_busy_alu.val_current = false;
-    cpu->res_stations_all_busy_branch.val_current = false;
-    cpu->memory_buffers_all_busy.val_current = false;
-    cpu->res_stations_ready_alu.val_current = false;
-    cpu->res_stations_ready_branch.val_current = false;
-    cpu->memory_buffers_ready_address.val_current = false;
-    cpu->memory_buffers_ready_memory.val_current = false;
     cpu->rob_full.val_current = false;
     cpu->rob_ready.val_current = false;
 
     cpu->mm = main_memory_init(file_name);
-    cpu->inst_queue = inst_queue_init(
-        &cpu->inst_queue_empty,
-        &cpu->inst_queue_full);
+    cpu->inst_queue = inst_queue_init();
     cpu->rob = rob_init(
         &cpu->rob_full,
         cpu->cdb,
@@ -69,35 +58,26 @@ struct cpu *cpu_init(char *file_name)
         cpu->inst_queue,
         &cpu->reg_pc_target,
         &cpu->reg_inst,
-        &cpu->reg_inst_pc,
-        &cpu->inst_queue_full);
+        &cpu->reg_inst_pc);
     cpu->decode_unit = decode_init(
         &cpu->reg_inst,
         &cpu->reg_inst_pc,
-        cpu->inst_queue,
-        &cpu->inst_queue_full);
+        cpu->inst_queue);
     cpu->alu_res_stations = res_stations_init(
         NUM_ALU_RES_STATIONS,
         1, // 1 is used because 0 indicates operands are ready
         cpu->reg_file,
-        cpu->cdb,
-        &cpu->res_stations_all_busy_alu,
-        &cpu->res_stations_ready_alu);
+        cpu->cdb);
     cpu->branch_res_stations = res_stations_init(
         NUM_BRANCH_RES_STATIONS,
         1 + NUM_ALU_RES_STATIONS,
         cpu->reg_file,
-        cpu->cdb,
-        &cpu->res_stations_all_busy_branch,
-        &cpu->res_stations_ready_branch);
+        cpu->cdb);
     cpu->memory_buffers = memory_buffers_init(
         NUM_MEMORY_BUFFERS,
         1 + NUM_ALU_RES_STATIONS + NUM_BRANCH_RES_STATIONS,
         cpu->reg_file,
         cpu->cdb,
-        &cpu->memory_buffers_all_busy,
-        &cpu->memory_buffers_ready_address,
-        &cpu->memory_buffers_ready_memory,
         cpu->rob);
     cpu->issue_unit = issue_init(
         cpu->inst_queue,
@@ -106,34 +86,26 @@ struct cpu *cpu_init(char *file_name)
         cpu->branch_res_stations,
         cpu->memory_buffers,
         cpu->rob,
-        &cpu->inst_queue_empty,
-        &cpu->res_stations_all_busy_alu,
-        &cpu->res_stations_all_busy_branch,
-        &cpu->memory_buffers_all_busy,
         &cpu->rob_full);
     cpu->address_unit = address_init(
         cpu->memory_buffers,
-        &cpu->memory_buffers_ready_address,
         cpu->rob);
     cpu->alu_unit = alu_init(
         cpu->alu_res_stations,
         cpu->reg_file,
-        cpu->cdb,
-        &cpu->res_stations_ready_alu);
+        cpu->cdb);
     cpu->branch_unit = branch_init(
         cpu->branch_res_stations,
         cpu->reg_file,
         &cpu->reg_pc_target,
         &cpu->pc_src,
         cpu->cdb,
-        &cpu->branch_in_pipeline,
-        &cpu->res_stations_ready_branch);
+        &cpu->branch_in_pipeline);
     cpu->memory_unit = memory_init(
         cpu->memory_buffers,
         cpu->mm,
         cpu->reg_file,
-        cpu->cdb,
-        &cpu->memory_buffers_ready_memory);
+        cpu->cdb);
     cpu->commit_unit = commit_init(
         cpu->rob,
         &cpu->rob_ready,
@@ -215,15 +187,6 @@ void update_current(struct cpu *cpu)
     reg_update_current(&cpu->reg_inst_pc);
 
     // TODO: Remove all the below registers and incorporate their functionality into functions
-    reg_update_current(&cpu->inst_queue_empty);
-    reg_update_current(&cpu->inst_queue_full);
-    reg_update_current(&cpu->res_stations_all_busy_alu);
-    reg_update_current(&cpu->res_stations_all_busy_branch);
-    reg_update_current(&cpu->memory_buffers_all_busy);
-    reg_update_current(&cpu->res_stations_ready_alu);
-    reg_update_current(&cpu->res_stations_ready_branch);
-    reg_update_current(&cpu->memory_buffers_ready_memory);
-    reg_update_current(&cpu->memory_buffers_ready_address);
     reg_update_current(&cpu->rob_full);
     reg_update_current(&cpu->rob_ready);
 
@@ -245,7 +208,6 @@ bool step(struct cpu *cpu)
         // printf("Decode\n");
     }
     issue_step(cpu->issue_unit);
-    inst_queue_step(cpu->inst_queue);
     alu_step(cpu->alu_unit);
     branch_step(cpu->branch_unit);
     memory_step(cpu->memory_unit);

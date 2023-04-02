@@ -19,10 +19,6 @@ struct issue_unit *issue_init(
     struct res_stations *branch_res_stations,
     struct memory_buffers *memory_buffers,
     struct rob *rob,
-    struct reg *inst_queue_empty,
-    struct reg *res_stations_all_busy_alu,
-    struct reg *res_stations_all_busy_branch,
-    struct reg *memory_buffers_all_busy,
     struct reg *rob_full)
 {
     struct issue_unit *issue_unit = malloc(sizeof(struct issue_unit));
@@ -39,10 +35,6 @@ struct issue_unit *issue_init(
     issue_unit->branch_res_stations = branch_res_stations;
     issue_unit->memory_buffers = memory_buffers;
     issue_unit->rob = rob;
-    issue_unit->inst_queue_empty = inst_queue_empty;
-    issue_unit->res_stations_all_busy_alu = res_stations_all_busy_alu;
-    issue_unit->res_stations_all_busy_branch = res_stations_all_busy_branch;
-    issue_unit->memory_buffers_all_busy = memory_buffers_all_busy;
     issue_unit->rob_full = rob_full;
 
     return issue_unit;
@@ -248,13 +240,13 @@ void handle_mem_operation(
 
 void issue_step(struct issue_unit *issue_unit)
 {
-    if (!reg_read(issue_unit->inst_queue_empty) && !reg_read(issue_unit->rob_full))
+    if (!inst_queue_empty(issue_unit->inst_queue) && !reg_read(issue_unit->rob_full))
     {
         enum op_type op_type = inst_queue_peek_op_type(issue_unit->inst_queue);
         switch (op_type)
         {
         case AL:
-            if (!reg_read(issue_unit->res_stations_all_busy_alu))
+            if (!res_stations_all_busy(issue_unit->alu_res_stations))
             {
                 // printf("\tIssue: AL\n");
                 struct decoded_inst inst = inst_queue_dequeue(issue_unit->inst_queue);
@@ -263,7 +255,7 @@ void issue_step(struct issue_unit *issue_unit)
             break;
         case JUMP:
         case BRANCH:
-            if (!reg_read(issue_unit->res_stations_all_busy_branch))
+            if (!res_stations_all_busy(issue_unit->branch_res_stations))
             {
                 // printf("\tIssue: JUMP/BRANCH\n");
                 struct decoded_inst inst = inst_queue_dequeue(issue_unit->inst_queue);
@@ -274,7 +266,7 @@ void issue_step(struct issue_unit *issue_unit)
         case STORE_WORD:
         case STORE_HALF:
         case STORE_BYTE:
-            if (!reg_read(issue_unit->memory_buffers_all_busy))
+            if (!memory_buffers_all_busy(issue_unit->memory_buffers))
             {
                 // printf("\tIssue: LOAD/STORE\n");
                 struct decoded_inst inst = inst_queue_dequeue(issue_unit->inst_queue);
