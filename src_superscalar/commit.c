@@ -79,7 +79,8 @@ bool commit_step(struct commit_unit *commit_unit)
         switch (entry.op_type)
         {
         case JUMP:
-            printf("\tCommit: Jump (%d)\n", entry.inst_pc);
+            // printf("\tCommit: Jump (%d)\n", entry.inst_pc);
+            printf("\tRF[%d] = %d\n", entry.dest, entry.value);
             reg_file_reg_commit(commit_unit->reg_file, entry.dest, entry.value, entry.rob_id);
             if (entry.npc_actual != entry.npc_pred)
             {
@@ -89,14 +90,10 @@ bool commit_step(struct commit_unit *commit_unit)
                 reg_write(commit_unit->reg_pc_target, entry.npc_actual);
                 reg_write(commit_unit->pc_src, PC_SRC_MISPREDICT);
             }
-            else
-            {
-                // printf("Correct prediction\n");
-            }
             *commit_unit->jump_zero = (entry.npc_actual == 0x0); // End of program
             break;
         case BRANCH:
-            printf("\tCommit: Branch (%d) %d %d\n", entry.inst_pc, entry.npc_actual, entry.npc_pred);
+            // printf("\tCommit: Branch (%d) %d %d\n", entry.inst_pc, entry.npc_actual, entry.npc_pred);
             if (entry.npc_actual != entry.npc_pred)
             {
                 // printf("B: %d %d\n", entry.npc_actual, entry.npc_pred);
@@ -105,29 +102,26 @@ bool commit_step(struct commit_unit *commit_unit)
                 reg_write(commit_unit->reg_pc_target, entry.npc_actual);
                 reg_write(commit_unit->pc_src, PC_SRC_MISPREDICT);
             }
-            else
-            {
-                // printf("Correct prediction\n");
-            }
             break;
         case LOAD:
         case AL:
-            printf("\tCommit: AL/Load %d %d\n", entry.dest, entry.value);
+            // printf("\tCommit: AL/Load %d %d %d\n", entry.dest, entry.value, entry.rob_id);
+            printf("\tRF[%d] = %d\n", entry.dest, entry.value);
             reg_file_reg_commit(commit_unit->reg_file, entry.dest, entry.value, entry.rob_id);
             break;
         case STORE_WORD:
-            printf("\tCommit: SW %d %d\n", entry.dest, entry.value);
-            // printf("\t%d %d\n", entry.dest, entry.value);
+            // printf("\tCommit: SW %d %d\n", entry.dest, entry.value);
+            printf("\tMM[%d] = %d\n", entry.dest, entry.value);
             main_memory_store_word(commit_unit->mm, entry.dest, entry.value);
             break;
         case STORE_HALF:
-            printf("\tCommit: SH %d %d\n", entry.dest, entry.value);
-            // printf("\t%d %d\n", entry.dest, entry.value);
+            // printf("\tCommit: SH %d %d\n", entry.dest, entry.value);
+            printf("\tMM[%d] = %d\n", entry.dest, entry.value);
             main_memory_store_half(commit_unit->mm, entry.dest, entry.value);
             break;
         case STORE_BYTE:
-            printf("\tCommit: SB %d %d\n", entry.dest, entry.value);
-            // printf("\t%d %d\n", entry.dest, entry.value);
+            // printf("\tCommit: SB %d %d\n", entry.dest, entry.value);
+            printf("\tMM[%d] = %d\n", entry.dest, entry.value);
             main_memory_store_byte(commit_unit->mm, entry.dest, entry.value);
             break;
         default:

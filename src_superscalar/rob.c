@@ -40,7 +40,7 @@ void rob_step(struct rob *rob)
 {
     for (uint32_t i = 0; i < REORDER_BUFFER_SIZE; i++)
     {
-        if (rob->queue_current[i].busy && !rob->queue_current[i].ready)
+        if (rob->queue_next[i].busy && !rob->queue_next[i].ready)
         {
             if (cdb_is_val_ready(rob->cdb, i + 1))
             {
@@ -48,12 +48,12 @@ void rob_step(struct rob *rob)
                 rob->queue_next[i].ready = true;
             }
 
-            enum op_type op_type = rob->queue_current[i].op_type;
-            if ((op_type == STORE_WORD || op_type == STORE_HALF || op_type == STORE_BYTE) && rob->queue_current[i].q != 0)
+            enum op_type op_type = rob->queue_next[i].op_type;
+            if ((op_type == STORE_WORD || op_type == STORE_HALF || op_type == STORE_BYTE) && rob->queue_next[i].q != 0)
             {
-                if (cdb_is_val_ready(rob->cdb, rob->queue_current[i].q))
+                if (cdb_is_val_ready(rob->cdb, rob->queue_next[i].q))
                 {
-                    rob->queue_next[i].value = cdb_get_val(rob->cdb, rob->queue_current[i].q);
+                    rob->queue_next[i].value = cdb_get_val(rob->cdb, rob->queue_next[i].q);
                     rob->queue_next[i].q = 0;
                     if (rob->queue_next[i].dest != 0) // TODO: Can we never store to zero then?
                     {
@@ -67,6 +67,7 @@ void rob_step(struct rob *rob)
 
 bool rob_full(struct rob *rob)
 {
+    // printf("Full? %d\n", (rob->rear_current + 1) % REORDER_BUFFER_SIZE == rob->front_current);
     return (rob->rear_current + 1) % REORDER_BUFFER_SIZE == rob->front_current;
 }
 
@@ -97,6 +98,15 @@ uint32_t rob_enqueue(
     rob->queue_next[rob->rear_next].q = q;
     rob->queue_next[rob->rear_next].npc_pred = npc_pred;
     rob->queue_next[rob->rear_next].inst_pc = inst_pc;
+
+    // rob->queue_current[rob->rear_next].op_type = op_type;
+    // rob->queue_current[rob->rear_next].dest = dest;
+    // rob->queue_current[rob->rear_next].ready = false;
+    // rob->queue_current[rob->rear_next].busy = true;
+    // rob->queue_current[rob->rear_next].value = value;
+    // rob->queue_current[rob->rear_next].q = q;
+    // rob->queue_current[rob->rear_next].npc_pred = npc_pred;
+    // rob->queue_current[rob->rear_next].inst_pc = inst_pc;
 
     // We add 1 to the ID since 0 is reserved to indicate the value is ready
     return rob->rear_next + 1;
@@ -160,7 +170,11 @@ void rob_add_address(struct rob *rob, uint32_t rob_id, uint32_t addr)
 void rob_add_npc_actual(struct rob *rob, uint32_t rob_id, uint32_t npc_actual)
 {
     rob->queue_next[rob_id - 1].npc_actual = npc_actual;
-    rob->queue_next[rob_id - 1].ready = true;
+    // We don't ready JUMPs here, since it prevents the writeback value coming from the CBD
+    if (rob->queue_next[rob_id - 1].op_type == BRANCH)
+    {
+        rob->queue_next[rob_id - 1].ready = true;
+    }
 }
 
 void rob_clear(struct rob *rob)

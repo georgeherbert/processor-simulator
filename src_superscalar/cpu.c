@@ -206,6 +206,7 @@ void update_current(struct cpu *cpu)
 bool step(struct cpu *cpu)
 {
     fetch_step(cpu->fetch_unit);
+    // printf("PC: %d\n", cpu->fetch_unit->reg_pc);
     decode_step(cpu->decode_unit);
     issue_step(cpu->issue_unit);
     alu_step(cpu->alu_unit);
@@ -215,8 +216,8 @@ bool step(struct cpu *cpu)
     res_stations_step(cpu->alu_res_stations);
     res_stations_step(cpu->branch_res_stations);
     memory_buffers_step(cpu->memory_buffers);
-    bool inst_committed = commit_step(cpu->commit_unit);
     rob_step(cpu->rob);
+    bool inst_committed = commit_step(cpu->commit_unit);
 
     return inst_committed;
 }
