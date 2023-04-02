@@ -75,7 +75,13 @@ bool rob_ready(struct rob *rob)
     return rob->front_current != -1 && rob->queue_current[rob->front_current].ready;
 }
 
-uint32_t rob_enqueue(struct rob *rob, enum op_type op_type, uint32_t dest, uint32_t value, uint32_t q)
+uint32_t rob_enqueue(
+    struct rob *rob,
+    enum op_type op_type,
+    uint32_t dest,
+    uint32_t value,
+    uint32_t q,
+    uint32_t npc_pred)
 {
     if (rob->front_next == -1)
     {
@@ -88,6 +94,7 @@ uint32_t rob_enqueue(struct rob *rob, enum op_type op_type, uint32_t dest, uint3
     rob->queue_next[rob->rear_next].busy = true;
     rob->queue_next[rob->rear_next].value = value;
     rob->queue_next[rob->rear_next].q = q;
+    rob->queue_next[rob->rear_next].npc_pred = npc_pred;
 
     // We add 1 to the ID since 0 is reserved to indicate the value is ready
     return rob->rear_next + 1;
@@ -121,7 +128,7 @@ uint32_t rob_get_entry_value(struct rob *rob, uint32_t id)
 
 bool rob_earlier_stores(struct rob *rob, uint32_t rob_id, uint32_t addr)
 {
-    int32_t current_index = rob_id - 2;
+    int32_t current_index = rob_id - 1;
     bool earlier_store = false;
     while (!earlier_store)
     {
@@ -145,6 +152,23 @@ void rob_add_address(struct rob *rob, uint32_t rob_id, uint32_t addr)
     if (rob->queue_next[rob_id - 1].q == 0)
     {
         rob->queue_next[rob_id - 1].ready = true;
+    }
+}
+
+void rob_add_npc_actual(struct rob *rob, uint32_t rob_id, uint32_t npc_actual)
+{
+    rob->queue_next[rob_id - 1].npc_actual = npc_actual;
+    rob->queue_next[rob_id - 1].ready = true;
+}
+
+void rob_clear(struct rob *rob)
+{
+    rob->front_next = -1;
+    rob->rear_next = -1;
+    for (uint32_t i = 0; i < REORDER_BUFFER_SIZE; i++)
+    {
+        rob->queue_current[i].busy = false;
+        rob->queue_next[i].busy = false;
     }
 }
 

@@ -69,6 +69,14 @@ void reg_file_set_rob_id(struct reg_file *reg_file, uint32_t reg_addr, uint32_t 
     }
 }
 
+void reg_file_clear(struct reg_file *reg_file)
+{
+    for (uint32_t i = 0; i < NUM_REGS; i++)
+    {
+        reg_file->regs[i].busy = false;
+    }
+}
+
 void reg_file_destroy(struct reg_file *reg_file)
 {
     free(reg_file);

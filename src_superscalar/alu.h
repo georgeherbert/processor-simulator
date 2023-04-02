@@ -24,6 +24,7 @@ struct alu_unit *alu_init(
     struct res_stations *alu_res_stations,
     struct reg_file *reg_file,
     struct cdb *cdb);                        // Initialise alu unit
+void alu_clear(struct alu_unit *alu_unit);   // Clear alu unit on mispredict
 void alu_step(struct alu_unit *alu_unit);    // Step alu unit
 void alu_destroy(struct alu_unit *alu_unit); // Free alu unit
 

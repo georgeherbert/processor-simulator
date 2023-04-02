@@ -62,6 +62,12 @@ bool inst_queue_empty(struct inst_queue *iq)
     return iq->front_current == -1;
 }
 
+void inst_queue_clear(struct inst_queue *iq)
+{
+    iq->front_next = -1;
+    iq->rear_next = -1;
+}
+
 void inst_queue_update_current(struct inst_queue *iq)
 {
     memcpy(iq->queue_current, iq->queue_next, sizeof(struct decoded_inst) * INST_QUEUE_SIZE);

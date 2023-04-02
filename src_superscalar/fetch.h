@@ -12,7 +12,6 @@ struct fetch_unit
 {
     struct main_memory *mm;         // Pointer to main memory
     struct reg *pc_src;             // Pointer to control signal for PC source
-    struct reg *branch_in_pipeline; // Pointer to control signal for presence of branch in pipeline
     struct inst_queue *inst_queue;  // Pointer to instruction queue
     struct reg *reg_pc_target;      // Pointer to PC target register
     struct reg *reg_inst;           // Pointer to instruction register
@@ -24,7 +23,6 @@ struct fetch_unit
 struct fetch_unit *fetch_init(
     struct main_memory *mm,
     struct reg *pc_src,
-    struct reg *branch_in_pipeline,
     struct inst_queue *inst_queue,
     struct reg *reg_pc_target,
     struct reg *reg_inst,

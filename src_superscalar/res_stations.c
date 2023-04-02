@@ -126,6 +126,14 @@ struct res_station *res_stations_remove(struct res_stations *rs)
     return NULL;
 }
 
+void res_stations_clear(struct res_stations *rs)
+{
+    for (uint32_t i = 0; i < rs->num_stations; i++)
+    {
+        rs->stations_next[i].busy = false;
+    }
+}
+
 void res_stations_update_current(struct res_stations *rs)
 {
     memcpy(rs->stations_current, rs->stations_next, sizeof(struct res_station) * rs->num_stations);

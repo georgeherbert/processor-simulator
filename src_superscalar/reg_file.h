@@ -26,6 +26,7 @@ uint32_t reg_file_get_rob_id(struct reg_file *reg_file, uint32_t reg_addr);     
 uint32_t reg_file_get_reg_val(struct reg_file *reg_file, uint32_t reg_addr);                           // Get val of register
 void reg_file_set_rob_id(struct reg_file *reg_file, uint32_t reg_addr, uint32_t rob_id);               // Set ROB ID of register
 void reg_file_reg_commit(struct reg_file *reg_file, uint32_t reg_addr, uint32_t val, uint32_t rob_id); // Commit register
+void reg_file_clear(struct reg_file *reg_file);                                                        // Clear register file on mispredict
 void reg_file_destroy(struct reg_file *reg_file);                                                      // Free register file
 
 #endif // REG_FILE_H

@@ -39,9 +39,9 @@ struct cpu *cpu_init(char *file_name)
     cpu->cdb = cdb_init(3); // One entry for each functional unit
     cpu->reg_file = reg_file_init(cpu->cdb);
 
-    cpu->pc_src.val_current = PC_SRC_PLUS_4;
-    cpu->branch_in_pipeline.val_current = BRANCH_NOT_IN_PIPELINE;
+    cpu->pc_src.val_current = PC_SRC_NORMAL;
     cpu->reg_inst.val_current = 0x0;
+    cpu->jump_zero = false;
 
     cpu->mm = main_memory_init(
         file_name);
@@ -51,7 +51,6 @@ struct cpu *cpu_init(char *file_name)
     cpu->fetch_unit = fetch_init(
         cpu->mm,
         &cpu->pc_src,
-        &cpu->branch_in_pipeline,
         cpu->inst_queue,
         &cpu->reg_pc_target,
         &cpu->reg_inst,
@@ -93,10 +92,8 @@ struct cpu *cpu_init(char *file_name)
     cpu->branch_unit = branch_init(
         cpu->branch_res_stations,
         cpu->reg_file,
-        &cpu->reg_pc_target,
-        &cpu->pc_src,
         cpu->cdb,
-        &cpu->branch_in_pipeline);
+        cpu->rob);
     cpu->memory_unit = memory_init(
         cpu->memory_buffers,
         cpu->mm,
@@ -105,7 +102,16 @@ struct cpu *cpu_init(char *file_name)
     cpu->commit_unit = commit_init(
         cpu->rob,
         cpu->mm,
-        cpu->reg_file);
+        cpu->reg_file,
+        cpu->alu_res_stations,
+        cpu->branch_res_stations,
+        cpu->memory_buffers,
+        cpu->alu_unit,
+        cpu->inst_queue,
+        &cpu->reg_inst,
+        &cpu->pc_src,
+        &cpu->reg_pc_target,
+        &cpu->jump_zero);
 
     printf("CPU successfully initialised\n");
 
@@ -178,7 +184,6 @@ void update_current(struct cpu *cpu)
     cdb_clear(cpu->cdb);
 
     reg_update_current(&cpu->pc_src);
-    reg_update_current(&cpu->branch_in_pipeline);
     reg_update_current(&cpu->reg_pc_target);
     reg_update_current(&cpu->reg_inst);
     reg_update_current(&cpu->reg_inst_pc);
@@ -193,13 +198,8 @@ void update_current(struct cpu *cpu)
 
 bool step(struct cpu *cpu)
 {
-    if (!cpu->jump_to_zero)
-    {
-        fetch_step(cpu->fetch_unit);
-        // printf("Fetch\n");
-        decode_step(cpu->decode_unit);
-        // printf("Decode\n");
-    }
+    fetch_step(cpu->fetch_unit);
+    decode_step(cpu->decode_unit);
     issue_step(cpu->issue_unit);
     alu_step(cpu->alu_unit);
     branch_step(cpu->branch_unit);
@@ -214,23 +214,23 @@ bool step(struct cpu *cpu)
     return inst_committed;
 }
 
-bool ready_to_exit(struct cpu *cpu)
-{
-    // Is the last instruction a jump to zero?
-    bool jump_to_zero = cpu->pc_src.val_current == PC_SRC_BRANCH && cpu->reg_pc_target.val_current == 0;
-    cpu->jump_to_zero = cpu->jump_to_zero || jump_to_zero;
+// bool ready_to_exit(struct cpu *cpu)
+// {
+//     // Is the last instruction a jump to zero?
+//     bool jump_to_zero = cpu->pc_src.val_current == PC_SRC_MISPREDICT && cpu->reg_pc_target.val_current == 0;
+//     cpu->jump_to_zero = cpu->jump_to_zero || jump_to_zero;
 
-    bool all_regs_written = true;
-    for (int i = 0; i < NUM_REGS; i++)
-    {
-        all_regs_written &= cpu->reg_file->regs[i].busy == false;
-    }
+//     bool all_regs_written = true;
+//     for (int i = 0; i < NUM_REGS; i++)
+//     {
+//         all_regs_written &= cpu->reg_file->regs[i].busy == false;
+//     }
 
-    // If we have had a jump to zero and all registers have been written, the program we exit
-    bool ready_to_exit = cpu->jump_to_zero && all_regs_written;
+//     // If we have had a jump to zero and all registers have been written, the program we exit
+//     bool ready_to_exit = cpu->jump_to_zero && all_regs_written;
 
-    return ready_to_exit;
-}
+//     return ready_to_exit;
+// }
 
 int main(int argc, char *argv[])
 {
@@ -246,10 +246,11 @@ int main(int argc, char *argv[])
     uint64_t cycles = 0;
 
     // Cycle until PC will be 0
-    while (!ready_to_exit(cpu))
+    while (!cpu->jump_zero)
     {
         // printf("\nCycle: %" PRIu64 "\n", cycles);
-
+        
+        
         instructions += step(cpu);
         update_current(cpu);
 

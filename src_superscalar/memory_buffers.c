@@ -219,6 +219,15 @@ void memory_buffers_add_address(struct memory_buffers *mb, uint32_t id, uint32_t
     mb->buffers_next[id_index].queue_pos = 0;
 }
 
+void memory_buffers_clear(struct memory_buffers *mb)
+{
+    for (uint32_t i = 0; i < mb->num_buffers; i++)
+    {
+        mb->buffers_next[i].busy = false;
+    }
+    mb->num_buffers_in_queue_next = 0;
+}
+
 void memory_buffers_update_current(struct memory_buffers *mb)
 {
     memcpy(mb->buffers_current, mb->buffers_next, sizeof(struct memory_buffer) * mb->num_buffers);

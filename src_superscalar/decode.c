@@ -187,32 +187,32 @@ void handle_op_imm(struct inst_queue *inst_queue, uint32_t inst)
     {
     case FUNCT3_ADDI:
         op = ADDI;
-        printf("addi x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
+        // printf("addi x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
         break;
     case FUNCT3_SLTI:
         op = SLTI;
-        printf("slti x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
+        // printf("slti x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
         break;
     case FUNCT3_SLTIU:
         op = SLTIU;
-        printf("sltiu x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
+        // printf("sltiu x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
         break;
     case FUNCT3_XORI:
         op = XORI;
-        printf("xori x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
+        // printf("xori x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
         break;
     case FUNCT3_ORI:
         op = ORI;
-        printf("ori x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
+        // printf("ori x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
         break;
     case FUNCT3_ANDI:
         op = ANDI;
-        printf("andi x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
+        // printf("andi x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
         break;
     case FUNCT3_SLLI:
         op = SLLI;
         imm &= 0x1F;
-        printf("slli x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
+        // printf("slli x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
         break;
     case FUNCT3_SRLI_SRAI:
         switch (get_funct7(inst))
@@ -220,12 +220,12 @@ void handle_op_imm(struct inst_queue *inst_queue, uint32_t inst)
         case FUNCT7_SRLI:
             op = SRLI;
             imm &= 0x1F;
-            printf("srli x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
+            // printf("srli x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
             break;
         case FUNCT7_SRAI:
             op = SRAI;
             imm &= 0x1F;
-            printf("srai x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
+            // printf("srai x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
             break;
         default:
             fprintf(stderr, "Error: Unknown funct7");
@@ -263,7 +263,7 @@ void handle_lui(struct inst_queue *inst_queue, uint32_t inst)
         imm,
         NA);
 
-    printf("lui x%d, %d\n", rd_addr, imm);
+    // printf("lui x%d, %d\n", rd_addr, imm);
 }
 
 void handle_auipc(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
@@ -281,7 +281,7 @@ void handle_auipc(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc
         imm,
         inst_pc);
 
-    printf("auipc x%d, %d", rd_addr, imm);
+    // printf("auipc x%d, %d", rd_addr, imm);
 }
 
 void handle_op(struct inst_queue *inst_queue, uint32_t inst)
@@ -299,11 +299,11 @@ void handle_op(struct inst_queue *inst_queue, uint32_t inst)
         {
         case FUNCT7_ADD:
             op = ADD;
-            printf("add x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
+            // printf("add x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
             break;
         case FUNCT7_SUB:
             op = SUB;
-            printf("sub x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
+            // printf("sub x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
             break;
         default:
             fprintf(stderr, "Error: Unknown funct7");
@@ -312,30 +312,30 @@ void handle_op(struct inst_queue *inst_queue, uint32_t inst)
         break;
     case FUNCT3_SLL:
         op = SLL;
-        printf("sll x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
+        // printf("sll x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
         break;
     case FUNCT3_SLT:
         op = SLT;
-        printf("slt x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
+        // printf("slt x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
         break;
     case FUNCT3_SLTU:
         op = SLTU;
-        printf("sltu x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
+        // printf("sltu x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
         break;
     case FUNCT3_XOR:
         op = XOR;
-        printf("xor x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
+        // printf("xor x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
         break;
     case FUNCT3_SRL_SRA:
         switch (get_funct7(inst))
         {
         case FUNCT7_SRL:
             op = SRL;
-            printf("srl x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
+            // printf("srl x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
             break;
         case FUNCT7_SRA:
             op = SRA;
-            printf("sra x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
+            // printf("sra x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
             break;
         default:
             fprintf(stderr, "Error: Unknown funct7");
@@ -344,11 +344,11 @@ void handle_op(struct inst_queue *inst_queue, uint32_t inst)
         break;
     case FUNCT3_OR:
         op = OR;
-        printf("or x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
+        // printf("or x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
         break;
     case FUNCT3_AND:
         op = AND;
-        printf("and x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
+        // printf("and x%d, x%d, x%d\n", rd_addr, rs1_addr, rs2_addr);
         break;
     default:
         fprintf(stderr, "Error: Unknown funct3");
@@ -381,7 +381,7 @@ void handle_jal(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
         imm,
         inst_pc);
 
-    printf("jal x%d, %d\n", rd_addr, imm);
+    // printf("jal x%d, %d\n", rd_addr, imm);
 }
 
 void handle_jalr(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
@@ -400,7 +400,7 @@ void handle_jalr(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
         imm,
         inst_pc);
 
-    printf("jalr x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
+    // printf("jalr x%d, x%d, %d\n", rd_addr, rs1_addr, imm);
 }
 
 void handle_branch(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_pc)
@@ -415,30 +415,30 @@ void handle_branch(struct inst_queue *inst_queue, uint32_t inst, uint32_t inst_p
     {
     case FUNCT3_BEQ:
         op = BEQ;
-        printf("beq x%d, x%d, %d\n", rs1_addr, rs2_addr, imm);
+        // printf("beq x%d, x%d, %d\n", rs1_addr, rs2_addr, imm);
         break;
     case FUNCT3_BNE:
         op = BNE;
-        printf("bne x%d, x%d, %d\n", rs1_addr, rs2_addr, imm);
+        // printf("bne x%d, x%d, %d\n", rs1_addr, rs2_addr, imm);
         break;
     case FUNCT3_BLT:
         op = BLT;
-        printf("blt x%d, x%d, %d\n", rs1_addr, rs2_addr, imm);
+        // printf("blt x%d, x%d, %d\n", rs1_addr, rs2_addr, imm);
         break;
     case FUNCT3_BLTU:
         op = BLTU;
-        printf("bltu x%d, x%d, %d\n", rs1_addr, rs2_addr, imm);
+        // printf("bltu x%d, x%d, %d\n", rs1_addr, rs2_addr, imm);
         break;
     case FUNCT3_BGE:
         op = BGE;
-        printf("bge x%d, x%d, %d\n", rs1_addr, rs2_addr, imm);
+        // printf("bge x%d, x%d, %d\n", rs1_addr, rs2_addr, imm);
         break;
     case FUNCT3_BGEU:
         op = BGEU;
-        printf("bgeu x%d, x%d, %d\n", rs1_addr, rs2_addr, imm);
+        // printf("bgeu x%d, x%d, %d\n", rs1_addr, rs2_addr, imm);
         break;
     default:
-        printf("Unknown funct3");
+        // printf("Unknown funct3");
         exit(EXIT_FAILURE);
     }
 
@@ -465,26 +465,26 @@ void handle_load(struct inst_queue *inst_queue, uint32_t inst)
     {
     case FUNCT3_LB:
         op = LB;
-        printf("lb x%d, %d(x%d)\n", rd_addr, imm, rs1_addr);
+        // printf("lb x%d, %d(x%d)\n", rd_addr, imm, rs1_addr);
         break;
     case FUNCT3_LBU:
         op = LBU;
-        printf("lbu x%d, %d(x%d)\n", rd_addr, imm, rs1_addr);
+        // printf("lbu x%d, %d(x%d)\n", rd_addr, imm, rs1_addr);
         break;
     case FUNCT3_LH:
         op = LH;
-        printf("lh x%d, %d(x%d)\n", rd_addr, imm, rs1_addr);
+        // printf("lh x%d, %d(x%d)\n", rd_addr, imm, rs1_addr);
         break;
     case FUNCT3_LHU:
         op = LHU;
-        printf("lhu x%d, %d(x%d)\n", rd_addr, imm, rs1_addr);
+        // printf("lhu x%d, %d(x%d)\n", rd_addr, imm, rs1_addr);
         break;
     case FUNCT3_LW:
         op = LW;
-        printf("lw x%d, %d(x%d)\n", rd_addr, imm, rs1_addr);
+        // printf("lw x%d, %d(x%d)\n", rd_addr, imm, rs1_addr);
         break;
     default:
-        printf("Unknown funct3");
+        // printf("Unknown funct3");
         exit(EXIT_FAILURE);
     }
 
@@ -514,20 +514,20 @@ void handle_store(struct inst_queue *inst_queue, uint32_t inst)
     case FUNCT3_SB:
         op_type = STORE_BYTE;
         op = SB;
-        printf("sb x%d, %d(x%d)\n", rs2_addr, imm, rs1_addr);
+        // printf("sb x%d, %d(x%d)\n", rs2_addr, imm, rs1_addr);
         break;
     case FUNCT3_SH:
         op_type = STORE_HALF;
         op = SH;
-        printf("sh x%d, %d(x%d)\n", rs2_addr, imm, rs1_addr);
+        // printf("sh x%d, %d(x%d)\n", rs2_addr, imm, rs1_addr);
         break;
     case FUNCT3_SW:
         op_type = STORE_WORD;
         op = SW;
-        printf("sw x%d, %d(x%d)\n", rs2_addr, imm, rs1_addr);
+        // printf("sw x%d, %d(x%d)\n", rs2_addr, imm, rs1_addr);
         break;
     default:
-        printf("Unknown funct3");
+        // printf("Unknown funct3");
         exit(EXIT_FAILURE);
     }
 

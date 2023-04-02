@@ -145,6 +145,7 @@ int main(int argc, char *argv[])
     while (!(cpu->ctrl_pc_src == CTRL_PC_SRC_ALU_OUT && cpu->reg_alu_out == 0))
     {
         fetch_step(cpu->fetch_unit);
+        // printf("PC: %d\n", cpu->reg_pc);
         decode_step(cpu->decode_unit);
         execute_step(cpu->execute_unit);
         memory_step(cpu->memory_unit);
