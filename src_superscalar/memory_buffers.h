@@ -53,8 +53,8 @@ void memory_buffers_enqueue(
     uint32_t a,
     uint32_t rob_id);                                    // Add instruction to memory buffers
 bool memory_buffers_all_busy(struct memory_buffers *mb); // Check if all memory buffers are busy
-struct memory_buffer *memory_buffers_dequeue_memory(struct memory_buffers *mb);
-struct memory_buffer *memory_buffers_dequeue_address(struct memory_buffers *mb);
+struct memory_buffer *memory_buffers_dequeue_memory(struct memory_buffers *mb, uint8_t id);
+struct memory_buffer *memory_buffers_dequeue_address(struct memory_buffers *mb, uint8_t id);
 void memory_buffers_add_address(struct memory_buffers *mb, uint32_t id, uint32_t address); // Add address to memory buffer
 void memory_buffers_clear(struct memory_buffers *mb);                                      // Clear memory buffers on mispredict
 void memory_buffers_update_current(struct memory_buffers *rs);                             // Update current memory buffers

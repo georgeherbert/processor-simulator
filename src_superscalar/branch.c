@@ -29,7 +29,7 @@ struct branch_unit *branch_init(
     branch_unit->cdb = cdb;
     branch_unit->rob = rob;
 
-    branch_unit->num_cycles = 4;
+    branch_unit->num_cycles = 1;
     branch_unit->relative_cycle = 0;
 
     return branch_unit;

@@ -84,9 +84,13 @@ struct cpu *cpu_init(char *file_name)
         cpu->branch_res_stations,
         cpu->memory_buffers,
         cpu->rob);
-    cpu->address_unit = address_init(
-        cpu->memory_buffers,
-        cpu->rob);
+    for (uint8_t i = 0; i < NUM_ADDRESS_UNITS; i++)
+    {
+        cpu->address_units[i] = address_init(
+            i,
+            cpu->memory_buffers,
+            cpu->rob);
+    }
     for (uint8_t i = 0; i < NUM_ALU_UNITS; i++)
     {
         cpu->alu_units[i] = alu_init(
@@ -104,12 +108,15 @@ struct cpu *cpu_init(char *file_name)
             cpu->cdb,
             cpu->rob);
     }
-
-    cpu->memory_unit = memory_init(
-        cpu->memory_buffers,
-        cpu->mm,
-        cpu->reg_file,
-        cpu->cdb);
+    for (uint8_t i = 0; i < NUM_MEMORY_UNITS; i++)
+    {
+        cpu->memory_units[i] = memory_init(
+            i,
+            cpu->memory_buffers,
+            cpu->mm,
+            cpu->reg_file,
+            cpu->cdb);
+    }
     cpu->commit_unit = commit_init(
         cpu->rob,
         cpu->mm,
@@ -119,6 +126,8 @@ struct cpu *cpu_init(char *file_name)
         cpu->memory_buffers,
         cpu->alu_units,
         cpu->branch_units,
+        cpu->address_units,
+        cpu->memory_units,
         cpu->inst_queue,
         &cpu->reg_inst,
         &cpu->pc_src,
@@ -190,8 +199,14 @@ void cpu_destroy(struct cpu *cpu)
     {
         branch_destroy(cpu->branch_units[i]);
     }
-    memory_destroy(cpu->memory_unit);
-    address_destroy(cpu->address_unit);
+    for (uint8_t i = 0; i < NUM_MEMORY_UNITS; i++)
+    {
+        memory_destroy(cpu->memory_units[i]);
+    }
+    for (uint8_t i = 0; i < NUM_ADDRESS_UNITS; i++)
+    {
+        address_destroy(cpu->address_units[i]);
+    }
     rob_destroy(cpu->rob);
     commit_destroy(cpu->commit_unit);
 
@@ -230,8 +245,14 @@ bool step(struct cpu *cpu)
     {
         branch_step(cpu->branch_units[i]);
     }
-    memory_step(cpu->memory_unit);
-    address_step(cpu->address_unit);
+    for (uint8_t i = 0; i < NUM_MEMORY_UNITS; i++)
+    {
+        memory_step(cpu->memory_units[i]);
+    }
+    for (uint8_t i = 0; i < NUM_ADDRESS_UNITS; i++)
+    {
+        address_step(cpu->address_units[i]);
+    }
     res_stations_step(cpu->alu_res_stations);
     res_stations_step(cpu->branch_res_stations);
     memory_buffers_step(cpu->memory_buffers);

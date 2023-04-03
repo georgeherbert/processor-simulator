@@ -23,22 +23,22 @@
 
 struct cpu
 {
-    struct main_memory *mm;                             // Pointer to main memory
-    struct fetch_unit *fetch_unit;                      // Pointer to fetch unit
-    struct decode_unit *decode_unit;                    // Pointer to decode unit
-    struct inst_queue *inst_queue;                      // Pointer to instruction queue
-    struct res_stations *alu_res_stations;              // Pointer to ALU reservation station
-    struct res_stations *branch_res_stations;           // Pointer to branch reservation station
-    struct memory_buffers *memory_buffers;              // Pointer to memory reservation station
-    struct address_unit *address_unit;                  // Pointer to address unit
-    struct issue_unit *issue_unit;                      // Pointer to issue unit
-    struct alu_unit *alu_units[NUM_ALU_UNITS];          // Pointer to ALU units
-    struct branch_unit *branch_units[NUM_BRANCH_UNITS]; // Pointer to branch unit
-    struct memory_unit *memory_unit;                    // Pointer to memory unit
-    struct cdb *cdb;                                    // Pointer to common data bus
-    struct rob *rob;                                    // Pointer to reorder buffer
-    struct commit_unit *commit_unit;                    // Pointer to commit unit
-    struct btb *btb;                                    // Pointer to branch target buffer
+    struct main_memory *mm;                                // Pointer to main memory
+    struct fetch_unit *fetch_unit;                         // Pointer to fetch unit
+    struct decode_unit *decode_unit;                       // Pointer to decode unit
+    struct inst_queue *inst_queue;                         // Pointer to instruction queue
+    struct res_stations *alu_res_stations;                 // Pointer to ALU reservation station
+    struct res_stations *branch_res_stations;              // Pointer to branch reservation station
+    struct memory_buffers *memory_buffers;                 // Pointer to memory reservation station
+    struct address_unit *address_units[NUM_ADDRESS_UNITS]; // Pointer to address unit
+    struct issue_unit *issue_unit;                         // Pointer to issue unit
+    struct alu_unit *alu_units[NUM_ALU_UNITS];             // Pointer to ALU units
+    struct branch_unit *branch_units[NUM_BRANCH_UNITS];    // Pointer to branch unit
+    struct memory_unit *memory_units[NUM_MEMORY_UNITS];    // Pointer to memory unit
+    struct cdb *cdb;                                       // Pointer to common data bus
+    struct rob *rob;                                       // Pointer to reorder buffer
+    struct commit_unit *commit_unit;                       // Pointer to commit unit
+    struct btb *btb;                                       // Pointer to branch target buffer
 
     struct reg_file *reg_file; // Pointer to register file
     struct reg pc_src;         // Control signal for PC source

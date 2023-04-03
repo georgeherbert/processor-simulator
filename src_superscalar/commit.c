@@ -10,6 +10,8 @@
 #include "inst_queue.h"
 #include "reg_file.h"
 #include "control.h"
+#include "address.h"
+#include "memory.h"
 
 struct commit_unit *commit_init(
     struct rob *rob,
@@ -20,6 +22,8 @@ struct commit_unit *commit_init(
     struct memory_buffers *mb,
     struct alu_unit **alus,
     struct branch_unit **branch_units,
+    struct address_unit **address_units,
+    struct memory_unit **memory_units,
     struct inst_queue *iq,
     struct reg *inst_reg,
     struct reg *pc_src,
@@ -42,6 +46,8 @@ struct commit_unit *commit_init(
     commit_unit->mb = mb;
     commit_unit->alus = alus;
     commit_unit->branch_units = branch_units;
+    commit_unit->address_units = address_units;
+    commit_unit->memory_units = memory_units;
     commit_unit->iq = iq;
     commit_unit->inst_reg = inst_reg;
     commit_unit->pc_src = pc_src;
@@ -76,6 +82,14 @@ void commit_clear(struct commit_unit *commit_unit)
     for (uint8_t i = 0; i < NUM_BRANCH_UNITS; i++)
     {
         branch_clear(commit_unit->branch_units[i]);
+    }
+    for (uint8_t i = 0; i < NUM_ADDRESS_UNITS; i++)
+    {
+        address_clear(commit_unit->address_units[i]);
+    }
+    for (uint8_t i = 0; i < NUM_MEMORY_UNITS; i++)
+    {
+        memory_clear(commit_unit->memory_units[i]);
     }
     inst_queue_clear(commit_unit->iq);
     reg_write(commit_unit->inst_reg, 0x0);

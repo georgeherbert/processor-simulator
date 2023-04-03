@@ -11,6 +11,8 @@
 #include "branch.h"
 #include "inst_queue.h"
 #include "btb.h"
+#include "address.h"
+#include "memory.h"
 
 struct commit_unit
 {
@@ -22,6 +24,8 @@ struct commit_unit
     struct memory_buffers *mb;
     struct alu_unit **alus;
     struct branch_unit **branch_units;
+    struct address_unit **address_units;
+    struct memory_unit **memory_units;
     struct inst_queue *iq;
     struct reg *inst_reg;
     struct reg *pc_src;        // Pointer to control signal for PC source
@@ -39,6 +43,8 @@ struct commit_unit *commit_init(
     struct memory_buffers *mb,
     struct alu_unit **alus,
     struct branch_unit **branch_units,
+    struct address_unit **address_units,
+    struct memory_unit **memory_units,
     struct inst_queue *iq,
     struct reg *inst_reg,
     struct reg *pc_src,

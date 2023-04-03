@@ -124,7 +124,7 @@ bool memory_buffers_all_busy(struct memory_buffers *mb)
     return all_busy;
 }
 
-struct memory_buffer *memory_buffers_dequeue_memory(struct memory_buffers *mb)
+struct memory_buffer *memory_buffers_dequeue_memory(struct memory_buffers *mb, uint8_t id)
 {
     for (uint32_t i = 0; i < mb->num_buffers; i++)
     {
@@ -136,8 +136,12 @@ struct memory_buffer *memory_buffers_dequeue_memory(struct memory_buffers *mb)
             // We nest this if statement for efficiency
             if (!rob_earlier_stores(mb->rob, mb_entry->rob_id, mb_entry->a))
             {
-                mb->buffers_next[i].busy = false;
-                return mb_entry;
+                if (id == 0)
+                {
+                    mb->buffers_next[i].busy = false;
+                    return mb_entry;
+                }
+                id--;
             }
         }
     }
@@ -167,37 +171,48 @@ void shift_queue(struct memory_buffers *mb, uint32_t removed_pos)
     }
 }
 
-struct memory_buffer *memory_buffers_dequeue_address(struct memory_buffers *mb)
+struct memory_buffer *memory_buffers_dequeue_address(struct memory_buffers *mb, uint8_t id)
 {
-    if (mb->num_buffers_in_queue_current > 0)
-    {
-        uint32_t queue_pos_indices[mb->num_buffers_in_queue_current];
-        get_queue_pos_indices(mb, queue_pos_indices);
+    uint32_t queue_pos_indices[mb->num_buffers_in_queue_current];
+    get_queue_pos_indices(mb, queue_pos_indices);
 
-        struct memory_buffer *first_mb_entry = &mb->buffers_current[queue_pos_indices[0]];
-        if ((first_mb_entry->op == SW || first_mb_entry->op == SH || first_mb_entry->op == SB))
+    bool raw_potential = false;
+    /*
+        We can't send a load for effective address execution if we haven't sent any prior stores.
+        Otherwise, a load could then execute in the memory stage before the store, even though
+        they may both have the same effective address. This would be a RAW hazard.
+    */
+
+    for (uint32_t i = 0; i < mb->num_buffers_in_queue_current; i++)
+    {
+        struct memory_buffer *mb_entry = &mb->buffers_current[queue_pos_indices[i]];
+        if (mb_entry->op == SW || mb_entry->op == SH || mb_entry->op == SB)
         {
-            if (first_mb_entry->qj == 0)
+            if (mb_entry->qj == 0)
             {
-                mb->buffers_next[queue_pos_indices[0]].busy = false;
-                shift_queue(mb, 1);
-                return first_mb_entry;
-            }
-        }
-        else
-        {
-            for (uint32_t i = 0; i < mb->num_buffers_in_queue_current; i++)
-            {
-                struct memory_buffer *mb_entry = &mb->buffers_current[queue_pos_indices[i]];
-                if (mb_entry->op == SW || mb_entry->op == SH || mb_entry->op == SB)
+                if (id == 0)
                 {
-                    break;
-                }
-                if (mb_entry->qj == 0)
-                {
-                    shift_queue(mb, mb_entry->queue_pos);
+                    mb->buffers_next[queue_pos_indices[i]].busy = false;
+                    shift_queue(mb, mb->buffers_next[queue_pos_indices[i]].queue_pos);
                     return mb_entry;
                 }
+                id--;
+            }
+            else
+            {
+                raw_potential = true;
+            }
+        }
+        else if (!raw_potential)
+        {
+            if (mb_entry->qj == 0)
+            {
+                if (id == 0)
+                {
+                    shift_queue(mb, mb->buffers_next[queue_pos_indices[i]].queue_pos);
+                    return mb_entry;
+                }
+                id--;
             }
         }
     }

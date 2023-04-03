@@ -7,58 +7,84 @@
 #include "memory_buffers.h"
 
 struct memory_unit *memory_init(
+    uint8_t id,
     struct memory_buffers *memory_buffers,
     struct main_memory *mm,
     struct reg_file *reg_file,
     struct cdb *cdb)
 {
-    struct memory_unit *memory_unit = malloc(sizeof(struct memory_unit));
+    struct memory_unit *mu = malloc(sizeof(struct memory_unit));
 
-    if (memory_unit == NULL)
+    if (mu == NULL)
     {
         fprintf(stderr, "Error: Could not allocate memory for memory unit\n");
         exit(EXIT_FAILURE);
     }
 
-    memory_unit->memory_buffers = memory_buffers;
-    memory_unit->mm = mm;
-    memory_unit->reg_file = reg_file;
-    memory_unit->cdb = cdb;
+    mu->id = id;
+    mu->memory_buffers = memory_buffers;
+    mu->mm = mm;
+    mu->reg_file = reg_file;
+    mu->cdb = cdb;
 
-    return memory_unit;
+    mu->num_cycles = 1;
+    mu->relative_cycle = 0;
+
+    return mu;
 }
 
-void memory_step(struct memory_unit *memory_unit)
+void memory_step(struct memory_unit *mu)
 {
-    struct memory_buffer *mb_entry = memory_buffers_dequeue_memory(memory_unit->memory_buffers);
-
-    if (mb_entry)
+    if (mu->relative_cycle == 0)
     {
-        switch (mb_entry->op)
+        struct memory_buffer *mb_entry = memory_buffers_dequeue_memory(mu->memory_buffers, mu->id);
+
+        if (mb_entry)
         {
-        case LW:
-            cdb_write(memory_unit->cdb, mb_entry->rob_id, main_memory_load_word(memory_unit->mm, mb_entry->a));
-            break;
-        case LH:
-            cdb_write(memory_unit->cdb, mb_entry->rob_id, (int32_t)(int16_t)main_memory_load_half(memory_unit->mm, mb_entry->a));
-            break;
-        case LHU:
-            cdb_write(memory_unit->cdb, mb_entry->rob_id, main_memory_load_half(memory_unit->mm, mb_entry->a));
-            break;
-        case LB:
-            cdb_write(memory_unit->cdb, mb_entry->rob_id, (int32_t)(int8_t)main_memory_load_byte(memory_unit->mm, mb_entry->a));
-            break;
-        case LBU:
-            cdb_write(memory_unit->cdb, mb_entry->rob_id, main_memory_load_byte(memory_unit->mm, mb_entry->a));
-            break;
-        default:
-            fprintf(stderr, "Error: Unknown memory operation");
-            exit(EXIT_FAILURE);
+            mu->relative_cycle++;
+
+            switch (mb_entry->op)
+            {
+            case LW:
+                mu->out = main_memory_load_word(mu->mm, mb_entry->a);
+                break;
+            case LH:
+                mu->out = (int32_t)(int16_t)main_memory_load_half(mu->mm, mb_entry->a);
+                break;
+            case LHU:
+                mu->out = main_memory_load_half(mu->mm, mb_entry->a);
+                break;
+            case LB:
+                mu->out = (int32_t)(int8_t)main_memory_load_byte(mu->mm, mb_entry->a);
+                break;
+            case LBU:
+                mu->out = main_memory_load_byte(mu->mm, mb_entry->a);
+                break;
+            default:
+                fprintf(stderr, "Error: Unknown memory operation");
+                exit(EXIT_FAILURE);
+            }
+
+            mu->entry_rob_id = mb_entry->rob_id;
         }
+    }
+    else if (mu->relative_cycle > 0 && mu->relative_cycle < mu->num_cycles)
+    {
+        mu->relative_cycle++;
+    }
+    else if (mu->relative_cycle == mu->num_cycles)
+    {
+        cdb_write(mu->cdb, mu->entry_rob_id, mu->out);
+        mu->relative_cycle = 0;
     }
 }
 
-void memory_destroy(struct memory_unit *memory_unit)
+void memory_clear(struct memory_unit *mu)
 {
-    free(memory_unit);
+    mu->relative_cycle = 0;
+}
+
+void memory_destroy(struct memory_unit *mu)
+{
+    free(mu);
 }

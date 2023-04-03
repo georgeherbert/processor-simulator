@@ -5,40 +5,66 @@
 #include "memory_buffers.h"
 #include "rob.h"
 
-struct address_unit *address_init(struct memory_buffers *memory_buffers, struct rob *rob)
+struct address_unit *address_init(uint8_t id, struct memory_buffers *memory_buffers, struct rob *rob)
 {
-    struct address_unit *address_unit = malloc(sizeof(struct address_unit));
-    if (address_unit == NULL)
+    struct address_unit *au = malloc(sizeof(struct address_unit));
+    if (au == NULL)
     {
         fprintf(stderr, "Error: Could not allocate memory for address");
         exit(EXIT_FAILURE);
     }
 
-    address_unit->memory_buffers = memory_buffers;
-    address_unit->rob = rob;
+    au->id = id;
+    au->memory_buffers = memory_buffers;
+    au->rob = rob;
 
-    return address_unit;
+    au->num_cycles = 1;
+    au->relative_cycle = 0;
+
+    return au;
 }
 
-void address_step(struct address_unit *address_unit)
+void address_step(struct address_unit *au)
 {
-    struct memory_buffer *mb_entry = memory_buffers_dequeue_address(address_unit->memory_buffers);
-
-    if (mb_entry)
+    if (au->relative_cycle == 0)
     {
-        uint32_t address = mb_entry->vj + mb_entry->a;
-        if (mb_entry->op == LW || mb_entry->op == LH || mb_entry->op == LHU || mb_entry->op == LB || mb_entry->op == LBU)
+        struct memory_buffer *mb_entry = memory_buffers_dequeue_address(au->memory_buffers, au->id);
+        if (mb_entry)
         {
-            memory_buffers_add_address(address_unit->memory_buffers, mb_entry->id, address);
+            au->relative_cycle++;
+            au->is_store = mb_entry->op == SW || mb_entry->op == SH || mb_entry->op == SB;
+            au->address = mb_entry->vj + mb_entry->a;
+            au->dest_id = au->is_store ? mb_entry->rob_id : mb_entry->id;
         }
-        else if (mb_entry->op == SW || mb_entry->op == SH || mb_entry->op == SB)
+    }
+    else if (au->relative_cycle > 0 && au->relative_cycle < au->num_cycles)
+    {
+        au->relative_cycle++;
+    }
+    /*
+        The below if an "if" not an "else if" because we don't model the address computation
+        to have a "writeback" cycle.
+    */
+    if (au->relative_cycle == au->num_cycles)
+    {
+        if (au->is_store)
         {
-            rob_add_address(address_unit->rob, mb_entry->rob_id, address);
+            rob_add_address(au->rob, au->dest_id, au->address);
         }
+        else
+        {
+            memory_buffers_add_address(au->memory_buffers, au->dest_id, au->address);
+        }
+        au->relative_cycle = 0;
     }
 }
 
-void address_destroy(struct address_unit *address_unit)
+void address_clear(struct address_unit *au)
 {
-    free(address_unit);
+    au->relative_cycle = 0;
+}
+
+void address_destroy(struct address_unit *au)
+{
+    free(au);
 }
