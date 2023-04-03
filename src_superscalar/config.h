@@ -14,4 +14,6 @@
 
 #define REORDER_BUFFER_SIZE 128
 
+#define BTB_SIZE 64
+
 #endif // CONFIG_H

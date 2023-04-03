@@ -209,6 +209,7 @@ void cpu_destroy(struct cpu *cpu)
     }
     rob_destroy(cpu->rob);
     commit_destroy(cpu->commit_unit);
+    btb_destroy(cpu->btb);
 
     free(cpu);
 }
@@ -231,7 +232,7 @@ void update_current(struct cpu *cpu)
     memory_buffers_update_current(cpu->memory_buffers);
 }
 
-bool step(struct cpu *cpu)
+void step(struct cpu *cpu, uint32_t *num_comitted, uint32_t *num_branches, uint32_t *num_mispredicted)
 {
     fetch_step(cpu->fetch_unit);
     // printf("PC: %d\n", cpu->fetch_unit->reg_pc);
@@ -257,9 +258,7 @@ bool step(struct cpu *cpu)
     res_stations_step(cpu->branch_res_stations);
     memory_buffers_step(cpu->memory_buffers);
     rob_step(cpu->rob);
-    bool inst_committed = commit_step(cpu->commit_unit);
-
-    return inst_committed;
+    commit_step(cpu->commit_unit, num_comitted, num_branches, num_mispredicted);
 }
 
 int main(int argc, char *argv[])
@@ -272,15 +271,17 @@ int main(int argc, char *argv[])
 
     struct cpu *cpu = cpu_init(argv[1]);
 
-    uint64_t instructions = 0;
-    uint64_t cycles = 0;
+    uint32_t num_comitted = 0;
+    uint32_t num_branches = 0;
+    uint32_t num_mispredicted = 0;
+    uint32_t cycles = 0;
 
     // Cycle until PC will be 0
     while (!cpu->jump_zero)
     {
         // printf("\nCycle: %" PRIu64 "\n", cycles);
 
-        instructions += step(cpu);
+        step(cpu, &num_comitted, &num_branches, &num_mispredicted);
         update_current(cpu);
 
         // print_main_memory(cpu->mm);
@@ -292,9 +293,10 @@ int main(int argc, char *argv[])
     print_main_memory(cpu->mm);
     print_reg_file(cpu->reg_file);
 
-    printf("\nInstructions: %" PRIu64 "\n", instructions);
-    printf("Cycles: %" PRIu64 "\n", cycles);
-    printf("IPC: %f\n", (double)instructions / cycles);
+    printf("\nInstructions: %" PRIu32 "\n", num_comitted);
+    printf("Cycles: %" PRIu32 "\n", cycles);
+    printf("IPC: %f\n", (double)num_comitted / cycles);
+    printf("Misprediction Rate: %.3f%%\n", (double)num_mispredicted / num_branches * 100);
 
     cpu_destroy(cpu);
     return 0;

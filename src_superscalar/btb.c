@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "btb.h"
+#include "config.h"
 
 struct btb *btb_init()
 {
@@ -40,4 +41,9 @@ void btb_not_taken(struct btb *btb, uint32_t pc)
 {
     uint8_t *bits = &btb->entries[(pc / 4) % BTB_SIZE].bits;
     *bits = *bits == 0 ? 0 : *bits - 1;
+}
+
+void btb_destroy(struct btb *btb)
+{
+    free(btb);
 }

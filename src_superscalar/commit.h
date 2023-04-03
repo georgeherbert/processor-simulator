@@ -51,7 +51,7 @@ struct commit_unit *commit_init(
     struct reg *reg_pc_target,
     struct btb *btb,
     bool *jump_zero);
-bool commit_step(struct commit_unit *commit_unit);
+void commit_step(struct commit_unit *commit_unit, uint32_t *num_committed, uint32_t *num_branches, uint32_t *num_mispredicted);
 void commit_destroy(struct commit_unit *commit_unit);
 
 #endif // COMMIT_H

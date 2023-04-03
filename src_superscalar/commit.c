@@ -107,7 +107,7 @@ void update_btb(struct btb *btb, uint32_t inst_pc, uint32_t npc_actual)
     }
 }
 
-bool commit_step(struct commit_unit *commit_unit)
+void commit_step(struct commit_unit *commit_unit, uint32_t *num_committed, uint32_t *num_branches, uint32_t *num_mispredicted)
 {
     if (rob_ready(commit_unit->rob))
     {
@@ -118,8 +118,10 @@ bool commit_step(struct commit_unit *commit_unit)
             update_btb(commit_unit->btb, entry.inst_pc, entry.npc_actual);
             reg_file_reg_commit(commit_unit->reg_file, entry.dest, entry.value, entry.rob_id);
             printf("\tRF[%d] = %d\n", entry.dest, entry.value);
+            (*num_branches)++;
             if (entry.npc_actual != entry.npc_pred) // Misprediction
             {
+                (*num_mispredicted)++;
                 commit_clear(commit_unit);
                 reg_write(commit_unit->reg_pc_target, entry.npc_actual);
                 reg_write(commit_unit->pc_src, PC_SRC_MISPREDICT);
@@ -129,8 +131,10 @@ bool commit_step(struct commit_unit *commit_unit)
             break;
         case BRANCH:
             update_btb(commit_unit->btb, entry.inst_pc, entry.npc_actual);
+            (*num_branches)++;
             if (entry.npc_actual != entry.npc_pred) // Misprediction
             {
+                (*num_mispredicted)++;
                 commit_clear(commit_unit);
                 reg_write(commit_unit->reg_pc_target, entry.npc_actual);
                 reg_write(commit_unit->pc_src, PC_SRC_MISPREDICT);
@@ -161,9 +165,8 @@ bool commit_step(struct commit_unit *commit_unit)
             fprintf(stderr, "Error: Invalid op type in commit step\n");
             exit(EXIT_FAILURE);
         }
-        return true;
+        (*num_committed)++;
     }
-    return false;
 }
 
 void commit_destroy(struct commit_unit *commit_unit)

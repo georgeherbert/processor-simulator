@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define BTB_SIZE 128
+#include "config.h"
 
 struct btb_entry
 {
@@ -21,5 +21,6 @@ struct btb *btb_init();
 uint32_t btb_lookup(struct btb *btb, uint32_t addr);
 void btb_taken(struct btb *btb, uint32_t pc, uint32_t npc_pred);
 void btb_not_taken(struct btb *btb, uint32_t pc);
+void btb_destroy(struct btb *btb);
 
 #endif // BTB_H
