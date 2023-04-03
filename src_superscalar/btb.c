@@ -17,7 +17,7 @@ struct btb *btb_init()
 
     for (uint32_t i = 0; i < BTB_SIZE; i++)
     {
-        btb->entries[i].valid = false;
+        btb->entries[i].bits = 1; // Weakly not taken
     }
 
     return btb;
@@ -26,11 +26,18 @@ struct btb *btb_init()
 uint32_t btb_lookup(struct btb *btb, uint32_t pc)
 {
     struct btb_entry btb_entry = btb->entries[(pc / 4) % BTB_SIZE];
-    return btb_entry.valid ? btb_entry.npc_pred : pc + 4;
+    return btb_entry.bits > 1 ? btb_entry.npc_pred : pc + 4;
 }
 
-void btb_set(struct btb *btb, uint32_t pc, uint32_t npc_pred)
+void btb_taken(struct btb *btb, uint32_t pc, uint32_t npc_pred)
 {
-    btb->entries[(pc / 4) % BTB_SIZE].valid = true;
+    uint8_t *bits = &btb->entries[(pc / 4) % BTB_SIZE].bits;
+    *bits = *bits == 3 ? 3 : *bits + 1;
     btb->entries[(pc / 4) % BTB_SIZE].npc_pred = npc_pred;
+}
+
+void btb_not_taken(struct btb *btb, uint32_t pc)
+{
+    uint8_t *bits = &btb->entries[(pc / 4) % BTB_SIZE].bits;
+    *bits = *bits == 0 ? 0 : *bits - 1;
 }

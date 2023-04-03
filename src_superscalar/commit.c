@@ -71,6 +71,18 @@ void commit_clear(struct commit_unit *commit_unit)
     reg_write(commit_unit->inst_reg, 0x0);
 }
 
+void update_btb(struct btb *btb, uint32_t inst_pc, uint32_t npc_actual)
+{
+    if (npc_actual != inst_pc + 4)
+    {
+        btb_taken(btb, inst_pc, npc_actual);
+    }
+    else
+    {
+        btb_not_taken(btb, inst_pc);
+    }
+}
+
 bool commit_step(struct commit_unit *commit_unit)
 {
     if (rob_ready(commit_unit->rob))
@@ -79,25 +91,22 @@ bool commit_step(struct commit_unit *commit_unit)
         switch (entry.op_type)
         {
         case JUMP:
-            // printf("\tCommit: Jump (%d)\n", entry.inst_pc);
-            printf("\tRF[%d] = %d\n", entry.dest, entry.value);
+            update_btb(commit_unit->btb, entry.inst_pc, entry.npc_actual);
             reg_file_reg_commit(commit_unit->reg_file, entry.dest, entry.value, entry.rob_id);
-            if (entry.npc_actual != entry.npc_pred)
+            printf("\tRF[%d] = %d\n", entry.dest, entry.value);
+            if (entry.npc_actual != entry.npc_pred) // Misprediction
             {
-                // printf("J: %d %d\n", entry.npc_actual, entry.npc_pred);
-                btb_set(commit_unit->btb, entry.inst_pc, entry.npc_actual);
                 commit_clear(commit_unit);
                 reg_write(commit_unit->reg_pc_target, entry.npc_actual);
                 reg_write(commit_unit->pc_src, PC_SRC_MISPREDICT);
             }
             *commit_unit->jump_zero = (entry.npc_actual == 0x0); // End of program
+            // printf("\tJump %d %d\n", entry.dest, entry.value);
             break;
         case BRANCH:
-            // printf("\tCommit: Branch (%d) %d %d\n", entry.inst_pc, entry.npc_actual, entry.npc_pred);
-            if (entry.npc_actual != entry.npc_pred)
+            update_btb(commit_unit->btb, entry.inst_pc, entry.npc_actual);
+            if (entry.npc_actual != entry.npc_pred) // Misprediction
             {
-                // printf("B: %d %d\n", entry.npc_actual, entry.npc_pred);
-                btb_set(commit_unit->btb, entry.inst_pc, entry.npc_actual);
                 commit_clear(commit_unit);
                 reg_write(commit_unit->reg_pc_target, entry.npc_actual);
                 reg_write(commit_unit->pc_src, PC_SRC_MISPREDICT);
@@ -105,24 +114,24 @@ bool commit_step(struct commit_unit *commit_unit)
             break;
         case LOAD:
         case AL:
-            // printf("\tCommit: AL/Load %d %d %d\n", entry.dest, entry.value, entry.rob_id);
-            printf("\tRF[%d] = %d\n", entry.dest, entry.value);
             reg_file_reg_commit(commit_unit->reg_file, entry.dest, entry.value, entry.rob_id);
+            printf("\tRF[%d] = %d\n", entry.dest, entry.value);
+            // printf("\tAL/Load %d %d\n", entry.dest, entry.value);
             break;
         case STORE_WORD:
-            // printf("\tCommit: SW %d %d\n", entry.dest, entry.value);
-            printf("\tMM[%d] = %d\n", entry.dest, entry.value);
             main_memory_store_word(commit_unit->mm, entry.dest, entry.value);
+            printf("\tMM[%d] = %d\n", entry.dest, entry.value);
+            // printf("\tSW %d %d\n", entry.dest, entry.value);
             break;
         case STORE_HALF:
-            // printf("\tCommit: SH %d %d\n", entry.dest, entry.value);
-            printf("\tMM[%d] = %d\n", entry.dest, entry.value);
             main_memory_store_half(commit_unit->mm, entry.dest, entry.value);
+            printf("\tMM[%d] = %d\n", entry.dest, entry.value);
+            // printf("\tCSH %d %d\n", entry.dest, entry.value);
             break;
         case STORE_BYTE:
-            // printf("\tCommit: SB %d %d\n", entry.dest, entry.value);
-            printf("\tMM[%d] = %d\n", entry.dest, entry.value);
             main_memory_store_byte(commit_unit->mm, entry.dest, entry.value);
+            printf("\tMM[%d] = %d\n", entry.dest, entry.value);
+            // printf("\tSB %d %d\n", entry.dest, entry.value);
             break;
         default:
             fprintf(stderr, "Error: Invalid op type in commit step\n");
