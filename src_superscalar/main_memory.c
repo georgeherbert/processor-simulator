@@ -5,6 +5,7 @@
 
 uint8_t main_memory_load_byte(struct main_memory *mm, uint32_t addr)
 {
+    addr %= MEMORY_SIZE; // Speculative execution can cause out of bounds memory accesses
     uint8_t byte = mm->bytes[addr];
     return byte;
 }
