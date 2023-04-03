@@ -4,6 +4,7 @@
 #include <string.h>
 #include "inst_queue.h"
 #include "decode.h"
+#include "config.h"
 
 struct inst_queue *inst_queue_init()
 {

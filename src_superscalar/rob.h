@@ -6,8 +6,7 @@
 #include "decoded_inst.h"
 #include "reg.h"
 #include "cdb.h"
-
-#define REORDER_BUFFER_SIZE 32
+#include "config.h"
 
 struct rob_entry
 {

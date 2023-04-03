@@ -9,18 +9,19 @@
 
 struct alu_unit
 {
+    uint8_t id;                            // ID of alu unit
     struct res_stations *alu_res_stations; // Pointer to ALU reservation station
     struct reg_file *reg_file;             // Pointer to register file
     struct cdb *cdb;                       // Pointer to common data bus
 
     uint32_t num_cycles;
     uint32_t relative_cycle;
-
     uint32_t entry_rob_id;
     uint32_t out;
 };
 
 struct alu_unit *alu_init(
+    uint8_t id,
     struct res_stations *alu_res_stations,
     struct reg_file *reg_file,
     struct cdb *cdb);                        // Initialise alu unit

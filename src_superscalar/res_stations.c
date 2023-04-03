@@ -113,14 +113,19 @@ bool res_stations_all_busy(struct res_stations *rs)
     return all_busy;
 }
 
-struct res_station *res_stations_remove(struct res_stations *rs)
+struct res_station *res_stations_remove(struct res_stations *rs, uint8_t id)
 {
+
     for (uint32_t i = 0; i < rs->num_stations; i++)
     {
         if (rs->stations_current[i].qj == 0 && rs->stations_current[i].qk == 0 && rs->stations_current[i].busy)
         {
-            rs->stations_next[i].busy = false;
-            return &rs->stations_current[i];
+            if (id == 0) // Prevents us passing the same entry to each reservation station
+            {
+                rs->stations_next[i].busy = false;
+                return &rs->stations_current[i];
+            }
+            id--;
         }
     }
     return NULL;

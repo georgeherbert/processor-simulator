@@ -7,6 +7,7 @@
 #include "reg.h"
 
 struct alu_unit *alu_init(
+    uint8_t id,
     struct res_stations *alu_res_stations,
     struct reg_file *reg_file,
     struct cdb *cdb)
@@ -19,11 +20,12 @@ struct alu_unit *alu_init(
         exit(EXIT_FAILURE);
     }
 
+    alu_unit->id = id;
     alu_unit->alu_res_stations = alu_res_stations;
     alu_unit->reg_file = reg_file;
     alu_unit->cdb = cdb;
 
-    alu_unit->num_cycles = 10;
+    alu_unit->num_cycles = 5;
     alu_unit->relative_cycle = 0;
 
     return alu_unit;
@@ -33,7 +35,7 @@ void alu_step(struct alu_unit *alu_unit)
 {
     if (alu_unit->relative_cycle == 0)
     {
-        struct res_station *rs_entry = res_stations_remove(alu_unit->alu_res_stations);
+        struct res_station *rs_entry = res_stations_remove(alu_unit->alu_res_stations, alu_unit->id);
         if (rs_entry)
         {
             alu_unit->relative_cycle++;

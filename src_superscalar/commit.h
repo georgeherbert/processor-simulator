@@ -8,6 +8,7 @@
 #include "res_stations.h"
 #include "memory_buffers.h"
 #include "alu.h"
+#include "branch.h"
 #include "inst_queue.h"
 #include "btb.h"
 
@@ -19,7 +20,8 @@ struct commit_unit
     struct res_stations *alu_rs;
     struct res_stations *branch_rs;
     struct memory_buffers *mb;
-    struct alu_unit *alu;
+    struct alu_unit **alus;
+    struct branch_unit **branch_units;
     struct inst_queue *iq;
     struct reg *inst_reg;
     struct reg *pc_src;        // Pointer to control signal for PC source
@@ -35,7 +37,8 @@ struct commit_unit *commit_init(
     struct res_stations *alu_rs,
     struct res_stations *branch_rs,
     struct memory_buffers *mb,
-    struct alu_unit *alu,
+    struct alu_unit **alus,
+    struct branch_unit **branch_units,
     struct inst_queue *iq,
     struct reg *inst_reg,
     struct reg *pc_src,

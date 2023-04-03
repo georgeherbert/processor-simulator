@@ -6,6 +6,7 @@
 #include "reg.h"
 #include "decoded_inst.h"
 #include "cdb.h"
+#include "config.h"
 
 struct rob *rob_init(struct cdb *cdb)
 {

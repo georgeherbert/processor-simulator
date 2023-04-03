@@ -4,8 +4,7 @@
 #include <stdbool.h>
 #include "decoded_inst.h"
 #include "reg.h"
-
-#define INST_QUEUE_SIZE 32
+#include "config.h"
 
 struct inst_queue
 {

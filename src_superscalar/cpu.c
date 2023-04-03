@@ -21,12 +21,9 @@
 #include "rob.h"
 #include "commit.h"
 #include "btb.h"
+#include "config.h"
 
 #define NUM_WORDS_OUTPUT 2048
-
-#define NUM_ALU_RES_STATIONS 32
-#define NUM_BRANCH_RES_STATIONS 32
-#define NUM_MEMORY_BUFFERS 32
 
 struct cpu *cpu_init(char *file_name)
 {
@@ -37,7 +34,7 @@ struct cpu *cpu_init(char *file_name)
         exit(EXIT_FAILURE);
     }
 
-    cpu->cdb = cdb_init(3); // One entry for each functional unit
+    cpu->cdb = cdb_init(NUM_ALU_UNITS + NUM_BRANCH_UNITS + 1); // One entry for each functional unit
     cpu->reg_file = reg_file_init(cpu->cdb);
 
     cpu->pc_src.val_current = PC_SRC_NORMAL;
@@ -90,15 +87,24 @@ struct cpu *cpu_init(char *file_name)
     cpu->address_unit = address_init(
         cpu->memory_buffers,
         cpu->rob);
-    cpu->alu_unit = alu_init(
-        cpu->alu_res_stations,
-        cpu->reg_file,
-        cpu->cdb);
-    cpu->branch_unit = branch_init(
-        cpu->branch_res_stations,
-        cpu->reg_file,
-        cpu->cdb,
-        cpu->rob);
+    for (uint8_t i = 0; i < NUM_ALU_UNITS; i++)
+    {
+        cpu->alu_units[i] = alu_init(
+            i,
+            cpu->alu_res_stations,
+            cpu->reg_file,
+            cpu->cdb);
+    }
+    for (uint8_t i = 0; i < NUM_BRANCH_UNITS; i++)
+    {
+        cpu->branch_units[i] = branch_init(
+            i,
+            cpu->branch_res_stations,
+            cpu->reg_file,
+            cpu->cdb,
+            cpu->rob);
+    }
+
     cpu->memory_unit = memory_init(
         cpu->memory_buffers,
         cpu->mm,
@@ -111,7 +117,8 @@ struct cpu *cpu_init(char *file_name)
         cpu->alu_res_stations,
         cpu->branch_res_stations,
         cpu->memory_buffers,
-        cpu->alu_unit,
+        cpu->alu_units,
+        cpu->branch_units,
         cpu->inst_queue,
         &cpu->reg_inst,
         &cpu->pc_src,
@@ -175,8 +182,14 @@ void cpu_destroy(struct cpu *cpu)
     res_stations_destroy(cpu->alu_res_stations);
     res_stations_destroy(cpu->branch_res_stations);
     memory_buffers_destroy(cpu->memory_buffers);
-    alu_destroy(cpu->alu_unit);
-    branch_destroy(cpu->branch_unit);
+    for (uint8_t i = 0; i < NUM_ALU_UNITS; i++)
+    {
+        alu_destroy(cpu->alu_units[i]);
+    }
+    for (uint8_t i = 0; i < NUM_BRANCH_UNITS; i++)
+    {
+        branch_destroy(cpu->branch_units[i]);
+    }
     memory_destroy(cpu->memory_unit);
     address_destroy(cpu->address_unit);
     rob_destroy(cpu->rob);
@@ -209,8 +222,14 @@ bool step(struct cpu *cpu)
     // printf("PC: %d\n", cpu->fetch_unit->reg_pc);
     decode_step(cpu->decode_unit);
     issue_step(cpu->issue_unit);
-    alu_step(cpu->alu_unit);
-    branch_step(cpu->branch_unit);
+    for (uint8_t i = 0; i < NUM_ALU_UNITS; i++)
+    {
+        alu_step(cpu->alu_units[i]);
+    }
+    for (uint8_t i = 0; i < NUM_BRANCH_UNITS; i++)
+    {
+        branch_step(cpu->branch_units[i]);
+    }
     memory_step(cpu->memory_unit);
     address_step(cpu->address_unit);
     res_stations_step(cpu->alu_res_stations);

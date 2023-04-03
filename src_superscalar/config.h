@@ -1,0 +1,15 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#define NUM_ALU_UNITS 8
+#define NUM_BRANCH_UNITS 8
+
+#define NUM_ALU_RES_STATIONS 32
+#define NUM_BRANCH_RES_STATIONS 32
+#define NUM_MEMORY_BUFFERS 32
+
+#define INST_QUEUE_SIZE 32
+
+#define REORDER_BUFFER_SIZE 32
+
+#endif // CONFIG_H

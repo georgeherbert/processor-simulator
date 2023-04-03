@@ -6,6 +6,7 @@
 #include "res_stations.h"
 #include "memory_buffers.h"
 #include "alu.h"
+#include "branch.h"
 #include "inst_queue.h"
 #include "reg_file.h"
 #include "control.h"
@@ -17,7 +18,8 @@ struct commit_unit *commit_init(
     struct res_stations *alu_rs,
     struct res_stations *branch_rs,
     struct memory_buffers *mb,
-    struct alu_unit *alu,
+    struct alu_unit **alus,
+    struct branch_unit **branch_units,
     struct inst_queue *iq,
     struct reg *inst_reg,
     struct reg *pc_src,
@@ -38,7 +40,8 @@ struct commit_unit *commit_init(
     commit_unit->alu_rs = alu_rs;
     commit_unit->branch_rs = branch_rs;
     commit_unit->mb = mb;
-    commit_unit->alu = alu;
+    commit_unit->alus = alus;
+    commit_unit->branch_units = branch_units;
     commit_unit->iq = iq;
     commit_unit->inst_reg = inst_reg;
     commit_unit->pc_src = pc_src;
@@ -66,7 +69,14 @@ void commit_clear(struct commit_unit *commit_unit)
     res_stations_clear(commit_unit->alu_rs);
     res_stations_clear(commit_unit->branch_rs);
     memory_buffers_clear(commit_unit->mb);
-    alu_clear(commit_unit->alu);
+    for (uint8_t i = 0; i < NUM_ALU_UNITS; i++)
+    {
+        alu_clear(commit_unit->alus[i]);
+    }
+    for (uint8_t i = 0; i < NUM_BRANCH_UNITS; i++)
+    {
+        branch_clear(commit_unit->branch_units[i]);
+    }
     inst_queue_clear(commit_unit->iq);
     reg_write(commit_unit->inst_reg, 0x0);
 }
