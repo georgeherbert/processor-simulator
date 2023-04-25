@@ -7,7 +7,6 @@
 
 struct address_unit
 {
-    uint8_t id;                            // Address unit id
     struct memory_buffers *memory_buffers; // Pointer to memory buffers
     struct rob *rob;                       // Pointer to reorder buffer
 
@@ -18,9 +17,9 @@ struct address_unit
     uint32_t address;
 };
 
-struct address_unit *address_init(uint8_t id, struct memory_buffers *memory_buffers, struct rob *rob); // Initialise address unit
-void address_step(struct address_unit *address_unit);                                                  // Step address unit
-void address_clear(struct address_unit *address_unit);                                                 // Clear address unit
-void address_destroy(struct address_unit *address_unit);                                               // Free address unit
+struct address_unit *address_init(struct memory_buffers *memory_buffers, struct rob *rob); // Initialise address unit
+void address_step(struct address_unit *address_unit);                                      // Step address unit
+void address_clear(struct address_unit *address_unit);                                     // Clear address unit
+void address_destroy(struct address_unit *address_unit);                                   // Free address unit
 
 #endif // ADDRESS_H

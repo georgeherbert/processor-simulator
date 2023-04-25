@@ -87,7 +87,6 @@ struct cpu *cpu_init(char *file_name)
     for (uint8_t i = 0; i < NUM_ADDRESS_UNITS; i++)
     {
         cpu->address_units[i] = address_init(
-            i,
             cpu->memory_buffers,
             cpu->rob);
     }

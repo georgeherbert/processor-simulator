@@ -136,7 +136,7 @@ struct memory_buffer *memory_buffers_dequeue_memory(struct memory_buffers *mb)
         struct memory_buffer *mb_entry = &mb->buffers_current[i];
         enum op op = mb_entry->op;
         bool is_load = op == LW || op == LH || op == LHU || op == LB || op == LBU;
-        if (is_load && mb_entry->busy && mb_entry->queue_pos == 0)
+        if (is_load && mb_entry->busy && mb_entry->queue_pos == 0 && mb_entry->a != 0)
         {
             // We nest this if statement for efficiency
             if (!rob_earlier_stores(mb->rob, mb_entry->rob_id, mb_entry->a))
@@ -178,12 +178,13 @@ void shift_queue(struct memory_buffers *mb, uint32_t removed_pos)
     }
 }
 
-struct memory_buffer *memory_buffers_dequeue_address(struct memory_buffers *mb, uint8_t id)
+struct memory_buffer *memory_buffers_dequeue_address(struct memory_buffers *mb)
 {
-    // id = mb->cur_cycle_count_address;
+    uint32_t id = mb->cur_cycle_count_address;
     uint32_t queue_pos_indices[mb->num_buffers_in_queue_current];
     get_queue_pos_indices(mb, queue_pos_indices);
 
+    // printf("%d\n", mb->num_buffers_in_queue_current);
     bool raw_potential = false;
     /*
         We can't send a load for effective address execution if we haven't sent any prior stores.
@@ -221,6 +222,11 @@ struct memory_buffer *memory_buffers_dequeue_address(struct memory_buffers *mb, 
                 {
                     // printf("LOAD\n");
                     shift_queue(mb, mb->buffers_next[queue_pos_indices[i]].queue_pos);
+                    /*
+                        We set the address to 0 to indicate that the buffer is in the address unit.
+                    */
+                    mb->buffers_next[queue_pos_indices[i]].a = 0;
+                    mb->buffers_next[queue_pos_indices[i]].queue_pos = 0;
                     mb->cur_cycle_count_address++;
                     return mb_entry;
                 }

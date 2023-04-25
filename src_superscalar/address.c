@@ -5,7 +5,7 @@
 #include "memory_buffers.h"
 #include "rob.h"
 
-struct address_unit *address_init(uint8_t id, struct memory_buffers *memory_buffers, struct rob *rob)
+struct address_unit *address_init(struct memory_buffers *memory_buffers, struct rob *rob)
 {
     struct address_unit *au = malloc(sizeof(struct address_unit));
     if (au == NULL)
@@ -14,7 +14,6 @@ struct address_unit *address_init(uint8_t id, struct memory_buffers *memory_buff
         exit(EXIT_FAILURE);
     }
 
-    au->id = id;
     au->memory_buffers = memory_buffers;
     au->rob = rob;
 
@@ -28,7 +27,7 @@ void address_step(struct address_unit *au)
 {
     if (au->relative_cycle == 0)
     {
-        struct memory_buffer *mb_entry = memory_buffers_dequeue_address(au->memory_buffers, au->id);
+        struct memory_buffer *mb_entry = memory_buffers_dequeue_address(au->memory_buffers);
         if (mb_entry)
         {
             au->relative_cycle++;
