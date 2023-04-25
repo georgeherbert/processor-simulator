@@ -94,7 +94,6 @@ struct cpu *cpu_init(char *file_name)
     for (uint8_t i = 0; i < NUM_ALU_UNITS; i++)
     {
         cpu->alu_units[i] = alu_init(
-            i,
             cpu->alu_res_stations,
             cpu->reg_file,
             cpu->cdb);
@@ -102,7 +101,6 @@ struct cpu *cpu_init(char *file_name)
     for (uint8_t i = 0; i < NUM_BRANCH_UNITS; i++)
     {
         cpu->branch_units[i] = branch_init(
-            i,
             cpu->branch_res_stations,
             cpu->reg_file,
             cpu->cdb,
@@ -111,7 +109,6 @@ struct cpu *cpu_init(char *file_name)
     for (uint8_t i = 0; i < NUM_MEMORY_UNITS; i++)
     {
         cpu->memory_units[i] = memory_init(
-            i,
             cpu->memory_buffers,
             cpu->mm,
             cpu->reg_file,

@@ -7,7 +7,6 @@
 #include "reg.h"
 
 struct alu_unit *alu_init(
-    uint8_t id,
     struct res_stations *alu_res_stations,
     struct reg_file *reg_file,
     struct cdb *cdb)
@@ -20,12 +19,11 @@ struct alu_unit *alu_init(
         exit(EXIT_FAILURE);
     }
 
-    alu_unit->id = id;
     alu_unit->alu_res_stations = alu_res_stations;
     alu_unit->reg_file = reg_file;
     alu_unit->cdb = cdb;
 
-    alu_unit->num_cycles = 5;
+    alu_unit->num_cycles = -1;
     alu_unit->relative_cycle = 0;
 
     return alu_unit;
@@ -35,7 +33,7 @@ void alu_step(struct alu_unit *alu_unit)
 {
     if (alu_unit->relative_cycle == 0)
     {
-        struct res_station *rs_entry = res_stations_remove(alu_unit->alu_res_stations, alu_unit->id);
+        struct res_station *rs_entry = res_stations_remove(alu_unit->alu_res_stations);
         if (rs_entry)
         {
             alu_unit->relative_cycle++;
@@ -47,47 +45,59 @@ void alu_step(struct alu_unit *alu_unit)
             case ADD:
             case ADDI:
                 out = rs_entry->vj + rs_entry->vk;
+                alu_unit->num_cycles = EXEC_CYCLES_ADD;
                 break;
             case LUI:
                 out = rs_entry->vj;
+                alu_unit->num_cycles = EXEC_CYCLES_LUI;
                 break;
             case AUIPC:
                 out = rs_entry->vj + rs_entry->inst_pc;
+                alu_unit->num_cycles = EXEC_CYCLES_AUIPC;
                 break;
             case SUB:
                 out = rs_entry->vj - rs_entry->vk;
+                alu_unit->num_cycles = EXEC_CYCLES_SUB;
                 break;
             case SLL:
             case SLLI:
                 out = rs_entry->vj << rs_entry->vk;
+                alu_unit->num_cycles = EXEC_CYCLES_SLL;
                 break;
             case SLT:
             case SLTI:
                 out = (int32_t)rs_entry->vj < (int32_t)rs_entry->vk;
+                alu_unit->num_cycles = EXEC_CYCLES_SLT;
                 break;
             case SLTU:
             case SLTIU:
                 out = rs_entry->vj < rs_entry->vk;
+                alu_unit->num_cycles = EXEC_CYCLES_SLTU;
                 break;
             case XOR:
             case XORI:
                 out = rs_entry->vj ^ rs_entry->vk;
+                alu_unit->num_cycles = EXEC_CYCLES_XOR;
                 break;
             case SRL:
             case SRLI:
                 out = rs_entry->vj >> rs_entry->vk;
+                alu_unit->num_cycles = EXEC_CYCLES_SRL;
                 break;
             case SRA:
             case SRAI:
                 out = (int32_t)rs_entry->vj >> rs_entry->vk;
+                alu_unit->num_cycles = EXEC_CYCLES_SRA;
                 break;
             case OR:
             case ORI:
                 out = rs_entry->vj | rs_entry->vk;
+                alu_unit->num_cycles = EXEC_CYCLES_OR;
                 break;
             case AND:
             case ANDI:
                 out = rs_entry->vj & rs_entry->vk;
+                alu_unit->num_cycles = EXEC_CYCLES_AND;
                 break;
             default:
                 fprintf(stderr, "Error: Unknown ALU operation\n");
@@ -111,6 +121,7 @@ void alu_step(struct alu_unit *alu_unit)
 
 void alu_clear(struct alu_unit *alu_unit)
 {
+    alu_unit->num_cycles = -1;
     alu_unit->relative_cycle = 0;
 }
 

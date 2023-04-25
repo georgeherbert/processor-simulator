@@ -29,6 +29,8 @@ struct res_stations
     struct reg_file *reg_file;            // Pointer to register file
     uint32_t num_stations;                // Number of reservation stations
     struct cdb *cdb;                      // Pointer to common data bus
+
+    uint32_t cur_cycle_count; // Number of entries moved to ALUs in current cycle
 };
 
 struct res_stations *res_stations_init(
@@ -46,11 +48,11 @@ void res_stations_add(
     uint32_t vk,
     uint32_t a,
     uint32_t dest,
-    uint32_t inst_pc);                                                        // Add instruction to reservation stations
-bool res_stations_all_busy(struct res_stations *rs);                          // Check if all reservation stations are busy
-struct res_station *res_stations_remove(struct res_stations *rs, uint8_t id); // Remove instruction from reservation stations
-void res_stations_clear(struct res_stations *rs);                             // Clear reservation stations on mispredict
-void res_stations_update_current(struct res_stations *rs);                    // Update current reservation stations
-void res_stations_destroy(struct res_stations *rs);                           // Free reservation stations
+    uint32_t inst_pc);                                            // Add instruction to reservation stations
+bool res_stations_all_busy(struct res_stations *rs);              // Check if all reservation stations are busy
+struct res_station *res_stations_remove(struct res_stations *rs); // Remove instruction from reservation stations
+void res_stations_clear(struct res_stations *rs);                 // Clear reservation stations on mispredict
+void res_stations_update_current(struct res_stations *rs);        // Update current reservation stations
+void res_stations_destroy(struct res_stations *rs);               // Free reservation stations
 
 #endif // RES_STATIONS_H

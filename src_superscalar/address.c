@@ -18,7 +18,7 @@ struct address_unit *address_init(uint8_t id, struct memory_buffers *memory_buff
     au->memory_buffers = memory_buffers;
     au->rob = rob;
 
-    au->num_cycles = 1;
+    au->num_cycles = EXEC_CYCLES_ADDRESS;
     au->relative_cycle = 0;
 
     return au;
@@ -50,10 +50,12 @@ void address_step(struct address_unit *au)
         if (au->is_store)
         {
             rob_add_address(au->rob, au->dest_id, au->address);
+            // printf("Store added with address %d\n", au->address);
         }
         else
         {
             memory_buffers_add_address(au->memory_buffers, au->dest_id, au->address);
+            // printf("Load added with address %d\n", au->address);
         }
         au->relative_cycle = 0;
     }

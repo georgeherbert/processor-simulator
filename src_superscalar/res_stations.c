@@ -45,6 +45,8 @@ struct res_stations *res_stations_init(
         rs->stations_next[i].busy = false;
     }
 
+    rs->cur_cycle_count = 0;
+
     return rs;
 }
 
@@ -113,9 +115,9 @@ bool res_stations_all_busy(struct res_stations *rs)
     return all_busy;
 }
 
-struct res_station *res_stations_remove(struct res_stations *rs, uint8_t id)
+struct res_station *res_stations_remove(struct res_stations *rs)
 {
-
+    uint32_t id = rs->cur_cycle_count;
     for (uint32_t i = 0; i < rs->num_stations; i++)
     {
         if (rs->stations_current[i].qj == 0 && rs->stations_current[i].qk == 0 && rs->stations_current[i].busy)
@@ -123,6 +125,7 @@ struct res_station *res_stations_remove(struct res_stations *rs, uint8_t id)
             if (id == 0) // Prevents us passing the same entry to each reservation station
             {
                 rs->stations_next[i].busy = false;
+                rs->cur_cycle_count++;
                 return &rs->stations_current[i];
             }
             id--;
@@ -142,6 +145,7 @@ void res_stations_clear(struct res_stations *rs)
 void res_stations_update_current(struct res_stations *rs)
 {
     memcpy(rs->stations_current, rs->stations_next, sizeof(struct res_station) * rs->num_stations);
+    rs->cur_cycle_count = 0;
 }
 
 void res_stations_destroy(struct res_stations *rs)

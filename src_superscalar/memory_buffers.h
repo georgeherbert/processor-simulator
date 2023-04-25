@@ -34,6 +34,9 @@ struct memory_buffers
     struct reg_file *reg_file; // Pointer to register file
     struct cdb *cdb;           // Pointer to common data bus
     struct rob *rob;           // Pointer to reorder buffer
+
+    uint32_t cur_cycle_count_address; // Counter for the number of entires sent to address units in current cycle
+    uint32_t cur_cycle_count_memory;  // Counter for the number of entries sent to memory units in current cycle
 };
 
 struct memory_buffers *memory_buffers_init(
@@ -53,7 +56,7 @@ void memory_buffers_enqueue(
     uint32_t a,
     uint32_t rob_id);                                    // Add instruction to memory buffers
 bool memory_buffers_all_busy(struct memory_buffers *mb); // Check if all memory buffers are busy
-struct memory_buffer *memory_buffers_dequeue_memory(struct memory_buffers *mb, uint8_t id);
+struct memory_buffer *memory_buffers_dequeue_memory(struct memory_buffers *mb);
 struct memory_buffer *memory_buffers_dequeue_address(struct memory_buffers *mb, uint8_t id);
 void memory_buffers_add_address(struct memory_buffers *mb, uint32_t id, uint32_t address); // Add address to memory buffer
 void memory_buffers_clear(struct memory_buffers *mb);                                      // Clear memory buffers on mispredict

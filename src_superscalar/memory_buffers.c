@@ -52,6 +52,9 @@ struct memory_buffers *memory_buffers_init(
         mb->buffers_next[i].queue_pos = 0;
     }
 
+    mb->cur_cycle_count_address = 0;
+    mb->cur_cycle_count_memory = 0;
+
     return mb;
 }
 
@@ -109,6 +112,7 @@ void memory_buffers_enqueue(
             */
             mb->buffers_next[i].queue_pos = mb->num_buffers_in_queue_current + 1;
             mb->num_buffers_in_queue_next++;
+
             break;
         }
     }
@@ -124,8 +128,9 @@ bool memory_buffers_all_busy(struct memory_buffers *mb)
     return all_busy;
 }
 
-struct memory_buffer *memory_buffers_dequeue_memory(struct memory_buffers *mb, uint8_t id)
+struct memory_buffer *memory_buffers_dequeue_memory(struct memory_buffers *mb)
 {
+    uint32_t id = mb->cur_cycle_count_memory;
     for (uint32_t i = 0; i < mb->num_buffers; i++)
     {
         struct memory_buffer *mb_entry = &mb->buffers_current[i];
@@ -139,6 +144,8 @@ struct memory_buffer *memory_buffers_dequeue_memory(struct memory_buffers *mb, u
                 if (id == 0)
                 {
                     mb->buffers_next[i].busy = false;
+                    mb->cur_cycle_count_memory++;
+                    // printf("%d\n", mb_entry->a);
                     return mb_entry;
                 }
                 id--;
@@ -173,6 +180,7 @@ void shift_queue(struct memory_buffers *mb, uint32_t removed_pos)
 
 struct memory_buffer *memory_buffers_dequeue_address(struct memory_buffers *mb, uint8_t id)
 {
+    // id = mb->cur_cycle_count_address;
     uint32_t queue_pos_indices[mb->num_buffers_in_queue_current];
     get_queue_pos_indices(mb, queue_pos_indices);
 
@@ -182,7 +190,7 @@ struct memory_buffer *memory_buffers_dequeue_address(struct memory_buffers *mb, 
         Otherwise, a load could then execute in the memory stage before the store, even though
         they may both have the same effective address. This would be a RAW hazard.
     */
-
+    // printf("\n");
     for (uint32_t i = 0; i < mb->num_buffers_in_queue_current; i++)
     {
         struct memory_buffer *mb_entry = &mb->buffers_current[queue_pos_indices[i]];
@@ -192,8 +200,10 @@ struct memory_buffer *memory_buffers_dequeue_address(struct memory_buffers *mb, 
             {
                 if (id == 0)
                 {
+                    // printf("STORE\n");
                     mb->buffers_next[queue_pos_indices[i]].busy = false;
                     shift_queue(mb, mb->buffers_next[queue_pos_indices[i]].queue_pos);
+                    mb->cur_cycle_count_address++;
                     return mb_entry;
                 }
                 id--;
@@ -209,7 +219,9 @@ struct memory_buffer *memory_buffers_dequeue_address(struct memory_buffers *mb, 
             {
                 if (id == 0)
                 {
+                    // printf("LOAD\n");
                     shift_queue(mb, mb->buffers_next[queue_pos_indices[i]].queue_pos);
+                    mb->cur_cycle_count_address++;
                     return mb_entry;
                 }
                 id--;
@@ -247,6 +259,8 @@ void memory_buffers_update_current(struct memory_buffers *mb)
 {
     memcpy(mb->buffers_current, mb->buffers_next, sizeof(struct memory_buffer) * mb->num_buffers);
     mb->num_buffers_in_queue_current = mb->num_buffers_in_queue_next;
+    mb->cur_cycle_count_address = 0;
+    mb->cur_cycle_count_memory = 0;
 }
 
 void memory_buffers_destroy(struct memory_buffers *mb)

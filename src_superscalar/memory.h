@@ -9,7 +9,6 @@
 
 struct memory_unit
 {
-    uint8_t id;                            // ID of memory unit
     struct memory_buffers *memory_buffers; // Pointer to memory buffers
     struct main_memory *mm;                // Pointer to main memory
     struct reg_file *reg_file;             // Pointer to register file
@@ -22,7 +21,6 @@ struct memory_unit
 };
 
 struct memory_unit *memory_init(
-    uint8_t id,
     struct memory_buffers *memory_buffers,
     struct main_memory *mm,
     struct reg_file *reg_file,

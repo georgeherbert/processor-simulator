@@ -215,37 +215,37 @@ void handle_op_imm(
     case FUNCT3_ADDI:
         *reg_imm = imm;
         alu_op = CTRL_ALU_OP_ADD;
-        // printf("addi x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+        printf("addi x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
         break;
     case FUNCT3_SLTI:
         *reg_imm = imm;
         alu_op = CTRL_ALU_OP_SLT;
-        // printf("slti x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+        printf("slti x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
         break;
     case FUNCT3_SLTIU:
         *reg_imm = imm;
         alu_op = CTRL_ALU_OP_SLTU;
-        // printf("sltiu x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+        printf("sltiu x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
         break;
     case FUNCT3_XORI:
         *reg_imm = imm;
         alu_op = CTRL_ALU_OP_XOR;
-        // printf("xori x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+        printf("xori x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
         break;
     case FUNCT3_ORI:
         *reg_imm = imm;
         alu_op = CTRL_ALU_OP_OR;
-        // printf("ori x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+        printf("ori x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
         break;
     case FUNCT3_ANDI:
         *reg_imm = imm;
         alu_op = CTRL_ALU_OP_AND;
-        // printf("andi x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+        printf("andi x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
         break;
     case FUNCT3_SLLI:
         *reg_imm = shamt;
         alu_op = CTRL_ALU_OP_SLL;
-        // printf("slli x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+        printf("slli x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
         break;
     case FUNCT3_SRLI_SRAI:
         switch (get_funct7(inst))
@@ -253,12 +253,12 @@ void handle_op_imm(
         case FUNCT7_SRLI:
             *reg_imm = shamt;
             alu_op = CTRL_ALU_OP_SRL;
-            // printf("srli x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+            printf("srli x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
             break;
         case FUNCT7_SRAI:
             *reg_imm = shamt;
             alu_op = CTRL_ALU_OP_SRA;
-            // printf("srai x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+            printf("srai x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
             break;
         default:
             fprintf(stderr, "Error: Unknown funct7");
@@ -313,7 +313,7 @@ void handle_lui(
         CTRL_MEM_NONE,
         CTRL_WB_ALU_OUT);
 
-    // printf("lui x%d, %d\n", *reg_rd_addr, *reg_imm);
+    printf("lui x%d, %d\n", *reg_rd_addr, *reg_imm);
 }
 
 void handle_auipc(
@@ -344,7 +344,7 @@ void handle_auipc(
         CTRL_MEM_NONE,
         CTRL_WB_ALU_OUT);
 
-    // printf("auipc x%d, %d", *reg_rd_addr, *reg_imm);
+    printf("auipc x%d, %d", *reg_rd_addr, *reg_imm);
 }
 
 void handle_op(
@@ -375,11 +375,11 @@ void handle_op(
         {
         case FUNCT7_ADD:
             alu_op = CTRL_ALU_OP_ADD;
-            // printf("add x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+            printf("add x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
             break;
         case FUNCT7_SUB:
             alu_op = CTRL_ALU_OP_SUB;
-            // printf("sub x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+            printf("sub x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
             break;
         default:
             fprintf(stderr, "Error: Unknown funct7");
@@ -388,30 +388,30 @@ void handle_op(
         break;
     case FUNCT3_SLL:
         alu_op = CTRL_ALU_OP_SLL;
-        // printf("sll x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+        printf("sll x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
         break;
     case FUNCT3_SLT:
         alu_op = CTRL_ALU_OP_SLT;
-        // printf("slt x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+        printf("slt x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
         break;
     case FUNCT3_SLTU:
         alu_op = CTRL_ALU_OP_SLTU;
-        // printf("sltu x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+        printf("sltu x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
         break;
     case FUNCT3_XOR:
         alu_op = CTRL_ALU_OP_XOR;
-        // printf("xor x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+        printf("xor x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
         break;
     case FUNCT3_SRL_SRA:
         switch (get_funct7(inst))
         {
         case FUNCT7_SRL:
             alu_op = CTRL_ALU_OP_SRL;
-            // printf("srl x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+            printf("srl x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
             break;
         case FUNCT7_SRA:
             alu_op = CTRL_ALU_OP_SRA;
-            // printf("sra x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+            printf("sra x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
             break;
         default:
             fprintf(stderr, "Error: Unknown funct7");
@@ -420,11 +420,11 @@ void handle_op(
         break;
     case FUNCT3_OR:
         alu_op = CTRL_ALU_OP_OR;
-        // printf("or x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+        printf("or x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
         break;
     case FUNCT3_AND:
         alu_op = CTRL_ALU_OP_AND;
-        // printf("and x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
+        printf("and x%d, x%d, x%d\n", *reg_rd_addr, rs1_addr, rs2_addr);
         break;
     default:
         fprintf(stderr, "Error: Unknown funct3");
@@ -474,7 +474,7 @@ void handle_jal(
         CTRL_MEM_NONE,
         CTRL_WB_NPC);
 
-    // printf("jal x%d, %d\n", *reg_rd_addr, *reg_imm);
+    printf("jal x%d, %d\n", *reg_rd_addr, *reg_imm);
 }
 
 void handle_jalr(
@@ -509,7 +509,7 @@ void handle_jalr(
         CTRL_MEM_NONE,
         CTRL_WB_NPC);
 
-    // printf("jalr x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
+    printf("jalr x%d, x%d, %d\n", *reg_rd_addr, rs1_addr, *reg_imm);
 }
 
 void handle_branch(
@@ -537,30 +537,30 @@ void handle_branch(
     {
     case FUNCT3_BEQ:
         cmp = CTRL_CMP_EQ;
-        // printf("beq x%d, x%d, %d\n", rs1_addr, rs2_addr, *reg_imm);
+        printf("beq x%d, x%d, %d\n", rs1_addr, rs2_addr, *reg_imm);
         break;
     case FUNCT3_BNE:
         cmp = CTRL_CMP_NE;
-        // printf("bne x%d, x%d, %d\n", rs1_addr, rs2_addr, *reg_imm);
+        printf("bne x%d, x%d, %d\n", rs1_addr, rs2_addr, *reg_imm);
         break;
     case FUNCT3_BLT:
         cmp = CTRL_CMP_LT;
-        // printf("blt x%d, x%d, %d\n", rs1_addr, rs2_addr, *reg_imm);
+        printf("blt x%d, x%d, %d\n", rs1_addr, rs2_addr, *reg_imm);
         break;
     case FUNCT3_BLTU:
         cmp = CTRL_CMP_LTU;
-        // printf("bltu x%d, x%d, %d\n", rs1_addr, rs2_addr, *reg_imm);
+        printf("bltu x%d, x%d, %d\n", rs1_addr, rs2_addr, *reg_imm);
         break;
     case FUNCT3_BGE:
         cmp = CTRL_CMP_GE;
-        // printf("bge x%d, x%d, %d\n", rs1_addr, rs2_addr, *reg_imm);
+        printf("bge x%d, x%d, %d\n", rs1_addr, rs2_addr, *reg_imm);
         break;
     case FUNCT3_BGEU:
         cmp = CTRL_CMP_GEU;
-        // printf("bgeu x%d, x%d, %d\n", rs1_addr, rs2_addr, *reg_imm);
+        printf("bgeu x%d, x%d, %d\n", rs1_addr, rs2_addr, *reg_imm);
         break;
     default:
-        // printf("Unknown funct3");
+        printf("Unknown funct3");
         exit(EXIT_FAILURE);
     }
 
@@ -603,26 +603,26 @@ void handle_load(
     {
     case FUNCT3_LB:
         mem = CTRL_MEM_LOAD_BYTE;
-        // printf("lb x%d, %d(x%d)\n", *reg_rd_addr, *reg_imm, rs1_addr);
+        printf("lb x%d, %d(x%d)\n", *reg_rd_addr, *reg_imm, rs1_addr);
         break;
     case FUNCT3_LBU:
         mem = CTRL_MEM_LOAD_BYTE_UNSIGNED;
-        // printf("lbu x%d, %d(x%d)\n", *reg_rd_addr, *reg_imm, rs1_addr);
+        printf("lbu x%d, %d(x%d)\n", *reg_rd_addr, *reg_imm, rs1_addr);
         break;
     case FUNCT3_LH:
         mem = CTRL_MEM_LOAD_HALF;
-        // printf("lh x%d, %d(x%d)\n", *reg_rd_addr, *reg_imm, rs1_addr);
+        printf("lh x%d, %d(x%d)\n", *reg_rd_addr, *reg_imm, rs1_addr);
         break;
     case FUNCT3_LHU:
         mem = CTRL_MEM_LOAD_HALF_UNSIGNED;
-        // printf("lhu x%d, %d(x%d)\n", *reg_rd_addr, *reg_imm, rs1_addr);
+        printf("lhu x%d, %d(x%d)\n", *reg_rd_addr, *reg_imm, rs1_addr);
         break;
     case FUNCT3_LW:
         mem = CTRL_MEM_LOAD_WORD;
-        // printf("lw x%d, %d(x%d)\n", *reg_rd_addr, *reg_imm, rs1_addr);
+        printf("lw x%d, %d(x%d)\n", *reg_rd_addr, *reg_imm, rs1_addr);
         break;
     default:
-        // printf("Unknown funct3");
+        printf("Unknown funct3");
         exit(EXIT_FAILURE);
     }
 
@@ -666,18 +666,18 @@ void handle_store(
     {
     case FUNCT3_SB:
         mem = CTRL_MEM_STORE_BYTE;
-        // printf("sb x%d, %d(x%d)\n", rs2_addr, *reg_imm, rs1_addr);
+        printf("sb x%d, %d(x%d)\n", rs2_addr, *reg_imm, rs1_addr);
         break;
     case FUNCT3_SH:
         mem = CTRL_MEM_STORE_HALF;
-        // printf("sh x%d, %d(x%d)\n", rs2_addr, *reg_imm, rs1_addr);
+        printf("sh x%d, %d(x%d)\n", rs2_addr, *reg_imm, rs1_addr);
         break;
     case FUNCT3_SW:
         mem = CTRL_MEM_STORE_WORD;
-        // printf("sw x%d, %d(x%d)\n", rs2_addr, *reg_imm, rs1_addr);
+        printf("sw x%d, %d(x%d)\n", rs2_addr, *reg_imm, rs1_addr);
         break;
     default:
-        // printf("Unknown funct3");
+        printf("Unknown funct3");
         exit(EXIT_FAILURE);
     }
 

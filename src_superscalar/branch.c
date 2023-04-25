@@ -9,7 +9,6 @@
 #include "reg.h"
 
 struct branch_unit *branch_init(
-    uint8_t id,
     struct res_stations *branch_res_stations,
     struct reg_file *reg_file,
     struct cdb *cdb,
@@ -23,13 +22,12 @@ struct branch_unit *branch_init(
         exit(EXIT_FAILURE);
     }
 
-    branch_unit->id = id;
     branch_unit->branch_res_stations = branch_res_stations;
     branch_unit->reg_file = reg_file;
     branch_unit->cdb = cdb;
     branch_unit->rob = rob;
 
-    branch_unit->num_cycles = 1;
+    branch_unit->num_cycles = -1;
     branch_unit->relative_cycle = 0;
 
     return branch_unit;
@@ -39,7 +37,7 @@ void branch_step(struct branch_unit *branch_unit)
 {
     if (branch_unit->relative_cycle == 0)
     {
-        struct res_station *rs_entry = res_stations_remove(branch_unit->branch_res_stations, branch_unit->id);
+        struct res_station *rs_entry = res_stations_remove(branch_unit->branch_res_stations);
 
         if (rs_entry)
         {
@@ -52,28 +50,36 @@ void branch_step(struct branch_unit *branch_unit)
             case JAL:
                 npc_actual = rs_entry->a + rs_entry->inst_pc;
                 branch_unit->out_cdb = rs_entry->inst_pc + 4;
+                branch_unit->num_cycles = EXEC_CYCLES_JAL;
                 break;
             case JALR:
                 npc_actual = (rs_entry->vj + rs_entry->a) & ~1;
                 branch_unit->out_cdb = rs_entry->inst_pc + 4;
+                branch_unit->num_cycles = EXEC_CYCLES_JALR;
                 break;
             case BEQ:
                 npc_actual = rs_entry->vj == rs_entry->vk ? (rs_entry->a + rs_entry->inst_pc) : rs_entry->inst_pc + 4;
+                branch_unit->num_cycles = EXEC_CYCLES_BEQ;
                 break;
             case BNE:
                 npc_actual = rs_entry->vj != rs_entry->vk ? (rs_entry->a + rs_entry->inst_pc) : rs_entry->inst_pc + 4;
+                branch_unit->num_cycles = EXEC_CYCLES_BNE;
                 break;
             case BLT:
                 npc_actual = (int32_t)rs_entry->vj < (int32_t)rs_entry->vk ? (rs_entry->a + rs_entry->inst_pc) : rs_entry->inst_pc + 4;
+                branch_unit->num_cycles = EXEC_CYCLES_BLT;
                 break;
             case BLTU:
                 npc_actual = rs_entry->vj < rs_entry->vk ? (rs_entry->a + rs_entry->inst_pc) : rs_entry->inst_pc + 4;
+                branch_unit->num_cycles = EXEC_CYCLES_BLTU;
                 break;
             case BGE:
                 npc_actual = (int32_t)rs_entry->vj >= (int32_t)rs_entry->vk ? (rs_entry->a + rs_entry->inst_pc) : rs_entry->inst_pc + 4;
+                branch_unit->num_cycles = EXEC_CYCLES_BGE;
                 break;
             case BGEU:
                 npc_actual = rs_entry->vj >= rs_entry->vk ? (rs_entry->a + rs_entry->inst_pc) : rs_entry->inst_pc + 4;
+                branch_unit->num_cycles = EXEC_CYCLES_BGEU;
                 break;
             default:
                 fprintf(stderr, "Error: Unknown branch or jump operation\n");
@@ -102,6 +108,7 @@ void branch_step(struct branch_unit *branch_unit)
 
 void branch_clear(struct branch_unit *branch_unit)
 {
+    branch_unit->num_cycles = -1;
     branch_unit->relative_cycle = 0;
 }
 

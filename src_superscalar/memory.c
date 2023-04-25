@@ -7,7 +7,6 @@
 #include "memory_buffers.h"
 
 struct memory_unit *memory_init(
-    uint8_t id,
     struct memory_buffers *memory_buffers,
     struct main_memory *mm,
     struct reg_file *reg_file,
@@ -21,13 +20,12 @@ struct memory_unit *memory_init(
         exit(EXIT_FAILURE);
     }
 
-    mu->id = id;
     mu->memory_buffers = memory_buffers;
     mu->mm = mm;
     mu->reg_file = reg_file;
     mu->cdb = cdb;
 
-    mu->num_cycles = 1;
+    mu->num_cycles = -1;
     mu->relative_cycle = 0;
 
     return mu;
@@ -37,7 +35,7 @@ void memory_step(struct memory_unit *mu)
 {
     if (mu->relative_cycle == 0)
     {
-        struct memory_buffer *mb_entry = memory_buffers_dequeue_memory(mu->memory_buffers, mu->id);
+        struct memory_buffer *mb_entry = memory_buffers_dequeue_memory(mu->memory_buffers);
 
         if (mb_entry)
         {
@@ -47,18 +45,23 @@ void memory_step(struct memory_unit *mu)
             {
             case LW:
                 mu->out = main_memory_load_word(mu->mm, mb_entry->a);
+                mu->num_cycles = MEMORY_CYCLES_LW;
                 break;
             case LH:
                 mu->out = (int32_t)(int16_t)main_memory_load_half(mu->mm, mb_entry->a);
+                mu->num_cycles = MEMORY_CYCLES_LH;
                 break;
             case LHU:
                 mu->out = main_memory_load_half(mu->mm, mb_entry->a);
+                mu->num_cycles = MEMORY_CYCLES_LHU;
                 break;
             case LB:
                 mu->out = (int32_t)(int8_t)main_memory_load_byte(mu->mm, mb_entry->a);
+                mu->num_cycles = MEMORY_CYCLES_LB;
                 break;
             case LBU:
                 mu->out = main_memory_load_byte(mu->mm, mb_entry->a);
+                mu->num_cycles = MEMORY_CYCLES_LBU;
                 break;
             default:
                 fprintf(stderr, "Error: Unknown memory operation");
@@ -81,6 +84,7 @@ void memory_step(struct memory_unit *mu)
 
 void memory_clear(struct memory_unit *mu)
 {
+    mu->num_cycles = -1;
     mu->relative_cycle = 0;
 }
 

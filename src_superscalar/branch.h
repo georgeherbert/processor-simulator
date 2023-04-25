@@ -25,7 +25,6 @@ struct branch_unit
 };
 
 struct branch_unit *branch_init(
-    uint8_t id,
     struct res_stations *branch_res_stations,
     struct reg_file *reg_file,
     struct cdb *cdb,
