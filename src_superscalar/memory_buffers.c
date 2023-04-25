@@ -9,7 +9,6 @@
 
 struct memory_buffers *memory_buffers_init(
     uint32_t num_buffers,
-    uint32_t id_offset,
     struct reg_file *reg_file,
     struct cdb *cdb,
     struct rob *rob)
@@ -44,9 +43,9 @@ struct memory_buffers *memory_buffers_init(
 
     for (uint32_t i = 0; i < num_buffers; i++)
     {
-        mb->buffers_current[i].id = i + id_offset;
+        mb->buffers_current[i].id = i;
         mb->buffers_current[i].busy = false;
-        mb->buffers_next[i].id = i + id_offset;
+        mb->buffers_next[i].id = i;
         mb->buffers_next[i].busy = false;
         mb->buffers_current[i].queue_pos = 0;
         mb->buffers_next[i].queue_pos = 0;
@@ -239,17 +238,8 @@ struct memory_buffer *memory_buffers_dequeue_address(struct memory_buffers *mb)
 
 void memory_buffers_add_address(struct memory_buffers *mb, uint32_t id, uint32_t address)
 {
-    uint32_t id_index = 0;
-    for (uint32_t i = 0; i < mb->num_buffers; i++)
-    {
-        if (mb->buffers_next[i].id == id)
-        {
-            id_index = i;
-            break;
-        }
-    }
-    mb->buffers_next[id_index].a = address;
-    mb->buffers_next[id_index].queue_pos = 0;
+    mb->buffers_next[id].a = address;
+    mb->buffers_next[id].queue_pos = 0;
 }
 
 void memory_buffers_clear(struct memory_buffers *mb)

@@ -41,7 +41,6 @@ struct memory_buffers
 
 struct memory_buffers *memory_buffers_init(
     uint32_t num_buffers,
-    uint32_t id_offset,
     struct reg_file *reg_file,
     struct cdb *cdb,
     struct rob *rob);                                // Initialise memory buffers

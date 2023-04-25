@@ -63,17 +63,14 @@ struct cpu *cpu_init(char *file_name)
         &cpu->reg_npc_pred);
     cpu->alu_res_stations = res_stations_init(
         NUM_ALU_RES_STATIONS,
-        1, // 1 is used because 0 indicates operands are ready
         cpu->reg_file,
         cpu->cdb);
     cpu->branch_res_stations = res_stations_init(
         NUM_BRANCH_RES_STATIONS,
-        1 + NUM_ALU_RES_STATIONS,
         cpu->reg_file,
         cpu->cdb);
     cpu->memory_buffers = memory_buffers_init(
         NUM_MEMORY_BUFFERS,
-        1 + NUM_ALU_RES_STATIONS + NUM_BRANCH_RES_STATIONS,
         cpu->reg_file,
         cpu->cdb,
         cpu->rob);

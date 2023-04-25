@@ -10,7 +10,6 @@
 
 struct res_station
 {
-    uint32_t id;      // ID of reservation station
     bool busy;        // Whether reservation station is busy
     enum op op;       // Operation to perform
     uint32_t qj;      // Reservation station ID of first operand
@@ -35,7 +34,6 @@ struct res_stations
 
 struct res_stations *res_stations_init(
     uint32_t num_stations,
-    uint32_t id_offset,
     struct reg_file *reg_file,
     struct cdb *cdb);                            // Initialise reservation stations
 void res_stations_step(struct res_stations *rs); // Step reservation stations

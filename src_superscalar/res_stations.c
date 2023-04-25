@@ -8,7 +8,6 @@
 
 struct res_stations *res_stations_init(
     uint32_t num_stations,
-    uint32_t id_offset,
     struct reg_file *reg_file,
     struct cdb *cdb)
 {
@@ -39,9 +38,7 @@ struct res_stations *res_stations_init(
 
     for (uint32_t i = 0; i < num_stations; i++)
     {
-        rs->stations_current[i].id = i + id_offset;
         rs->stations_current[i].busy = false;
-        rs->stations_next[i].id = i + id_offset;
         rs->stations_next[i].busy = false;
     }
 
