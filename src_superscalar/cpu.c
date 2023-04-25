@@ -34,7 +34,7 @@ struct cpu *cpu_init(char *file_name)
         exit(EXIT_FAILURE);
     }
 
-    cpu->cdb = cdb_init(NUM_ALU_UNITS + NUM_BRANCH_UNITS + 1); // One entry for each functional unit
+    cpu->cdb = cdb_init(NUM_ALU_UNITS + NUM_BRANCH_UNITS + NUM_MEMORY_UNITS); // One entry for each functional unit
     cpu->reg_file = reg_file_init(cpu->cdb);
 
     cpu->pc_src.val_current = PC_SRC_NORMAL;

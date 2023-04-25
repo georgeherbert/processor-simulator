@@ -16,4 +16,6 @@
 
 #define BTB_SIZE 32
 
+#define COMMITS_PER_CYCLE 8
+
 #endif // CONFIG_H

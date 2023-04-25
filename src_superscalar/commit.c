@@ -107,11 +107,12 @@ void update_btb(struct btb *btb, uint32_t inst_pc, uint32_t npc_actual)
     }
 }
 
-void commit_step(struct commit_unit *commit_unit, uint32_t *num_committed, uint32_t *num_branches, uint32_t *num_mispredicted)
+bool single_commit(struct commit_unit *commit_unit, uint32_t *num_committed, uint32_t *num_branches, uint32_t *num_mispredicted, uint32_t commit_num)
 {
-    if (rob_ready(commit_unit->rob))
+    bool mispredict = false;
+    if (rob_ready(commit_unit->rob, commit_num))
     {
-        struct rob_entry entry = rob_dequeue(commit_unit->rob);
+        struct rob_entry entry = rob_dequeue(commit_unit->rob, commit_num);
         switch (entry.op_type)
         {
         case JUMP:
@@ -125,6 +126,7 @@ void commit_step(struct commit_unit *commit_unit, uint32_t *num_committed, uint3
                 commit_clear(commit_unit);
                 reg_write(commit_unit->reg_pc_target, entry.npc_actual);
                 reg_write(commit_unit->pc_src, PC_SRC_MISPREDICT);
+                mispredict = true;
             }
             *commit_unit->jump_zero = (entry.npc_actual == 0x0); // End of program
             // printf("\tJump %d %d\n", entry.dest, entry.value);
@@ -138,6 +140,7 @@ void commit_step(struct commit_unit *commit_unit, uint32_t *num_committed, uint3
                 commit_clear(commit_unit);
                 reg_write(commit_unit->reg_pc_target, entry.npc_actual);
                 reg_write(commit_unit->pc_src, PC_SRC_MISPREDICT);
+                mispredict = true;
             }
             break;
         case LOAD:
@@ -166,6 +169,19 @@ void commit_step(struct commit_unit *commit_unit, uint32_t *num_committed, uint3
             exit(EXIT_FAILURE);
         }
         (*num_committed)++;
+    }
+    return mispredict;
+}
+
+void commit_step(struct commit_unit *commit_unit, uint32_t *num_committed, uint32_t *num_branches, uint32_t *num_mispredicted)
+{
+    for (uint32_t i = 0; i < COMMITS_PER_CYCLE; i++)
+    {
+        bool mispredict = single_commit(commit_unit, num_committed, num_branches, num_mispredicted, i);
+        if (mispredict)
+        {
+            break;
+        }
     }
 }
 

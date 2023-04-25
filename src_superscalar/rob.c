@@ -72,9 +72,24 @@ bool rob_full(struct rob *rob)
     return (rob->rear_current + 1) % REORDER_BUFFER_SIZE == rob->front_current;
 }
 
-bool rob_ready(struct rob *rob)
+bool rob_ready(struct rob *rob, uint32_t commit_num)
 {
-    return rob->front_current != -1 && rob->queue_current[rob->front_current].ready;
+    uint32_t queue_size = (rob->front_current == -1)                  ? 0
+                          : (rob->front_current <= rob->rear_current) ? rob->rear_current - rob->front_current + 1
+                                                                      : (REORDER_BUFFER_SIZE - rob->front_current) + rob->rear_current + 1;
+    // printf("%d %d %d\n", rob->front_current, rob->rear_current, queue_size);
+    if (queue_size < commit_num + 1)
+    {
+        return false;
+    }
+    for (uint32_t i = 0; i < commit_num; i++)
+    {
+        if (!rob->queue_current[(rob->front_current + i) % REORDER_BUFFER_SIZE].ready)
+        {
+            return false;
+        }
+    }
+    return rob->queue_current[(rob->front_current + commit_num) % REORDER_BUFFER_SIZE].ready;
 }
 
 uint32_t rob_enqueue(
@@ -113,10 +128,10 @@ uint32_t rob_enqueue(
     return rob->rear_next + 1;
 }
 
-struct rob_entry rob_dequeue(struct rob *rob)
+struct rob_entry rob_dequeue(struct rob *rob, uint32_t commit_num)
 {
-    struct rob_entry entry = rob->queue_current[rob->front_current];
-    rob->queue_next[rob->front_current].busy = false;
+    struct rob_entry entry = rob->queue_current[rob->front_current + commit_num];
+    rob->queue_next[rob->front_current + commit_num].busy = false;
     if (rob->front_next == rob->rear_next)
     {
         rob->front_next = -1;
