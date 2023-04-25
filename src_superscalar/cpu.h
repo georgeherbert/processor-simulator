@@ -40,12 +40,12 @@ struct cpu
     struct commit_unit *commit_unit;                       // Pointer to commit unit
     struct btb *btb;                                       // Pointer to branch target buffer
 
-    struct reg_file *reg_file; // Pointer to register file
-    struct reg pc_src;         // Control signal for PC source
-    struct reg reg_pc_target;  // PC target from branch unit
-    struct reg reg_inst;       // Instruction register
-    struct reg reg_inst_pc;    // Program counter of instruction in instruction register
-    struct reg reg_npc_pred;   // Predicted next program counter (for speculative execution)
+    struct reg_file *reg_file;             // Pointer to register file
+    struct reg pc_src;                     // Control signal for PC source
+    struct reg reg_pc_target;              // PC target from branch unit
+    struct reg reg_insts[ISSUE_WIDTH];     // Instruction register
+    struct reg reg_inst_pcs[ISSUE_WIDTH];  // Program counter of instruction in instruction register
+    struct reg reg_npc_preds[ISSUE_WIDTH]; // Predicted next program counter (for speculative execution)
 
     bool jump_zero; // Indicates whether we have had a jump to zero (i.e. final instruction)
 };

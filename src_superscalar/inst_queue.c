@@ -53,9 +53,14 @@ enum op_type inst_queue_peek_op_type(struct inst_queue *iq)
     return iq->queue_current[iq->front_current].op_type;
 }
 
-bool inst_queue_full(struct inst_queue *iq)
+bool inst_queue_free_slots(struct inst_queue *iq)
 {
-    return (iq->rear_current + 1) % INST_QUEUE_SIZE == iq->front_current;
+    int32_t spaces_free = iq->front_current - iq->rear_current - 1;
+    if (spaces_free < 0)
+    {
+        spaces_free += INST_QUEUE_SIZE;
+    }
+    return spaces_free >= ISSUE_WIDTH;
 }
 
 bool inst_queue_empty(struct inst_queue *iq)

@@ -25,7 +25,7 @@ struct commit_unit *commit_init(
     struct address_unit **address_units,
     struct memory_unit **memory_units,
     struct inst_queue *iq,
-    struct reg *inst_reg,
+    struct reg reg_insts[ISSUE_WIDTH],
     struct reg *pc_src,
     struct reg *reg_pc_target,
     struct btb *btb,
@@ -49,7 +49,7 @@ struct commit_unit *commit_init(
     commit_unit->address_units = address_units;
     commit_unit->memory_units = memory_units;
     commit_unit->iq = iq;
-    commit_unit->inst_reg = inst_reg;
+    *commit_unit->reg_insts = reg_insts;
     commit_unit->pc_src = pc_src;
     commit_unit->reg_pc_target = reg_pc_target;
     commit_unit->btb = btb;
@@ -92,7 +92,10 @@ void commit_clear(struct commit_unit *commit_unit)
         memory_clear(commit_unit->memory_units[i]);
     }
     inst_queue_clear(commit_unit->iq);
-    reg_write(commit_unit->inst_reg, 0x0);
+    for (uint8_t i = 0; i < ISSUE_WIDTH; i++)
+    {
+        reg_write(commit_unit->reg_insts[i], 0x0);
+    }
 }
 
 void update_btb(struct btb *btb, uint32_t inst_pc, uint32_t npc_actual)
@@ -175,7 +178,7 @@ bool single_commit(struct commit_unit *commit_unit, uint32_t *num_committed, uin
 
 void commit_step(struct commit_unit *commit_unit, uint32_t *num_committed, uint32_t *num_branches, uint32_t *num_mispredicted)
 {
-    for (uint32_t i = 0; i < COMMITS_PER_CYCLE; i++)
+    for (uint32_t i = 0; i < COMMIT_WIDTH; i++)
     {
         bool mispredict = single_commit(commit_unit, num_committed, num_branches, num_mispredicted, i);
         if (mispredict)

@@ -38,7 +38,6 @@ struct cpu *cpu_init(char *file_name)
     cpu->reg_file = reg_file_init(cpu->cdb);
 
     cpu->pc_src.val_current = PC_SRC_NORMAL;
-    cpu->reg_inst.val_current = 0x0;
     cpu->jump_zero = false;
 
     cpu->mm = main_memory_init(
@@ -52,15 +51,15 @@ struct cpu *cpu_init(char *file_name)
         &cpu->pc_src,
         cpu->inst_queue,
         &cpu->reg_pc_target,
-        &cpu->reg_inst,
-        &cpu->reg_inst_pc,
-        &cpu->reg_npc_pred,
+        cpu->reg_insts,
+        cpu->reg_inst_pcs,
+        cpu->reg_npc_preds,
         cpu->btb);
     cpu->decode_unit = decode_init(
-        &cpu->reg_inst,
-        &cpu->reg_inst_pc,
+        cpu->reg_insts,
+        cpu->reg_inst_pcs,
         cpu->inst_queue,
-        &cpu->reg_npc_pred);
+        cpu->reg_npc_preds);
     cpu->alu_res_stations = res_stations_init(
         NUM_ALU_RES_STATIONS,
         cpu->reg_file,
@@ -122,7 +121,7 @@ struct cpu *cpu_init(char *file_name)
         cpu->address_units,
         cpu->memory_units,
         cpu->inst_queue,
-        &cpu->reg_inst,
+        cpu->reg_insts,
         &cpu->pc_src,
         &cpu->reg_pc_target,
         cpu->btb,
@@ -213,9 +212,12 @@ void update_current(struct cpu *cpu)
 
     reg_update_current(&cpu->pc_src);
     reg_update_current(&cpu->reg_pc_target);
-    reg_update_current(&cpu->reg_inst);
-    reg_update_current(&cpu->reg_inst_pc);
-    reg_update_current(&cpu->reg_npc_pred);
+    for (uint8_t i = 0; i < ISSUE_WIDTH; i++)
+    {
+        reg_update_current(&cpu->reg_insts[i]);
+        reg_update_current(&cpu->reg_inst_pcs[i]);
+        reg_update_current(&cpu->reg_npc_preds[i]);
+    }
 
     inst_queue_update_current(cpu->inst_queue);
     rob_update_current(cpu->rob);

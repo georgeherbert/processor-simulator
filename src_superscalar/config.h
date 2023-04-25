@@ -16,7 +16,8 @@
 
 #define BTB_SIZE 32
 
-#define COMMITS_PER_CYCLE 8
+#define ISSUE_WIDTH 1
+#define COMMIT_WIDTH 8
 
 #define EXEC_CYCLES_ADD 2
 #define EXEC_CYCLES_LUI 2

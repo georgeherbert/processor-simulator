@@ -12,9 +12,9 @@ struct fetch_unit *fetch_init(
     struct reg *pc_src,
     struct inst_queue *inst_queue,
     struct reg *reg_pc_target,
-    struct reg *reg_inst,
-    struct reg *reg_inst_pc,
-    struct reg *reg_npc_pred,
+    struct reg reg_insts[ISSUE_WIDTH],
+    struct reg reg_inst_pcs[ISSUE_WIDTH],
+    struct reg reg_npc_preds[ISSUE_WIDTH],
     struct btb *btb)
 {
     struct fetch_unit *fetch_unit = malloc(sizeof(struct fetch_unit));
@@ -28,9 +28,9 @@ struct fetch_unit *fetch_init(
     fetch_unit->pc_src = pc_src;
     fetch_unit->inst_queue = inst_queue;
     fetch_unit->reg_pc_target = reg_pc_target;
-    fetch_unit->reg_inst = reg_inst;
-    fetch_unit->reg_inst_pc = reg_inst_pc;
-    fetch_unit->reg_npc_pred = reg_npc_pred;
+    *fetch_unit->reg_insts = reg_insts;
+    *fetch_unit->reg_inst_pcs = reg_inst_pcs;
+    *fetch_unit->reg_npc_preds = reg_npc_preds;
     fetch_unit->btb = btb;
     fetch_unit->reg_pc = 0;
     fetch_unit->reg_npc = 0;
@@ -40,7 +40,7 @@ struct fetch_unit *fetch_init(
 
 void fetch_step(struct fetch_unit *fetch_unit)
 {
-    if (!inst_queue_full(fetch_unit->inst_queue))
+    if (inst_queue_free_slots(fetch_unit->inst_queue))
     {
         if (reg_read(fetch_unit->pc_src) == PC_SRC_NORMAL)
         {
@@ -63,11 +63,11 @@ void fetch_step(struct fetch_unit *fetch_unit)
         if ((inst & 0x7F) == 0x6f || (inst & 0x7F) == 0x67 || (inst & 0x7F) == 0x63)
         {
             npc = btb_lookup(fetch_unit->btb, fetch_unit->reg_pc);
-            reg_write(fetch_unit->reg_npc_pred, npc);
+            reg_write(fetch_unit->reg_npc_preds[0], npc);
         }
 
-        reg_write(fetch_unit->reg_inst, inst);
-        reg_write(fetch_unit->reg_inst_pc, fetch_unit->reg_pc);
+        reg_write(fetch_unit->reg_insts[0], inst);
+        reg_write(fetch_unit->reg_inst_pcs[0], fetch_unit->reg_pc);
         fetch_unit->reg_npc = npc;
     }
 }

@@ -18,7 +18,7 @@ struct inst_queue
 
 struct inst_queue *inst_queue_init();                                             // Initialise instruction queue
 void inst_queue_enqueue(struct inst_queue *inst_queue, struct decoded_inst inst); // Push instruction to queue
-bool inst_queue_full(struct inst_queue *iq);                                      // Check if instruction queue is full
+bool inst_queue_free_slots(struct inst_queue *iq);                                      // Check if instruction queue is full
 bool inst_queue_empty(struct inst_queue *iq);                                     // Check if instruction queue is empty
 struct decoded_inst inst_queue_dequeue(struct inst_queue *inst_queue);            // Pop instruction from queue
 enum op_type inst_queue_peek_op_type(struct inst_queue *inst_queue);              // Peek at next instruction's op type
