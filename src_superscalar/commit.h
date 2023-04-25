@@ -27,7 +27,7 @@ struct commit_unit
     struct address_unit **address_units;
     struct memory_unit **memory_units;
     struct inst_queue *iq;
-    struct reg *reg_insts[ISSUE_WIDTH];
+    struct reg *reg_insts;
     struct reg *pc_src;        // Pointer to control signal for PC source
     struct reg *reg_pc_target; // Pointer to PC target register
     struct btb *btb;           // Pointer to branch target buffer
@@ -46,7 +46,7 @@ struct commit_unit *commit_init(
     struct address_unit **address_units,
     struct memory_unit **memory_units,
     struct inst_queue *iq,
-    struct reg reg_insts[ISSUE_WIDTH],
+    struct reg *reg_insts,
     struct reg *pc_src,
     struct reg *reg_pc_target,
     struct btb *btb,

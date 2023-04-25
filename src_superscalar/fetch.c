@@ -12,9 +12,9 @@ struct fetch_unit *fetch_init(
     struct reg *pc_src,
     struct inst_queue *inst_queue,
     struct reg *reg_pc_target,
-    struct reg reg_insts[ISSUE_WIDTH],
-    struct reg reg_inst_pcs[ISSUE_WIDTH],
-    struct reg reg_npc_preds[ISSUE_WIDTH],
+    struct reg *reg_insts,
+    struct reg *reg_inst_pcs,
+    struct reg *reg_npc_preds,
     struct btb *btb)
 {
     struct fetch_unit *fetch_unit = malloc(sizeof(struct fetch_unit));
@@ -28,9 +28,9 @@ struct fetch_unit *fetch_init(
     fetch_unit->pc_src = pc_src;
     fetch_unit->inst_queue = inst_queue;
     fetch_unit->reg_pc_target = reg_pc_target;
-    *fetch_unit->reg_insts = reg_insts;
-    *fetch_unit->reg_inst_pcs = reg_inst_pcs;
-    *fetch_unit->reg_npc_preds = reg_npc_preds;
+    fetch_unit->reg_insts = reg_insts;
+    fetch_unit->reg_inst_pcs = reg_inst_pcs;
+    fetch_unit->reg_npc_preds = reg_npc_preds;
     fetch_unit->btb = btb;
     fetch_unit->reg_pc = 0;
     fetch_unit->reg_npc = 0;
@@ -56,12 +56,21 @@ void fetch_step(struct fetch_unit *fetch_unit)
             fprintf(stderr, "Error: Invalid PC source control signal %d\n", reg_read(fetch_unit->pc_src));
             exit(EXIT_FAILURE);
         }
-        uint32_t inst = main_memory_load_word(fetch_unit->mm, fetch_unit->reg_pc);
-        uint32_t npc = btb_lookup(fetch_unit->btb, fetch_unit->reg_pc);
+        uint32_t npc;
+        bool branch_taken = false;
+        for (uint8_t i = 0; i < ISSUE_WIDTH; i++)
+        {
+            uint32_t pc = fetch_unit->reg_pc + i * 4;
+            uint32_t inst = main_memory_load_word(fetch_unit->mm, pc);
+            npc = branch_taken ? npc : btb_lookup(fetch_unit->btb, pc);
 
-        reg_write(fetch_unit->reg_npc_preds[0], npc);
-        reg_write(fetch_unit->reg_insts[0], inst);
-        reg_write(fetch_unit->reg_inst_pcs[0], fetch_unit->reg_pc);
+            reg_write(&fetch_unit->reg_inst_pcs[i], pc);
+            reg_write(&fetch_unit->reg_npc_preds[i], npc);
+            reg_write(&fetch_unit->reg_insts[i], branch_taken ? 0x0 : inst);
+
+            branch_taken |= npc != pc + 4;
+        }
+
         fetch_unit->reg_npc = npc;
     }
 }

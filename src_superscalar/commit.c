@@ -25,7 +25,7 @@ struct commit_unit *commit_init(
     struct address_unit **address_units,
     struct memory_unit **memory_units,
     struct inst_queue *iq,
-    struct reg reg_insts[ISSUE_WIDTH],
+    struct reg *reg_insts,
     struct reg *pc_src,
     struct reg *reg_pc_target,
     struct btb *btb,
@@ -49,7 +49,7 @@ struct commit_unit *commit_init(
     commit_unit->address_units = address_units;
     commit_unit->memory_units = memory_units;
     commit_unit->iq = iq;
-    *commit_unit->reg_insts = reg_insts;
+    commit_unit->reg_insts = reg_insts;
     commit_unit->pc_src = pc_src;
     commit_unit->reg_pc_target = reg_pc_target;
     commit_unit->btb = btb;
@@ -94,7 +94,7 @@ void commit_clear(struct commit_unit *commit_unit)
     inst_queue_clear(commit_unit->iq);
     for (uint8_t i = 0; i < ISSUE_WIDTH; i++)
     {
-        reg_write(commit_unit->reg_insts[i], 0x0);
+        reg_write(&commit_unit->reg_insts[i], 0x0);
     }
 }
 
