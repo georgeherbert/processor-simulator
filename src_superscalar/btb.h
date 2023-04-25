@@ -8,7 +8,8 @@
 
 struct btb_entry
 {
-    uint8_t bits; // 2-bit branch predictor (0 & 1 = not taken, 2 & 3 = taken)
+    uint32_t addr;
+    uint8_t bits;
     uint32_t npc_pred;
 };
 

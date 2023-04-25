@@ -15,6 +15,7 @@
 #define REORDER_BUFFER_SIZE 128
 
 #define BTB_SIZE 32
+#define BTB_BITS 2
 
 #define ISSUE_WIDTH 1
 #define COMMIT_WIDTH 8

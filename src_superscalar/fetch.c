@@ -57,15 +57,9 @@ void fetch_step(struct fetch_unit *fetch_unit)
             exit(EXIT_FAILURE);
         }
         uint32_t inst = main_memory_load_word(fetch_unit->mm, fetch_unit->reg_pc);
+        uint32_t npc = btb_lookup(fetch_unit->btb, fetch_unit->reg_pc);
 
-        uint32_t npc = fetch_unit->reg_pc + 4;
-
-        if ((inst & 0x7F) == 0x6f || (inst & 0x7F) == 0x67 || (inst & 0x7F) == 0x63)
-        {
-            npc = btb_lookup(fetch_unit->btb, fetch_unit->reg_pc);
-            reg_write(fetch_unit->reg_npc_preds[0], npc);
-        }
-
+        reg_write(fetch_unit->reg_npc_preds[0], npc);
         reg_write(fetch_unit->reg_insts[0], inst);
         reg_write(fetch_unit->reg_inst_pcs[0], fetch_unit->reg_pc);
         fetch_unit->reg_npc = npc;
