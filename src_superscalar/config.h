@@ -12,7 +12,7 @@
 
 #define INST_QUEUE_SIZE 32
 
-#define REORDER_BUFFER_SIZE 128
+#define REORDER_BUFFER_SIZE 32
 
 #define BTB_SIZE 32
 #define BTB_BITS 2

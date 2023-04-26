@@ -33,9 +33,9 @@ void inst_queue_enqueue(struct inst_queue *iq, struct decoded_inst inst)
     iq->queue_next[iq->rear_next] = inst;
 }
 
-struct decoded_inst inst_queue_dequeue(struct inst_queue *iq)
+struct decoded_inst inst_queue_dequeue(struct inst_queue *iq, uint32_t batch_num)
 {
-    struct decoded_inst inst = iq->queue_current[iq->front_current];
+    struct decoded_inst inst = iq->queue_current[iq->front_current + batch_num];
     if (iq->front_next == iq->rear_next)
     {
         iq->front_next = -1;
@@ -48,13 +48,13 @@ struct decoded_inst inst_queue_dequeue(struct inst_queue *iq)
     return inst;
 }
 
-enum op_type inst_queue_peek_op_type(struct inst_queue *iq)
-{
-    return iq->queue_current[iq->front_current].op_type;
-}
-
 bool inst_queue_free_slots(struct inst_queue *iq)
 {
+    if (iq->front_current == -1 && iq->rear_current == -1)
+    {
+        return true;
+    }
+
     int32_t spaces_free = iq->front_current - iq->rear_current - 1;
     if (spaces_free < 0)
     {
@@ -63,9 +63,12 @@ bool inst_queue_free_slots(struct inst_queue *iq)
     return spaces_free >= ISSUE_WIDTH;
 }
 
-bool inst_queue_empty(struct inst_queue *iq)
+uint32_t inst_queue_cur_entries(struct inst_queue *iq)
 {
-    return iq->front_current == -1;
+    uint32_t queue_size = (iq->front_current == -1)                 ? 0
+                          : (iq->front_current <= iq->rear_current) ? iq->rear_current - iq->front_current + 1
+                                                                    : (INST_QUEUE_SIZE - iq->front_current) + iq->rear_current + 1;
+    return queue_size;
 }
 
 void inst_queue_clear(struct inst_queue *iq)

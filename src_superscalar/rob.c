@@ -66,10 +66,19 @@ void rob_step(struct rob *rob)
     }
 }
 
-bool rob_full(struct rob *rob)
+uint32_t rob_num_free_slots(struct rob *rob)
 {
-    // printf("Full? %d\n", (rob->rear_current + 1) % REORDER_BUFFER_SIZE == rob->front_current);
-    return (rob->rear_current + 1) % REORDER_BUFFER_SIZE == rob->front_current;
+    if (rob->front_current == -1 && rob->rear_current == -1)
+    {
+        return REORDER_BUFFER_SIZE;
+    }
+
+    int32_t spaces_free = rob->front_current - rob->rear_current - 1;
+    if (spaces_free < 0)
+    {
+        spaces_free += REORDER_BUFFER_SIZE;
+    }
+    return spaces_free;
 }
 
 bool rob_ready(struct rob *rob, uint32_t commit_num)

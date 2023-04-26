@@ -43,6 +43,7 @@ struct res_stations *res_stations_init(
     }
 
     rs->cur_cycle_count = 0;
+    rs->cur_cycle_count_added = 0;
 
     return rs;
 }
@@ -84,32 +85,39 @@ void res_stations_add(
     uint32_t rob_id,
     uint32_t inst_pc)
 {
+    uint32_t id = rs->cur_cycle_count_added;
     for (uint32_t i = 0; i < rs->num_stations; i++)
     {
         if (!rs->stations_current[i].busy)
         {
-            rs->stations_next[i].busy = true;
-            rs->stations_next[i].op = op;
-            rs->stations_next[i].qj = qj;
-            rs->stations_next[i].qk = qk;
-            rs->stations_next[i].vj = vj;
-            rs->stations_next[i].vk = vk;
-            rs->stations_next[i].a = a;
-            rs->stations_next[i].rob_id = rob_id;
-            rs->stations_next[i].inst_pc = inst_pc;
-            break;
+            if (id == 0)
+            {
+                rs->stations_next[i].busy = true;
+                rs->stations_next[i].op = op;
+                rs->stations_next[i].qj = qj;
+                rs->stations_next[i].qk = qk;
+                rs->stations_next[i].vj = vj;
+                rs->stations_next[i].vk = vk;
+                rs->stations_next[i].a = a;
+                rs->stations_next[i].rob_id = rob_id;
+                rs->stations_next[i].inst_pc = inst_pc;
+
+                rs->cur_cycle_count_added++;
+                break;
+            }
+            id--;
         }
     }
 }
 
-bool res_stations_all_busy(struct res_stations *rs)
+uint32_t res_stations_num_free(struct res_stations *rs)
 {
-    bool all_busy = true;
+    uint32_t num_free = 0;
     for (uint32_t i = 0; i < rs->num_stations; i++)
     {
-        all_busy &= rs->stations_current[i].busy;
+        num_free += !rs->stations_current[i].busy;
     }
-    return all_busy;
+    return num_free;
 }
 
 struct res_station *res_stations_remove(struct res_stations *rs)
@@ -143,6 +151,7 @@ void res_stations_update_current(struct res_stations *rs)
 {
     memcpy(rs->stations_current, rs->stations_next, sizeof(struct res_station) * rs->num_stations);
     rs->cur_cycle_count = 0;
+    rs->cur_cycle_count_added = 0;
 }
 
 void res_stations_destroy(struct res_stations *rs)

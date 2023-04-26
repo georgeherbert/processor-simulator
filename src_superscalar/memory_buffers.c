@@ -53,6 +53,7 @@ struct memory_buffers *memory_buffers_init(
 
     mb->cur_cycle_count_address = 0;
     mb->cur_cycle_count_memory = 0;
+    mb->cur_cycle_count_enqueue = 0;
 
     return mb;
 }
@@ -93,38 +94,43 @@ void memory_buffers_enqueue(
     uint32_t a,
     uint32_t rob_id)
 {
+    uint32_t id = mb->cur_cycle_count_enqueue;
     for (uint32_t i = 0; i < mb->num_buffers; i++)
     {
         if (!mb->buffers_current[i].busy)
         {
-            mb->buffers_next[i].busy = true;
-            mb->buffers_next[i].op = op;
-            mb->buffers_next[i].qj = qj;
-            mb->buffers_next[i].qk = qk;
-            mb->buffers_next[i].vj = vj;
-            mb->buffers_next[i].vk = vk;
-            mb->buffers_next[i].a = a;
-            mb->buffers_next[i].rob_id = rob_id;
-            /*
-                The +1 in the next line ensures that the queue position is never 0.
-                This is because 0 is used to indicate that the buffer is not in the queue.
-            */
-            mb->buffers_next[i].queue_pos = mb->num_buffers_in_queue_current + 1;
-            mb->num_buffers_in_queue_next++;
-
-            break;
+            if (id == 0)
+            {
+                mb->buffers_next[i].busy = true;
+                mb->buffers_next[i].op = op;
+                mb->buffers_next[i].qj = qj;
+                mb->buffers_next[i].qk = qk;
+                mb->buffers_next[i].vj = vj;
+                mb->buffers_next[i].vk = vk;
+                mb->buffers_next[i].a = a;
+                mb->buffers_next[i].rob_id = rob_id;
+                /*
+                    The +1 in the next line ensures that the queue position is never 0.
+                    This is because 0 is used to indicate that the buffer is not in the queue.
+                */
+                mb->buffers_next[i].queue_pos = mb->num_buffers_in_queue_current + 1 + mb->cur_cycle_count_enqueue;
+                mb->num_buffers_in_queue_next++;
+                mb->cur_cycle_count_enqueue++;
+                break;
+            }
+            id--;
         }
     }
 }
 
-bool memory_buffers_all_busy(struct memory_buffers *mb)
+uint32_t memory_buffers_num_free(struct memory_buffers *mb)
 {
-    bool all_busy = true;
+    uint32_t num_free = 0;
     for (uint32_t i = 0; i < mb->num_buffers; i++)
     {
-        all_busy &= mb->buffers_current[i].busy;
+        num_free += !mb->buffers_current[i].busy;
     }
-    return all_busy;
+    return num_free;
 }
 
 struct memory_buffer *memory_buffers_dequeue_memory(struct memory_buffers *mb)
@@ -257,6 +263,7 @@ void memory_buffers_update_current(struct memory_buffers *mb)
     mb->num_buffers_in_queue_current = mb->num_buffers_in_queue_next;
     mb->cur_cycle_count_address = 0;
     mb->cur_cycle_count_memory = 0;
+    mb->cur_cycle_count_enqueue = 0;
 }
 
 void memory_buffers_destroy(struct memory_buffers *mb)

@@ -35,7 +35,7 @@ struct rob
 };
 
 struct rob *rob_init(struct cdb *cdb);                // Initialise reorder buffer
-bool rob_full(struct rob *rob);                       // Check if reorder buffer is full
+uint32_t rob_num_free_slots(struct rob *rob);         // Get number of free slots in the reorder buffer
 bool rob_ready(struct rob *rob, uint32_t commit_num); // Check if reorder buffer is ready for commit number commit_num in cycle
 void rob_step(struct rob *rob);                       // Step reorder buffer
 uint32_t rob_enqueue(
@@ -46,7 +46,7 @@ uint32_t rob_enqueue(
     uint32_t q,
     uint32_t npc_pred,
     uint32_t inst_pc);                                                          // Enqueue instruction into reorder buffer
-struct rob_entry rob_dequeue(struct rob *rob, uint32_t commit_num);                // Dequeue the commit_num-th instruction from reorder buffer
+struct rob_entry rob_dequeue(struct rob *rob, uint32_t commit_num);             // Dequeue the commit_num-th instruction from reorder buffer
 void rob_add_address(struct rob *rob, uint32_t rob_id, uint32_t addr);          // Add address to reorder buffer entry
 void rob_add_npc_actual(struct rob *rob, uint32_t rob_id, uint32_t npc_actual); // Add actual next program counter to reorder buffer entry
 bool rob_is_entry_ready(struct rob *rob, uint32_t id);                          // Check if reorder buffer entry is ready
