@@ -29,8 +29,8 @@ struct res_stations
     uint32_t num_stations;                // Number of reservation stations
     struct cdb *cdb;                      // Pointer to common data bus
 
-    uint32_t cur_cycle_count;       // Number of entries moved to ALUs in current cycle
-    uint32_t cur_cycle_count_added; // Number of entries added to reservation stations in current cycle
+    uint32_t cur_cycle_count_removed; // Number of entries moved to ALUs in current cycle
+    uint32_t cur_cycle_count_added;   // Number of entries added to reservation stations in current cycle
 };
 
 struct res_stations *res_stations_init(

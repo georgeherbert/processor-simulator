@@ -70,7 +70,6 @@ void fetch_step(struct fetch_unit *fetch_unit)
 
             branch_taken |= npc != pc + 4;
         }
-
         fetch_unit->reg_npc = npc;
     }
 }

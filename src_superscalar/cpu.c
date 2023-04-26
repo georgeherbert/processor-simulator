@@ -274,7 +274,7 @@ int main(int argc, char *argv[])
     // Cycle until PC will be 0
     while (!cpu->jump_zero)
     {
-        // printf("\nCycle: %" PRIu64 "\n", cycles);
+        // printf("\nCycle: %" PRIu32 "\n", cycles);
 
         step(cpu, &num_comitted, &num_branches, &num_mispredicted);
         update_current(cpu);
