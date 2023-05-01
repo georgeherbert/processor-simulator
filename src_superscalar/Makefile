@@ -1,5 +1,5 @@
 # Compiler flags
-CFLAGS = -Wall -Wextra -pedantic -O3 -std=c11
+CFLAGS = -Wall -Wextra -pedantic -O3 -std=c11 $(OPTIONS)
 
 # Source files
 SRCS = \

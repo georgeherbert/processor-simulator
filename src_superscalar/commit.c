@@ -121,7 +121,9 @@ bool single_commit(struct commit_unit *commit_unit, uint32_t *num_committed, uin
         case JUMP:
             update_btb(commit_unit->btb, entry.inst_pc, entry.npc_actual);
             reg_file_reg_commit(commit_unit->reg_file, entry.dest, entry.value, entry.rob_id);
-            printf("\tRF[%d] = %d\n", entry.dest, entry.value);
+            #ifdef VERBOSE
+                printf("\tRF[%d] = %d\n", entry.dest, entry.value);
+            #endif
             (*num_branches)++;
             if (entry.npc_actual != entry.npc_pred) // Misprediction
             {
@@ -149,22 +151,30 @@ bool single_commit(struct commit_unit *commit_unit, uint32_t *num_committed, uin
         case LOAD:
         case AL:
             reg_file_reg_commit(commit_unit->reg_file, entry.dest, entry.value, entry.rob_id);
-            printf("\tRF[%d] = %d\n", entry.dest, entry.value);
+            #ifdef VERBOSE
+                printf("\tRF[%d] = %d\n", entry.dest, entry.value);
+            #endif
             // printf("\tAL/Load %d %d\n", entry.dest, entry.value);
             break;
         case STORE_WORD:
             main_memory_store_word(commit_unit->mm, entry.dest, entry.value);
-            printf("\tMM[%d] = %d\n", entry.dest, entry.value);
+            #ifdef VERBOSE
+                printf("\tMM[%d] = %d\n", entry.dest, entry.value);
+            #endif
             // printf("\tSW %d %d\n", entry.dest, entry.value);
             break;
         case STORE_HALF:
             main_memory_store_half(commit_unit->mm, entry.dest, entry.value);
-            printf("\tMM[%d] = %d\n", entry.dest, entry.value);
+            #ifdef VERBOSE
+                printf("\tMM[%d] = %d\n", entry.dest, entry.value);
+            #endif
             // printf("\tCSH %d %d\n", entry.dest, entry.value);
             break;
         case STORE_BYTE:
             main_memory_store_byte(commit_unit->mm, entry.dest, entry.value);
-            printf("\tMM[%d] = %d\n", entry.dest, entry.value);
+            #ifdef VERBOSE
+                printf("\tMM[%d] = %d\n", entry.dest, entry.value);
+            #endif
             // printf("\tSB %d %d\n", entry.dest, entry.value);
             break;
         default:
