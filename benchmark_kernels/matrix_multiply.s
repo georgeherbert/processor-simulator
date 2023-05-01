@@ -8,12 +8,10 @@
 	.globl	_start
 	.type	_start, @function
 _start:
-	addi	sp,sp,-336
-	sw	ra,332(sp)
-	sw	s0,328(sp)
-	addi	s0,sp,336
-	li	t0,-4096
-	add	sp,sp,t0
+	addi	sp,sp,-528
+	sw	ra,524(sp)
+	sw	s0,520(sp)
+	addi	s0,sp,528
 	sw	zero,-20(s0)
 	j	.L2
 .L3:
@@ -22,56 +20,42 @@ _start:
 	addi	a5,a5,-16
 	add	a5,a5,s0
 	lw	a4,-20(s0)
-	sw	a4,-2008(a5)
+	sw	a4,-208(a5)
 	lw	a5,-20(s0)
 	addi	a5,a5,1
 	sw	a5,-20(s0)
 .L2:
 	lw	a4,-20(s0)
-	li	a5,499
+	li	a5,49
 	ble	a4,a5,.L3
 	sw	zero,-24(s0)
 	j	.L4
 .L5:
-	li	a5,-4096
-	addi	a5,a5,-16
-	add	a4,a5,s0
 	lw	a5,-24(s0)
 	slli	a5,a5,2
-	add	a5,a4,a5
+	addi	a5,a5,-16
+	add	a5,a5,s0
 	lw	a4,-24(s0)
-	sw	a4,88(a5)
+	sw	a4,-408(a5)
 	lw	a5,-24(s0)
 	addi	a5,a5,1
 	sw	a5,-24(s0)
 .L4:
 	lw	a4,-24(s0)
-	li	a5,499
+	li	a5,49
 	ble	a4,a5,.L5
-	li	a5,-4096
-	addi	a5,a5,-312
-	addi	a5,a5,-16
-	add	a2,a5,s0
-	li	a5,-4096
-	addi	a5,a5,88
-	addi	a5,a5,-16
-	add	a4,a5,s0
-	addi	a3,s0,-2024
-	mv	a5,a2
-	li	a2,10
-	li	a1,50
-	li	a0,10
+	addi	a5,s0,-524
+	addi	a4,s0,-424
+	addi	a3,s0,-224
+	li	a2,5
+	li	a1,10
+	li	a0,5
 	call	matrix_multiply
-	li	a5,-4096
-	addi	a5,a5,-16
-	add	a5,a5,s0
-	lw	a5,-312(a5)
+	lw	a5,-524(s0)
 	mv	a0,a5
-	li	t0,4096
-	add	sp,sp,t0
-	lw	ra,332(sp)
-	lw	s0,328(sp)
-	addi	sp,sp,336
+	lw	ra,524(sp)
+	lw	s0,520(sp)
+	addi	sp,sp,528
 	jr	ra
 	.size	_start, .-_start
 	.align	2

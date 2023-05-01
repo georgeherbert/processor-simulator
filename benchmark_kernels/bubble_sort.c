@@ -1,12 +1,14 @@
 #include <stdint.h>
 
+#define LENGTH 100
+
 int32_t bubbleSort(int32_t arr[], int32_t n);
 
 int32_t _start() {
-    int32_t arr[1000];
+    int32_t arr[LENGTH];
     // Create an array of length 100 descending
-    for (int32_t i = 0; i < 1000; i++) {
-        arr[i] = 1000 - i;
+    for (int32_t i = 0; i < LENGTH; i++) {
+        arr[i] = LENGTH - i;
     }
     int32_t n = sizeof(arr) / sizeof(arr[0]);
     bubbleSort(arr, n);

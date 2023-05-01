@@ -20,7 +20,7 @@ struct btb *btb_init()
     for (uint32_t i = 0; i < BTB_SIZE; i++)
     {
         btb->entries[i].addr = -1;
-        btb->entries[i].bits = pow(2, BTB_BITS - 1) - 1; // Weakly not taken
+        btb->entries[i].bits = pow(2, BTB_BITS - 1); // Weakly not taken
     }
 
     return btb;
@@ -31,6 +31,7 @@ uint32_t btb_lookup(struct btb *btb, uint32_t pc)
     struct btb_entry btb_entry = btb->entries[(pc / 4) % BTB_SIZE];
     if (btb_entry.addr == pc)
     {
+        // return pc + 4;
         return btb_entry.bits >= pow(2, BTB_BITS - 1) ? btb_entry.npc_pred : pc + 4;
     }
     return pc + 4;
@@ -42,7 +43,7 @@ void btb_taken(struct btb *btb, uint32_t pc, uint32_t npc_pred)
     if (btb_entry->addr != pc)
     {
         btb_entry->addr = pc;
-        btb_entry->bits = pow(2, BTB_BITS - 1) - 1;
+        btb_entry->bits = pow(2, BTB_BITS - 1);
     }
     else
     {
@@ -57,7 +58,7 @@ void btb_not_taken(struct btb *btb, uint32_t pc)
     if (btb_entry->addr != pc)
     {
         btb_entry->addr = pc;
-        btb_entry->bits = pow(2, BTB_BITS - 1) - 1;
+        btb_entry->bits = pow(2, BTB_BITS - 1);
     }
     else
     {

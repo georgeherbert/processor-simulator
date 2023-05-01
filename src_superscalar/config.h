@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #define NUM_ALU_UNITS 8
-#define NUM_BRANCH_UNITS 8
+#define NUM_BRANCH_UNITS 2
 #define NUM_ADDRESS_UNITS 8
 #define NUM_MEMORY_UNITS 8
 
@@ -12,29 +12,37 @@
 
 #define INST_QUEUE_SIZE 128
 
+#ifndef REORDER_BUFFER_SIZE
 #define REORDER_BUFFER_SIZE 128
+#endif
 
-#define BTB_SIZE 32
+#ifndef BTB_SIZE
+#define BTB_SIZE 64
+#endif
 #define BTB_BITS 2
 
-#define ISSUE_WIDTH 8
-#define COMMIT_WIDTH 8
+#ifndef ISSUE_WIDTH
+#define ISSUE_WIDTH 16
+#endif
+#ifndef COMMIT_WIDTH
+#define COMMIT_WIDTH 16
+#endif
 
-#define EXEC_CYCLES_ADD 2
-#define EXEC_CYCLES_LUI 2
-#define EXEC_CYCLES_AUIPC 2
-#define EXEC_CYCLES_SUB 2
-#define EXEC_CYCLES_SLL 2
-#define EXEC_CYCLES_SLT 2
-#define EXEC_CYCLES_SLTU 2
-#define EXEC_CYCLES_XOR 2
-#define EXEC_CYCLES_SRL 2
-#define EXEC_CYCLES_SRA 2
-#define EXEC_CYCLES_OR 2
-#define EXEC_CYCLES_AND 2
+#define EXEC_CYCLES_ADD 1
+#define EXEC_CYCLES_LUI 1
+#define EXEC_CYCLES_AUIPC 1
+#define EXEC_CYCLES_SUB 1
+#define EXEC_CYCLES_SLL 1
+#define EXEC_CYCLES_SLT 1
+#define EXEC_CYCLES_SLTU 1
+#define EXEC_CYCLES_XOR 1
+#define EXEC_CYCLES_SRL 1
+#define EXEC_CYCLES_SRA 1
+#define EXEC_CYCLES_OR 1
+#define EXEC_CYCLES_AND 1
 
-#define EXEC_CYCLES_JAL 2
-#define EXEC_CYCLES_JALR 2
+#define EXEC_CYCLES_JAL 1
+#define EXEC_CYCLES_JALR 1
 #define EXEC_CYCLES_BEQ 2
 #define EXEC_CYCLES_BNE 2
 #define EXEC_CYCLES_BLT 2
@@ -42,7 +50,7 @@
 #define EXEC_CYCLES_BGE 2
 #define EXEC_CYCLES_BGEU 2
 
-#define EXEC_CYCLES_ADDRESS 2
+#define EXEC_CYCLES_ADDRESS 1
 
 #define MEMORY_CYCLES_LW 2
 #define MEMORY_CYCLES_LH 2

@@ -147,6 +147,7 @@ bool single_commit(struct commit_unit *commit_unit, uint32_t *num_committed, uin
                 reg_write(commit_unit->pc_src, PC_SRC_MISPREDICT);
                 mispredict = true;
             }
+            // printf("\tBranch %d %d\n", entry.dest, entry.value);
             break;
         case LOAD:
         case AL:

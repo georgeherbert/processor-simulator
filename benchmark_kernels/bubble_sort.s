@@ -8,46 +8,39 @@
 	.globl	_start
 	.type	_start, @function
 _start:
-	addi	sp,sp,-2032
-	sw	ra,2028(sp)
-	sw	s0,2024(sp)
-	addi	s0,sp,2032
-	addi	sp,sp,-2000
+	addi	sp,sp,-432
+	sw	ra,428(sp)
+	sw	s0,424(sp)
+	addi	s0,sp,432
 	sw	zero,-20(s0)
 	j	.L2
 .L3:
-	li	a4,1000
+	li	a4,100
 	lw	a5,-20(s0)
 	sub	a4,a4,a5
-	li	a5,-4096
-	addi	a5,a5,-16
-	add	a3,a5,s0
 	lw	a5,-20(s0)
 	slli	a5,a5,2
-	add	a5,a3,a5
-	sw	a4,88(a5)
+	addi	a5,a5,-16
+	add	a5,a5,s0
+	sw	a4,-408(a5)
 	lw	a5,-20(s0)
 	addi	a5,a5,1
 	sw	a5,-20(s0)
 .L2:
 	lw	a4,-20(s0)
-	li	a5,999
+	li	a5,99
 	ble	a4,a5,.L3
-	li	a5,1000
+	li	a5,100
 	sw	a5,-24(s0)
-	li	a5,-4096
-	addi	a5,a5,88
-	addi	a5,a5,-16
-	add	a5,a5,s0
+	addi	a5,s0,-424
 	lw	a1,-24(s0)
 	mv	a0,a5
 	call	bubbleSort
 	li	a5,0
 	mv	a0,a5
-	addi	sp,sp,2000
-	lw	ra,2028(sp)
-	lw	s0,2024(sp)
-	addi	sp,sp,2032
+	lw	ra,428(sp)
+	lw	s0,424(sp)
+	addi	sp,sp,432
 	jr	ra
 	.size	_start, .-_start
 	.align	2

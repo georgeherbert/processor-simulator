@@ -12,8 +12,8 @@ _start:
 	sw	ra,28(sp)
 	sw	s0,24(sp)
 	addi	s0,sp,32
-	li	a5,487010304
-	addi	a5,a5,647
+	li	a5,28647424
+	addi	a5,a5,279
 	sw	a5,-20(s0)
 	li	a5,686
 	sw	a5,-24(s0)

@@ -1,26 +1,29 @@
 #include <stdint.h>
 
+#define MATRIX_DIMS_1 5
+#define MATRIX_DIMS_2 10
+
 int32_t multiply(int32_t a, int32_t b);
 void matrix_multiply(int32_t m, int32_t n, int32_t p, int32_t *A, int32_t *B, int32_t *C);
 
 int32_t _start()
 {
-    int32_t A[500]; // 10x50 matrix
-    for (int32_t i = 0; i < 500; i++)
+    int32_t A[MATRIX_DIMS_1 * MATRIX_DIMS_2]; // 10x50 matrix
+    for (int32_t i = 0; i < MATRIX_DIMS_1 * MATRIX_DIMS_2; i++)
     {
         A[i] = i;
     }
 
-    int32_t B[500]; // 50x10 matrix
-    for (int32_t i = 0; i < 500; i++)
+    int32_t B[MATRIX_DIMS_1 * MATRIX_DIMS_2]; // 50x10 matrix
+    for (int32_t i = 0; i < MATRIX_DIMS_1 * MATRIX_DIMS_2; i++)
     {
         B[i] = i;
     }
 
-    int32_t C[100]; // 10x10 matrix
+    int32_t C[MATRIX_DIMS_1 * MATRIX_DIMS_1]; // 10x10 matrix
     int32_t i, j;
 
-    matrix_multiply(10, 50, 10, A, B, C);
+    matrix_multiply(MATRIX_DIMS_1, MATRIX_DIMS_2, MATRIX_DIMS_1, A, B, C);
 
     return C[0];
 }
@@ -56,7 +59,7 @@ void matrix_multiply(int32_t m, int32_t n, int32_t p, int32_t *A, int32_t *B, in
 Python NumPy script to generate the expected output for this kernel:
 
 import numpy as np
-a = np.array([i for i in range(500)]).reshape(10, 50)
-b = np.array([i for i in range(500)]).reshape(50, 10)
+a = np.array([i for i in range(50)]).reshape(5, 10)
+b = np.array([i for i in range(50)]).reshape(10, 5)
 a @ b
 */
