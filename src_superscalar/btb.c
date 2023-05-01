@@ -32,6 +32,7 @@ uint32_t btb_lookup(struct btb *btb, uint32_t pc)
     if (btb_entry.addr == pc)
     {
         // return pc + 4;
+        // return btb_entry.npc_pred;
         return btb_entry.bits >= pow(2, BTB_BITS - 1) ? btb_entry.npc_pred : pc + 4;
     }
     return pc + 4;
